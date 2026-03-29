@@ -1,0 +1,21 @@
+# docker-compose.caddy.yml  ─  Caddy reverse proxy (run once on the VPS)
+# Caddy auto-provisions and renews TLS certificates via Let's Encrypt.
+# Uses network_mode: host so it can reach all compose environments on localhost.
+#
+# Run: docker compose -f docker-compose.caddy.yml up -d
+# Reload config: docker compose -f docker-compose.caddy.yml exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: techderby-caddy
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

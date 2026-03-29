@@ -1,0 +1,25 @@
+# Environment files — never commit real secrets
+techderby-platform/.env
+techderby-platform/.env.dev
+techderby-platform/.env.test
+techderby-platform/.env.prod
+techderby-platform/frontend/.env
+techderby-platform/cms/.env
+
+# Node
+node_modules/
+*/node_modules/
+
+# Build outputs
+techderby-platform/frontend/dist/
+techderby-platform/cms/dist/
+techderby-platform/cms/.cache/
+techderby-platform/cms/public/uploads/*
+!techderby-platform/cms/public/uploads/.gitkeep
+
+# Docker volumes / local data
+techderby-platform/docker/data/
+
+# OS
+.DS_Store
+Thumbs.db

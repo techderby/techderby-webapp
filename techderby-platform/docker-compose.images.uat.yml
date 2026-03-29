@@ -1,0 +1,76 @@
+# docker-compose.images.uat.yml  ─  test.techderby.org (pre-built images)
+# Ports: frontend=3002, strapi=1339
+# Used by CI/CD on push to `uat` branch.
+# Run: docker compose -f docker-compose.images.uat.yml --env-file .env.uat up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: techderby-uat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-techderby_uat}
+      POSTGRES_USER: ${POSTGRES_USER:-techderby}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_uat_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-techderby} -d ${POSTGRES_DB:-techderby_uat}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - techderby-uat
+
+  strapi:
+    image: ${DOCKER_IMAGE_CMS:-techderby/cms}:${IMAGE_TAG:-uat-latest}
+    container_name: techderby-uat-strapi
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      NODE_ENV: production
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-techderby_uat}
+      DATABASE_USERNAME: ${POSTGRES_USER:-techderby}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_SSL: "false"
+      APP_KEYS: ${APP_KEYS}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
+      PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-https://test.techderby.org}
+    ports:
+      - "1339:1337"
+    networks:
+      - techderby-uat
+
+  frontend:
+    image: ${DOCKER_IMAGE_FRONTEND:-techderby/frontend}:${IMAGE_TAG:-uat-latest}
+    container_name: techderby-uat-frontend
+    restart: unless-stopped
+    depends_on:
+      - strapi
+    ports:
+      - "3002:3000"
+    networks:
+      - techderby-uat
+
+volumes:
+  postgres_uat_data:
+
+networks:
+  techderby-uat:
+    name: techderby-uat

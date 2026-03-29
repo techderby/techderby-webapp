@@ -1,0 +1,36 @@
+# Caddyfile  ─  reverse proxy + auto HTTPS for all environments
+# Replace techderby.org with your actual domain.
+# Caddy automatically obtains Let's Encrypt certificates for every listed domain.
+
+# ── Production ────────────────────────────────────────────────────────────────
+techderby.org, www.techderby.org {
+    encode gzip
+    reverse_proxy localhost:3000
+}
+
+cms.techderby.org {
+    encode gzip
+    reverse_proxy localhost:1337
+}
+
+# ── Test (Staging) ────────────────────────────────────────────────────────────
+test.techderby.org {
+    encode gzip
+    reverse_proxy localhost:3002
+}
+
+cms-test.techderby.org {
+    encode gzip
+    reverse_proxy localhost:1339
+}
+
+# ── Dev ───────────────────────────────────────────────────────────────────────
+dev.techderby.org {
+    encode gzip
+    reverse_proxy localhost:3001
+}
+
+cms-dev.techderby.org {
+    encode gzip
+    reverse_proxy localhost:1338
+}

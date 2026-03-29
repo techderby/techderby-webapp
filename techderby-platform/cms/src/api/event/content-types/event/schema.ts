@@ -1,0 +1,28 @@
+export default {
+  kind: 'collectionType',
+  collectionName: 'events',
+  info: { singularName: 'event', pluralName: 'events', displayName: 'Event' },
+  options: { draftAndPublish: true },
+  attributes: {
+    title: { type: 'string', required: true },
+    slug: { type: 'uid', targetField: 'title', required: true },
+    description: { type: 'text', required: true },
+    date: { type: 'datetime', required: true },
+    venue: { type: 'string', required: true },
+    eventSource: {
+      type: 'enumeration',
+      enum: ['tech-derby', 'other'],
+      default: 'tech-derby',
+      required: true,
+    },
+    theme: { type: 'string' },
+    shortLine: { type: 'text' },
+    eventRegistrationLink: { type: 'string' },
+    agenda: { type: 'richtext' },
+    agendaItems: { type: 'json' },
+    speakers: { type: 'relation', relation: 'manyToMany', target: 'api::speaker.speaker' },
+    speakerCards: { type: 'json' },
+    registrationLink: { type: 'string' },
+    mailingListNotifiedAt: { type: 'datetime' },
+  },
+};

@@ -55,10 +55,7 @@ jobs:
           cache-dependency-path: techderby-platform/cms/package-lock.json
 
       - name: Install dependencies
-        # Use npm install (not npm ci) so npm resolves the correct
-        # platform-specific @swc/core native binding for Linux.
-        # The lock file was generated on Windows and only contains the Win32 binding.
-        run: npm install
+        run: npm ci
 
       - name: Build Strapi
         run: npm run build

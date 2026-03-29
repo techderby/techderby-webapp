@@ -53,9 +53,10 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        # npm install (not npm ci) — the lock file was generated on Windows and
-        # is out of sync with optionalDependencies. npm install resolves correctly.
-        run: npm install
+        # The package-lock.json was generated on Windows and omits Linux optional
+        # native binaries (@swc/core, @rollup etc). Deleting it forces npm to
+        # resolve the correct binaries for this Linux runner.
+        run: rm -f package-lock.json && npm install
 
       - name: Build Strapi
         run: npm run build

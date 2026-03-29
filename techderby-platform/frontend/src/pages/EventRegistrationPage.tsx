@@ -73,7 +73,7 @@ export default function EventRegistrationPage() {
   const [mailingListMessage, setMailingListMessage] = useState<string | null>(null);
   const [mailingListError, setMailingListError] = useState<string | null>(null);
 
-  const allEvents = data ?? [];
+  const allEvents = useMemo(() => data ?? [], [data]);
   const sourceAndTimeEvents = useMemo(() => {
     const now = new Date();
 

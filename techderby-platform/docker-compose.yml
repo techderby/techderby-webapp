@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: techderby-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-techderby}
+      POSTGRES_USER: ${POSTGRES_USER:-techderby}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techderby}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-techderby} -d ${POSTGRES_DB:-techderby}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  strapi:
+    build:
+      context: ./cms
+      dockerfile: Dockerfile
+    container_name: techderby-strapi
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: ${STRAPI_PORT:-1337}
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME:-techderby}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-techderby}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-techderby}
+      DATABASE_SSL: "false"
+      APP_KEYS: ${APP_KEYS:-change-me-1,change-me-2,change-me-3,change-me-4}
+      API_TOKEN_SALT: ${API_TOKEN_SALT:-change-me-api-token-salt}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-change-me-admin-jwt-secret}
+      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT:-change-me-transfer-token-salt}
+      JWT_SECRET: ${JWT_SECRET:-change-me-jwt-secret}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
+      PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-http://localhost:3000}
+    ports:
+      - "1337:1337"
+    volumes:
+      - ./cms:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: techderby-frontend
+    restart: unless-stopped
+    depends_on:
+      - strapi
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:1337}
+      VITE_PROXY_TARGET: http://strapi:1337
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

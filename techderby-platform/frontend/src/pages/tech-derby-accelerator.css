@@ -1,0 +1,117 @@
+:root {
+  --accelerator-ink: #0f172a;
+  --accelerator-sky: #0369a1;
+  --accelerator-amber: #f59e0b;
+  --accelerator-mist: #ecfeff;
+}
+
+/* ── Typography ── */
+.accelerator-display {
+  font-family: 'Avenir Next', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  letter-spacing: -0.025em;
+}
+
+/* ── Kicker pill ── */
+.accelerator-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: linear-gradient(
+    120deg,
+    rgba(15, 118, 110, 0.1),
+    rgba(245, 158, 11, 0.1)
+  );
+  padding: 0.5rem 1.1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accelerator-ink);
+}
+
+/* ── Fade-up animation ── */
+.accelerator-fade-up {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: acceleratorFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.accelerator-delay-1 { animation-delay: 150ms; }
+.accelerator-delay-2 { animation-delay: 280ms; }
+.accelerator-delay-3 { animation-delay: 400ms; }
+
+@keyframes acceleratorFadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Journey cards hover effect ── */
+.accelerator-journey-card {
+  position: relative;
+}
+
+.accelerator-journey-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.04), rgba(249, 115, 22, 0.03));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.accelerator-journey-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Partner Carousel ── */
+.partner-carousel {
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.partner-carousel-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: partner-scroll 17.5s ease-in-out infinite;
+}
+
+.partner-carousel-track:hover {
+  animation-play-state: paused;
+}
+
+/* 5 logos duplicated → 10 slots. Each step shifts 10% (one logo).
+   ~0.5 s slide + ~3 s pause per step × 5 steps = 17.5 s total.      */
+@keyframes partner-scroll {
+  0%          { transform: translateX(0); }
+  2.86%       { transform: translateX(-10%); }
+  20%         { transform: translateX(-10%); }
+  22.86%      { transform: translateX(-20%); }
+  40%         { transform: translateX(-20%); }
+  42.86%      { transform: translateX(-30%); }
+  60%         { transform: translateX(-30%); }
+  62.86%      { transform: translateX(-40%); }
+  80%         { transform: translateX(-40%); }
+  82.86%      { transform: translateX(-50%); }
+  100%        { transform: translateX(-50%); }
+}
+
+/* ── Partner logo strip ── */
+.partner-logo-link {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.partner-logo-link:hover {
+  transform: scale(1.05);
+}
+
+/* ── Responsive adjustments ── */
+@media (max-width: 767px) {
+  .accelerator-display {
+    letter-spacing: -0.01em;
+  }
+}

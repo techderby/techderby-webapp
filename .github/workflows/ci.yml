@@ -55,12 +55,10 @@ jobs:
           cache-dependency-path: techderby-platform/cms/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Install Linux SWC native binding
-        # package-lock.json was generated on Windows so it only contains the
-        # Windows @swc/core native binding. Install the Linux one for CI.
-        run: npm install --no-save @swc/core-linux-x64-gnu @swc/core-linux-x64-musl 2>/dev/null || true
+        # Use npm install (not npm ci) so npm resolves the correct
+        # platform-specific @swc/core native binding for Linux.
+        # The lock file was generated on Windows and only contains the Win32 binding.
+        run: npm install
 
       - name: Build Strapi
         run: npm run build

@@ -51,11 +51,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: techderby-platform/cms/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        # npm install (not npm ci) — the lock file was generated on Windows and
+        # is out of sync with optionalDependencies. npm install resolves correctly.
+        run: npm install
 
       - name: Build Strapi
         run: npm run build

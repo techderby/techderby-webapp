@@ -1,0 +1,110 @@
+name: Deploy — Dev (dev.techderby.org)
+
+# Triggers on push to the `develop` branch.
+# Builds Docker images, pushes to Docker Hub, then pulls on the server.
+# No repo clone needed on the server.
+
+on:
+  push:
+    branches: [dev]
+
+env:
+  DOCKER_IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend
+  DOCKER_IMAGE_CMS: ${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms
+
+jobs:
+  build-and-push:
+    name: Build & push images (dev)
+    if: github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set image tag
+        id: vars
+        run: |
+          echo "image_tag=dev-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./techderby-platform/frontend
+          file: ./techderby-platform/frontend/Dockerfile.prod
+          push: true
+          build-args: |
+            VITE_API_URL=https://cms-dev.techderby.org
+            VITE_CALLMEBOT_API_KEY=${{ secrets.VITE_CALLMEBOT_API_KEY }}
+          tags: |
+            ${{ env.DOCKER_IMAGE_FRONTEND }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.DOCKER_IMAGE_FRONTEND }}:dev-latest
+
+      - name: Build & push CMS image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./techderby-platform/cms
+          file: ./techderby-platform/cms/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE_CMS }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.DOCKER_IMAGE_CMS }}:dev-latest
+
+  deploy:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: dev
+
+    steps:
+      - name: Checkout code (compose files only)
+        uses: actions/checkout@v4
+
+      - name: Copy compose file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "techderby-platform/docker-compose.images.dev.yml,techderby-platform/docker-compose.caddy.yml,techderby-platform/docker/Caddyfile"
+          target: "/opt/techderby/"
+          strip_components: 0
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            mkdir -p /opt/techderby/techderby-platform
+            cd /opt/techderby/techderby-platform
+
+            printf '%s' '${{ secrets.ENV_FILE_CONTENTS }}' > .env.dev
+            echo "" >> .env.dev
+            echo "IMAGE_TAG=${{ needs.build-and-push.outputs.image_tag }}" >> .env.dev
+            echo "DOCKER_IMAGE_FRONTEND=${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend" >> .env.dev
+            echo "DOCKER_IMAGE_CMS=${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms" >> .env.dev
+
+            docker compose -f docker-compose.images.dev.yml --env-file .env.dev pull
+            docker compose -f docker-compose.images.dev.yml --env-file .env.dev up -d
+            docker image prune -f
+
+      - name: Notify success
+        if: success()
+        run: echo "✅ Deployed to dev.techderby.org"
+
+      - name: Notify failure
+        if: failure()
+        run: echo "❌ Dev deployment failed — check server logs"
+

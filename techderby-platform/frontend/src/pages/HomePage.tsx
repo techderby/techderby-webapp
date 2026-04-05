@@ -6,7 +6,6 @@ import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
-import { WaterRippleContainer } from '../components/WaterRipple';
 import heroBackgroundImage from '../assets/images/background.webp';
 import partnerMcAnderson from '../assets/images/partners/partner1.png';
 import partnerBBB from '../assets/images/partners/partner2.svg';
@@ -22,6 +21,13 @@ const stats = [
   { value: '40+', label: 'Industry speakers' },
   { value: '15+', label: 'Partner organisations' },
   { value: '4 yrs', label: 'Building Derby tech' },
+];
+
+const trustTags = [
+  { emoji: '🎓', label: 'Student-welcoming' },
+  { emoji: '💼', label: 'Employer-backed' },
+  { emoji: '🆓', label: 'Often free to attend' },
+  { emoji: '📍', label: 'Derby-first' },
 ];
 
 const valueProps = [
@@ -206,7 +212,7 @@ export default function HomePage() {
 
       {/* ── HERO ── */}
       <Section className="relative min-h-[700px] py-0 md:min-h-[800px]">
-        <WaterRippleContainer className="min-h-[700px] md:min-h-[800px]">
+        <div className="min-h-[700px] md:min-h-[800px]">
           <div
             className="absolute inset-0 bg-slate-900 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${heroBackgroundImage})` }}
@@ -227,14 +233,15 @@ export default function HomePage() {
                   href={nextEvent.registrationLink ?? '/events'}
                   target={nextEvent.registrationLink ? '_blank' : undefined}
                   rel="noreferrer noopener"
+                  aria-label={`Next event — ${new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
                   className="group mb-5 inline-flex items-center gap-2.5 rounded-full border border-orange-400/40 bg-orange-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm transition hover:border-orange-400/60 hover:bg-orange-400/15"
                 >
-                  <span className="relative flex h-2 w-2">
+                  <span className="relative flex h-2 w-2" aria-hidden="true">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-400" />
                   </span>
-                  Next event — {new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                  <svg className="h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <span aria-hidden="true">Next event — {new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}</span>
+                  <svg className="h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </a>
@@ -261,10 +268,10 @@ export default function HomePage() {
                   href={nextEvent?.registrationLink ?? '/events'}
                   target={nextEvent?.registrationLink ? '_blank' : undefined}
                   rel="noreferrer noopener"
+                  aria-label={`Attend The Next Meetup${nextEvent?.registrationLink ? ' (opens in a new tab)' : ''}`}
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-9 text-sm font-semibold text-white shadow-xl shadow-orange-900/40 transition-colors hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400"
                 >
-                  <Button className="h-12 rounded-full px-9 text-sm shadow-xl shadow-orange-900/40">
-                    Attend The Next Meetup
-                  </Button>
+                  Attend The Next Meetup
                 </a>
                 <Link
                   to="/about"
@@ -278,11 +285,14 @@ export default function HomePage() {
               </div>
 
               {/* Trust tags */}
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-                {['🎓 Student-welcoming', '💼 Employer-backed', '🆓 Often free to attend', '📍 Derby-first'].map((tag) => (
-                  <span key={tag} className="text-[12px] font-medium text-white/40">{tag}</span>
+              <ul className="mt-12 flex list-none flex-wrap items-center justify-center gap-x-6 gap-y-2" aria-label="Community qualities">
+                {trustTags.map((tag) => (
+                  <li key={tag.label} className="flex items-center gap-1.5 text-[12px] font-medium text-white/70">
+                    <span aria-hidden="true">{tag.emoji}</span>
+                    {tag.label}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </Container>
 
@@ -299,7 +309,7 @@ export default function HomePage() {
               </div>
             </Container>
           </div>
-        </WaterRippleContainer>
+        </div>
       </Section>
 
       {/* ── VALUE PROPS ── */}

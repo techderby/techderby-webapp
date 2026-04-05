@@ -8,7 +8,7 @@ import acceleratorHeroImage from '../assets/images/acc1.jpg';
 import acceleratorImage2 from '../assets/images/acc2.jpg';
 import acceleratorImage3 from '../assets/images/acc3.jpg';
 import acceleratorImage5 from '../assets/images/acc5.jpg';
-import facilitatorImage from '../assets/images/facilitator.webp';
+import facilitatorImage from '../assets/images/facilitator.jpeg';
 import partnerMcAnderson from '../assets/images/partners/partner1.png';
 import partnerBBB from '../assets/images/partners/partner2.svg';
 import partnerPitchHub from '../assets/images/partners/partner3.avif';

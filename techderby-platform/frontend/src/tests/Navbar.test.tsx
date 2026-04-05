@@ -12,7 +12,8 @@ describe('Navbar', () => {
 
     expect(screen.getByRole('link', { name: 'Tech Derby home' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Become a Member' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign Up' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Toggle menu' })).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ techderby-platform/.env
 techderby-platform/.env.dev
 techderby-platform/.env.test
 techderby-platform/.env.prod
+techderby-platform/.env.example
 techderby-platform/frontend/.env
 techderby-platform/cms/.env
 

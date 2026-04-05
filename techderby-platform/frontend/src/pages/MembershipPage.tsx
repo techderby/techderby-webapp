@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppNotification } from '../lib/whatsapp';
+import { apiClient } from '../lib/api';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
@@ -50,12 +51,19 @@ export default function MembershipPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [interest, setInterest] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const text =
-      `[Membership Interest]\nName: ${name || '-'}\nEmail: ${email || '-'}\nTech Interest: ${interest || '-'}`;
+    setStatus('sending');
+    const text = `[Membership Interest]\nName: ${name || '-'}\nEmail: ${email || '-'}\nTech Interest: ${interest || '-'}`;
     sendWhatsAppNotification(text);
+    try {
+      await apiClient.notify('[Membership Interest] New registration', text, 'Membership Form');
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    }
   }
 
   return (
@@ -125,6 +133,12 @@ export default function MembershipPage() {
               </div>
 
               <form className="mt-8 space-y-4" aria-label="Membership interest form" onSubmit={handleSubmit}>
+                {status === 'success' ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center" role="alert">
+                    <p className="text-sm font-bold text-emerald-800">You're on the list!</p>
+                    <p className="mt-1 text-sm text-emerald-700">Thanks {name}, we'll be in touch when membership goes live.</p>
+                  </div>
+                ) : (<>
                 <div>
                   <label htmlFor="membership-name" className="mb-1 block text-sm font-medium text-slate-700">Full name</label>
                   <Input id="membership-name" aria-label="Full name" placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -137,9 +151,11 @@ export default function MembershipPage() {
                   <label htmlFor="membership-interest" className="mb-1 block text-sm font-medium text-slate-700">Primary tech interest</label>
                   <Input id="membership-interest" aria-label="Primary tech interest" placeholder="e.g. Software, Data, AI, Design" value={interest} onChange={(e) => setInterest(e.target.value)} />
                 </div>
-                <Button type="submit" className="mt-2 h-12 w-full rounded-full text-sm shadow-lg shadow-orange-900/30">
-                  Register Interest
+                <Button type="submit" disabled={status === 'sending'} className="mt-2 h-12 w-full rounded-full text-sm shadow-lg shadow-orange-900/30">
+                  {status === 'sending' ? 'Sending…' : 'Register Interest'}
                 </Button>
+                {status === 'error' && <p className="text-center text-sm text-red-600">Something went wrong. Please try again.</p>}
+                </>)}
               </form>
             </div>
 

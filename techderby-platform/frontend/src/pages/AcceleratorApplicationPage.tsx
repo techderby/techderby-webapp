@@ -1,5 +1,6 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { sendWhatsAppNotification } from '../lib/whatsapp';
+import { apiClient } from '../lib/api';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
@@ -72,6 +73,7 @@ export default function AcceleratorApplicationPage() {
   const [step, setStep] = useState<Step>(1);
   const [formValues, setFormValues] = useState<FormValues>(initialFormValues);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   function setField<K extends keyof FormValues>(field: K, value: FormValues[K]) {
     setFormValues((current) => ({ ...current, [field]: value }));
@@ -138,36 +140,20 @@ export default function AcceleratorApplicationPage() {
     return Object.keys(nextErrors).length === 0;
   }
 
-  const mailtoLink = useMemo(() => {
-    const subject = encodeURIComponent(`Pre-Seed Accelerator Application - ${formValues.startupName || 'New Applicant'}`);
-    const body = encodeURIComponent(
-      `Pre-Seed Accelerator Application\n\n` +
-        `Full name: ${formValues.fullName || '-'}\n` +
-        `Email: ${formValues.email || '-'}\n` +
-        `Phone: ${formValues.phone || '-'}\n` +
-        `Country: ${formValues.country || '-'}\n` +
-        `LinkedIn URL: ${formValues.linkedinUrl || '-'}\n\n` +
-        `Startup name: ${formValues.startupName || '-'}\n` +
-        `Startup website: ${formValues.startupWebsite || '-'}\n` +
-        `Industry: ${formValues.industry || '-'}\n` +
-        `Startup stage: ${formValues.startupStage || '-'}\n\n` +
-        `Mission description:\n${formValues.missionDescription || '-'}\n\n` +
-        `Team members and primary roles:\n${formValues.teamInfo || '-'}\n\n` +
-        `How they heard about Tech Derby: ${formValues.discoverySource || '-'}\n` +
-        `Past accelerator/incubator participation: ${formValues.priorAcceleratorExperience || '-'}\n\n` +
-        `Expected gain from accelerator:\n${formValues.expectedGain || '-'}\n\n` +
-        `Main startup challenges:\n${formValues.keyChallenges || '-'}\n`,
-    );
-    return `mailto:hello@techderby.org?subject=${subject}&body=${body}`;
-  }, [formValues]);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!validateCurrentStep(3)) return;
+    setStatus('sending');
+    const subject = `Pre-Seed Accelerator Application - ${formValues.startupName || 'New Applicant'}`;
     const text =
       `[Accelerator Application]\nName: ${formValues.fullName || '-'}\nEmail: ${formValues.email || '-'}\nPhone: ${formValues.phone || '-'}\nCountry: ${formValues.country || '-'}\nLinkedIn: ${formValues.linkedinUrl || '-'}\nStartup: ${formValues.startupName || '-'}\nWebsite: ${formValues.startupWebsite || '-'}\nIndustry: ${formValues.industry || '-'}\nStage: ${formValues.startupStage || '-'}\nDiscovery: ${formValues.discoverySource || '-'}\nPrior Accelerator: ${formValues.priorAcceleratorExperience || '-'}\nMission: ${formValues.missionDescription || '-'}\nTeam: ${formValues.teamInfo || '-'}\nExpected Gain: ${formValues.expectedGain || '-'}\nKey Challenges: ${formValues.keyChallenges || '-'}`;
     sendWhatsAppNotification(text);
-    window.location.href = mailtoLink;
+    try {
+      await apiClient.notify(subject, text, 'Accelerator Application Form');
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    }
   }
 
   function handleNext() {
@@ -224,6 +210,12 @@ export default function AcceleratorApplicationPage() {
             <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Step {step} of 3</p>
 
             <form className="mt-8 space-y-6" aria-label="Accelerator application form" onSubmit={handleSubmit}>
+              {status === 'success' ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-8 text-center" role="alert">
+                  <p className="text-xl font-bold text-emerald-800">Application submitted!</p>
+                  <p className="mt-2 text-base text-emerald-700">Thanks {formValues.fullName}, we've received your application for the Tech Derby Pre-Seed Accelerator and will be in touch shortly.</p>
+                </div>
+              ) : (<>
               {step === 1 ? (
                 <div className="space-y-6">
                   <div>
@@ -477,11 +469,13 @@ export default function AcceleratorApplicationPage() {
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" variant="ghost" className="border border-slate-300 bg-slate-100 px-8 text-slate-900">
-                    Submit
-                  </Button>
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800">
+                    Registration for this cohort is now closed. Check back for future cohorts.
+                  </p>
                 )}
               </div>
+
+              {status === 'error' && <p className="text-sm text-red-600">Something went wrong. Please try again or email hello@techderby.org.</p>}
 
               <p className="text-sm text-slate-600">
                 Need help? Email{' '}
@@ -490,6 +484,7 @@ export default function AcceleratorApplicationPage() {
                 </a>
                 .
               </p>
+              </>)}
             </form>
           </div>
         </Container>

@@ -23,9 +23,9 @@
     rgba(245, 158, 11, 0.1)
   );
   padding: 0.5rem 1.1rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accelerator-ink);
 }

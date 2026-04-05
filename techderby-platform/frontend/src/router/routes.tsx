@@ -1,6 +1,8 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { PublicLayout } from '../layouts/PublicLayout';
+import { DashboardLayout } from '../layouts/DashboardLayout';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const EventsPage = lazy(() => import('../pages/EventsPage'));
@@ -26,11 +28,46 @@ const AccessibilityPage = lazy(() => import('../pages/AccessibilityPage'));
 const SafeguardingPage = lazy(() => import('../pages/SafeguardingPage'));
 const MemberDirectoryPage = lazy(() => import('../pages/MemberDirectoryPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RegisterPage = lazy(() => import('../pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+
+// Dashboard pages
+const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
+const ProfilePage = lazy(() => import('../pages/dashboard/ProfilePage'));
+const DirectoryPage = lazy(() => import('../pages/dashboard/DirectoryPage'));
+const ConnectionsPage = lazy(() => import('../pages/dashboard/ConnectionsPage'));
+const ChatPage = lazy(() => import('../pages/dashboard/ChatPage'));
 
 const withLazy = (element: ReactNode) => <Suspense fallback={<p className="p-6">Loading...</p>}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
+  // ── Standalone auth pages ──────────────────────────────────────────────────
+  { path: '/login', element: withLazy(<LoginPage />) },
+  { path: '/register', element: withLazy(<RegisterPage />) },
+  { path: '/forgot-password', element: withLazy(<ForgotPasswordPage />) },
+  { path: '/reset-password', element: withLazy(<ResetPasswordPage />) },
+
+  // ── Dashboard (protected) ─────────────────────────────────────────────────
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: withLazy(<DashboardHomePage />) },
+      { path: 'profile', element: withLazy(<ProfilePage />) },
+      { path: 'directory', element: withLazy(<DirectoryPage />) },
+      { path: 'connections', element: withLazy(<ConnectionsPage />) },
+      { path: 'messages', element: withLazy(<ChatPage />) },
+      { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+    ],
+  },
+
+  // ── Public pages ───────────────────────────────────────────────────────────
   {
     path: '/',
     element: <PublicLayout />,
@@ -61,8 +98,8 @@ export const router = createBrowserRouter([
       { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
-      { path: 'login', element: withLazy(<LoginPage />) },
       { path: 'admin', element: withLazy(<AdminPage />) },
     ],
   },
 ]);
+

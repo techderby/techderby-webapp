@@ -72,6 +72,11 @@ export function PublicLayout() {
                   Login
                 </Button>
               </Link>
+              <Link to="/signup">
+                <Button size="sm" className="bg-white text-gray-900 hover:bg-white/90">
+                  Sign Up
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -117,6 +122,11 @@ export function PublicLayout() {
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="ghost" className="w-full text-white hover:bg-white/10">
                       Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full bg-white text-gray-900 hover:bg-white/90">
+                      Sign Up
                     </Button>
                   </Link>
                 </div>
@@ -180,8 +190,20 @@ export function PublicLayout() {
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/70">
-            <p>&copy; 2026 Tech Derby. All rights reserved.</p>
+          <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-white/70">&copy; 2026 Tech Derby. All rights reserved.</p>
+            <div className="flex items-center gap-3">
+              <Link to="/login">
+                <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button size="sm" className="bg-white text-gray-900 hover:bg-white/90">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

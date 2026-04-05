@@ -13,6 +13,7 @@ const AboutPage = lazy(() => import('../pages/AboutPage'));
 const ProgrammesPage = lazy(() => import('../pages/ProgrammesPage'));
 const TechStarWomenPage = lazy(() => import('../pages/TechStarWomenPage'));
 const TechDerbyAcceleratorPage = lazy(() => import('../pages/TechDerbyAcceleratorPage'));
+const TechDerbySummitPage = lazy(() => import('../pages/TechDerbySummitPage'));
 const AcceleratorApplicationPage = lazy(() => import('../pages/AcceleratorApplicationPage'));
 const MembershipPage = lazy(() => import('../pages/MembershipPage'));
 const GetInvolvedPage = lazy(() => import('../pages/GetInvolvedPage'));
@@ -80,6 +81,7 @@ export const router = createBrowserRouter([
       { path: 'events', element: withLazy(<EventsPage />) },
       { path: 'events/browse', element: withLazy(<EventRegistrationPage />) },
       { path: 'events/:slug', element: withLazy(<EventDetailPage />) },
+      { path: 'summit-2026', element: withLazy(<TechDerbySummitPage />) },
       { path: 'about', element: withLazy(<AboutPage />) },
       { path: 'programmes', element: withLazy(<ProgrammesPage />) },
       { path: 'tech-derby-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },

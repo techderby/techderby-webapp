@@ -465,7 +465,7 @@ export default function TechDerbyAcceleratorPage() {
         <Container>
           <div id="journey" className="mx-auto max-w-6xl">
             <div className="text-center">
-              <span className="accelerator-kicker">The 8-Week Journey</span>
+              <span className="accelerator-kicker text-slate-700">The 8-Week Journey</span>
               <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 md:text-5xl">
                 Structured progress, every single week
               </h2>
@@ -616,7 +616,7 @@ export default function TechDerbyAcceleratorPage() {
         <Container>
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
-              <span className="accelerator-kicker">Got Questions?</span>
+              <span className="accelerator-kicker text-slate-700">Got Questions?</span>
               <h2 className="mt-4 text-3xl font-black text-slate-900 md:text-4xl">Frequently asked questions</h2>
             </div>
 

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { PageSeo } from '../components/PageSeo';
 import summitEventPhoto from '../assets/images/acc2.jpg';
+import partnerLogo1 from '../assets/images/partners/partner1.png';
+import partnerLogo2 from '../assets/images/partners/partner2.svg';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -355,16 +357,6 @@ export default function TechDerbySummitPage() {
             pointerEvents: 'none',
           }} />
           <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
-            <button style={{
-              position: 'absolute', top: '-3px', right: '24px',
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.20)',
-              borderRadius: '999px', padding: '8px 20px',
-              fontSize: '12px', fontWeight: 700, color: '#fff', cursor: 'pointer',
-            }}>
-              View full agenda
-            </button>
-
             <div style={{ marginBottom: '22px' }}>
               <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
                 Agenda Preview
@@ -520,9 +512,6 @@ export default function TechDerbySummitPage() {
                   </div>
                   <p style={{ margin: '14px 0 0', fontSize: 'clamp(1.5rem, 2.2vw, 2rem)', fontWeight: 800, color: '#fff', lineHeight: 1.12 }}>{s.role}</p>
                   <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.5, color: 'rgba(210,223,240,0.62)' }}>{s.area}</p>
-                  <p style={{ margin: '18px 0 0', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(34,211,238,0.65)' }}>
-                    Photo + Bio Placeholder
-                  </p>
                 </div>
               ))}
             </div>
@@ -576,32 +565,31 @@ export default function TechDerbySummitPage() {
                       Become a Partner
                     </button>
                   </Link>
-                  <Link to="/contact" style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      height: '38px', padding: '0 20px', borderRadius: '999px',
-                      background: 'transparent',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff',
-                    }}>
-                      Sponsorship Pack
-                    </button>
-                  </Link>
+
                 </div>
               </div>
 
               {/* Right – logo grid */}
-              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', padding: '24px 28px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxWidth: '240px', marginLeft: 'auto' }}>
-                  {['Partner logo', 'Sponsor logo', 'University', 'Community'].map((label) => (
-                    <div key={label} style={{
-                      height: '64px', borderRadius: '12px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.11)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.28)' }}>{label}</span>
-                    </div>
-                  ))}
+              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                  <div style={{
+                    height: '64px', borderRadius: '12px',
+                    background: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.11)',
+                    padding: '10px 20px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <img src={partnerLogo1} alt="Partner" style={{ maxHeight: '44px', maxWidth: '160px', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{
+                    height: '64px', borderRadius: '12px',
+                    background: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.11)',
+                    padding: '10px 20px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <img src={partnerLogo2} alt="Partner" style={{ maxHeight: '44px', maxWidth: '160px', objectFit: 'contain' }} />
+                  </div>
                 </div>
               </div>
             </div>

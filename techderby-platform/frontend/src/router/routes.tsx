@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import NotFoundPage from '../pages/NotFoundPage';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const EventsPage = lazy(() => import('../pages/EventsPage'));
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
         <DashboardLayout />
       </ProtectedRoute>
     ),
+    errorElement: <NotFoundPage />,
     children: [
       { index: true, element: withLazy(<DashboardHomePage />) },
       { path: 'profile', element: withLazy(<ProfilePage />) },
@@ -64,6 +66,7 @@ export const router = createBrowserRouter([
       { path: 'connections', element: withLazy(<ConnectionsPage />) },
       { path: 'messages', element: withLazy(<ChatPage />) },
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 
@@ -71,6 +74,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <PublicLayout />,
+    errorElement: <NotFoundPage />,
     children: [
       { index: true, element: withLazy(<HomePage />) },
       { path: 'events', element: withLazy(<EventsPage />) },
@@ -99,7 +103,11 @@ export const router = createBrowserRouter([
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
       { path: 'admin', element: withLazy(<AdminPage />) },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
+
+  // ── Catch-all ─────────────────────────────────────────────────────────────
+  { path: '*', element: <NotFoundPage /> },
 ]);
 

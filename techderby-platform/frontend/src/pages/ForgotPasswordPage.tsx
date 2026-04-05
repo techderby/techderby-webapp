@@ -21,10 +21,10 @@ export default function ForgotPasswordPage() {
     try {
       await apiClient.forgotPassword(trimmed);
       setStatus('success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Strapi returns 200 even for unknown emails to prevent enumeration.
       // Show a generic error only for network/server failures.
-      const code = err?.response?.status;
+      const code = (err as { response?: { status?: number } })?.response?.status;
       if (code && code < 500) {
         setStatus('success'); // surface as success to avoid email enumeration
       } else {

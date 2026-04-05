@@ -73,8 +73,8 @@ export default function RegisterPage() {
         password: form.password,
       });
       navigate('/dashboard');
-    } catch (err: any) {
-      const msg = err?.response?.data?.error?.message ?? 'Registration failed. Please try again.';
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Registration failed. Please try again.';
       setServerError(msg);
     } finally {
       setIsSubmitting(false);

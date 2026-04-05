@@ -39,8 +39,8 @@ export default function ResetPasswordPage() {
       await apiClient.resetPassword(code, password, confirm);
       setStatus('success');
       setTimeout(() => navigate('/login', { replace: true }), 3000);
-    } catch (err: any) {
-      const msg = err?.response?.data?.error?.message;
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
       if (msg?.toLowerCase().includes('code')) {
         setErrorMsg('This reset link has expired or already been used. Please request a new one.');
       } else {

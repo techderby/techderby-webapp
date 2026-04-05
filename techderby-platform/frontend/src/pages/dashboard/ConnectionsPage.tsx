@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api';
-import { useAuth } from '../../contexts/AuthContext';
 import type { Connection } from '../../types/auth';
 import { cn } from '../../lib/utils';
 
@@ -115,7 +114,6 @@ function ConnectionCard({
 }
 
 export default function ConnectionsPage() {
-  const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('all');
 

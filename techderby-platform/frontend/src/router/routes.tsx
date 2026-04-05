@@ -1,6 +1,9 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { PublicLayout } from '../layouts/PublicLayout';
+import { DashboardLayout } from '../layouts/DashboardLayout';
+import { ProtectedRoute } from '../components/ProtectedRoute';
+import NotFoundPage from '../pages/NotFoundPage';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const EventsPage = lazy(() => import('../pages/EventsPage'));
@@ -10,6 +13,7 @@ const AboutPage = lazy(() => import('../pages/AboutPage'));
 const ProgrammesPage = lazy(() => import('../pages/ProgrammesPage'));
 const TechStarWomenPage = lazy(() => import('../pages/TechStarWomenPage'));
 const TechDerbyAcceleratorPage = lazy(() => import('../pages/TechDerbyAcceleratorPage'));
+const TechDerbySummitPage = lazy(() => import('../pages/TechDerbySummitPage'));
 const AcceleratorApplicationPage = lazy(() => import('../pages/AcceleratorApplicationPage'));
 const MembershipPage = lazy(() => import('../pages/MembershipPage'));
 const GetInvolvedPage = lazy(() => import('../pages/GetInvolvedPage'));
@@ -26,19 +30,58 @@ const AccessibilityPage = lazy(() => import('../pages/AccessibilityPage'));
 const SafeguardingPage = lazy(() => import('../pages/SafeguardingPage'));
 const MemberDirectoryPage = lazy(() => import('../pages/MemberDirectoryPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RegisterPage = lazy(() => import('../pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+
+// Dashboard pages
+const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
+const ProfilePage = lazy(() => import('../pages/dashboard/ProfilePage'));
+const DirectoryPage = lazy(() => import('../pages/dashboard/DirectoryPage'));
+const ConnectionsPage = lazy(() => import('../pages/dashboard/ConnectionsPage'));
+const ChatPage = lazy(() => import('../pages/dashboard/ChatPage'));
 
 const withLazy = (element: ReactNode) => <Suspense fallback={<p className="p-6">Loading...</p>}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
+  // ── Standalone auth pages ──────────────────────────────────────────────────
+  { path: '/login', element: withLazy(<LoginPage />) },
+  { path: '/register', element: withLazy(<RegisterPage />) },
+  { path: '/forgot-password', element: withLazy(<ForgotPasswordPage />) },
+  { path: '/reset-password', element: withLazy(<ResetPasswordPage />) },
+
+  // ── Dashboard (protected) ─────────────────────────────────────────────────
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    errorElement: <NotFoundPage />,
+    children: [
+      { index: true, element: withLazy(<DashboardHomePage />) },
+      { path: 'profile', element: withLazy(<ProfilePage />) },
+      { path: 'directory', element: withLazy(<DirectoryPage />) },
+      { path: 'connections', element: withLazy(<ConnectionsPage />) },
+      { path: 'messages', element: withLazy(<ChatPage />) },
+      { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+
+  // ── Public pages ───────────────────────────────────────────────────────────
   {
     path: '/',
     element: <PublicLayout />,
+    errorElement: <NotFoundPage />,
     children: [
       { index: true, element: withLazy(<HomePage />) },
       { path: 'events', element: withLazy(<EventsPage />) },
       { path: 'events/browse', element: withLazy(<EventRegistrationPage />) },
       { path: 'events/:slug', element: withLazy(<EventDetailPage />) },
+      { path: 'summit-2026', element: withLazy(<TechDerbySummitPage />) },
       { path: 'about', element: withLazy(<AboutPage />) },
       { path: 'programmes', element: withLazy(<ProgrammesPage />) },
       { path: 'tech-derby-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },
@@ -61,8 +104,12 @@ export const router = createBrowserRouter([
       { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
-      { path: 'login', element: withLazy(<LoginPage />) },
       { path: 'admin', element: withLazy(<AdminPage />) },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
+
+  // ── Catch-all ─────────────────────────────────────────────────────────────
+  { path: '*', element: <NotFoundPage /> },
 ]);
+

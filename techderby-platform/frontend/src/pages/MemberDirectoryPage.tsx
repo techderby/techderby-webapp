@@ -11,6 +11,7 @@ const sampleMembers = [
     bio: 'Building accessible web products and mentoring early-career developers.',
     skills: ['React', 'TypeScript', 'Accessibility'],
     interests: ['Community', 'Open Source'],
+    linkedin: 'https://www.linkedin.com/in/aisha-walker',
   },
   {
     id: 2,
@@ -19,6 +20,7 @@ const sampleMembers = [
     bio: 'Working on civic data insights and workshop facilitation.',
     skills: ['Python', 'SQL', 'Data Viz'],
     interests: ['Education', 'Civic Tech'],
+    linkedin: 'https://www.linkedin.com/in/harvey-singh',
   },
 ];
 

@@ -8,7 +8,7 @@ import acceleratorHeroImage from '../assets/images/acc1.jpg';
 import acceleratorImage2 from '../assets/images/acc2.jpg';
 import acceleratorImage3 from '../assets/images/acc3.jpg';
 import acceleratorImage5 from '../assets/images/acc5.jpg';
-import facilitatorImage from '../assets/images/facilitator.webp';
+import facilitatorImage from '../assets/images/facilitator.jpeg';
 import partnerMcAnderson from '../assets/images/partners/partner1.png';
 import partnerBBB from '../assets/images/partners/partner2.svg';
 import partnerPitchHub from '../assets/images/partners/partner3.avif';
@@ -465,7 +465,7 @@ export default function TechDerbyAcceleratorPage() {
         <Container>
           <div id="journey" className="mx-auto max-w-6xl">
             <div className="text-center">
-              <span className="accelerator-kicker">The 8-Week Journey</span>
+              <span className="accelerator-kicker text-slate-700">The 8-Week Journey</span>
               <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 md:text-5xl">
                 Structured progress, every single week
               </h2>
@@ -616,7 +616,7 @@ export default function TechDerbyAcceleratorPage() {
         <Container>
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
-              <span className="accelerator-kicker">Got Questions?</span>
+              <span className="accelerator-kicker text-slate-700">Got Questions?</span>
               <h2 className="mt-4 text-3xl font-black text-slate-900 md:text-4xl">Frequently asked questions</h2>
             </div>
 

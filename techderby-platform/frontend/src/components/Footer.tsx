@@ -136,13 +136,26 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-xs text-white/40">
-            &copy; {currentYear} Tech Derby. All rights reserved.
-          </p>
-          <p className="text-xs text-white/30">
-            Community Interest Company &middot; No. 16998866
-          </p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+          <div className="flex flex-col items-center gap-1 sm:items-start">
+            <p className="text-xs text-white/40">
+              &copy; {currentYear} Tech Derby. All rights reserved.
+            </p>
+            <p className="text-xs text-white/30">
+              Community Interest Company &middot; No. 16998866
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="text-sm font-medium text-white/60 transition-colors hover:text-white">
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="inline-flex h-9 items-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+            >
+              Sign Up
+            </Link>
+          </div>
         </div>
       </Container>
     </footer>

@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
-import { Section } from '../components/ui/Section';
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 

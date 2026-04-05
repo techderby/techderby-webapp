@@ -72,11 +72,12 @@ export function Navbar() {
                   </svg>
                 </Link>
 
-                {/* Dropdown panel */}
+                {/* Dropdown panel — outer wrapper with pt-3 bridges the visual gap so onMouseLeave doesn't fire */}
                 {openDropdown === link.to && (
-                  <div className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
+                  <div className="absolute left-1/2 top-full z-50 w-72 -translate-x-1/2 pt-3">
+                  <div className="rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
                     {/* Arrow */}
-                    <div className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-sm border-l border-t border-white/10 bg-slate-800" />
+                    <div className="absolute top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-sm border-l border-t border-white/10 bg-slate-800" />
                     {link.children.map((child) => (
                       <Link
                         key={child.to}
@@ -98,6 +99,7 @@ export function Navbar() {
                         View all programmes →
                       </Link>
                     </div>
+                  </div>
                   </div>
                 )}
               </div>

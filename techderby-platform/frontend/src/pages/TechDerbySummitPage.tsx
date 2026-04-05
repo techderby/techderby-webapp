@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { PageSeo } from '../components/PageSeo';
+import summitEventPhoto from '../assets/images/acc2.jpg';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -8,7 +9,7 @@ import { PageSeo } from '../components/PageSeo';
 const agendaItems = [
   { time: '09:00', title: 'Arrival, registration and networking',             desc: 'Coffee, welcome desk and partner conversations' },
   { time: '09:30', title: 'Opening remarks',                                  desc: 'Welcome to Tech Derby Summit 2026' },
-  { time: '09:45', title: 'Keynote: AI, Startups and the Next Digital Economy', desc: 'A practical view of the opportunity ahead', keynote: true },
+  { time: '09:45', title: 'Keynote: AI, Startups and the Next Digital Economy', desc: 'A practical view of the opportunity ahead' },
   { time: '10:30', title: 'Panel: AI for business growth and productivity',   desc: 'How organisations are using AI responsibly' },
   { time: '11:15', title: 'Founder spotlight',                                desc: 'Stories from startup builders and ecosystem leaders' },
   { time: '12:00', title: 'Networking and partner showcase',                  desc: 'Meet founders, educators, employers and investors' },
@@ -61,7 +62,7 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             HERO
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ position: 'relative', overflow: 'hidden', padding: '56px 0 52px' }}>
+        <section style={{ position: 'relative', overflow: 'hidden', padding: '52px 0 48px' }}>
           {/* Cyan glow – top-right */}
           <div style={{
             position: 'absolute', top: '-60px', right: '-80px',
@@ -97,14 +98,14 @@ export default function TechDerbySummitPage() {
             {/* H1 */}
             <h1 style={{
               margin: 0, fontWeight: 900, lineHeight: 1.07, letterSpacing: '-0.02em',
-              color: '#ffffff', fontSize: 'clamp(2rem, 5vw, 3rem)', maxWidth: '560px',
+              color: '#ffffff', fontSize: 'clamp(1.9rem, 4.8vw, 2.85rem)', maxWidth: '560px',
             }}>
               Tech Derby Summit 2026
             </h1>
 
             {/* Cyan subtitle */}
             <p style={{
-              margin: '10px 0 0', fontWeight: 700, fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
+              margin: '10px 0 0', fontWeight: 700, fontSize: 'clamp(0.95rem, 2.2vw, 1.15rem)',
               color: '#22d3ee', lineHeight: 1.3,
             }}>
               AI, Startups and the Next Digital Economy
@@ -121,21 +122,21 @@ export default function TechDerbySummitPage() {
 
             {/* Buttons */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
-              <Link to="/events/browse" style={{ textDecoration: 'none' }}>
+              <a href="https://www.eventbrite.co.uk/e/east-mids-tech-week-2026-tech-derby-summit-2026-tickets-1986190909477?aff=oddtdtcreator" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                 <button style={{
-                  height: '42px', padding: '0 22px', borderRadius: '8px',
+                  height: '36px', padding: '0 18px', borderRadius: '999px',
                   background: '#06b6d4', border: 'none', cursor: 'pointer',
-                  fontSize: '13px', fontWeight: 700, color: '#0c1829',
+                  fontSize: '12px', fontWeight: 700, color: '#0c1829',
                 }}>
                   Register for the Summit
                 </button>
-              </Link>
+              </a>
               <Link to="/contact" style={{ textDecoration: 'none' }}>
                 <button style={{
-                  height: '42px', padding: '0 22px', borderRadius: '8px',
+                  height: '36px', padding: '0 18px', borderRadius: '999px',
                   background: 'transparent',
                   border: '1px solid rgba(255,255,255,0.28)',
-                  cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#ffffff',
+                  cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#ffffff',
                 }}>
                   Become a Partner
                 </button>
@@ -152,9 +153,9 @@ export default function TechDerbySummitPage() {
                 <div key={s.label} style={{
                   border: '1px solid rgba(255,255,255,0.10)',
                   background: 'rgba(255,255,255,0.04)',
-                  borderRadius: '10px', padding: '10px 18px',
+                  borderRadius: '12px', padding: '9px 16px',
                 }}>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#fff' }}>{s.value}</p>
+                  <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#fff' }}>{s.value}</p>
                   <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.42)' }}>{s.label}</p>
                 </div>
               ))}
@@ -165,44 +166,65 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             CONFERENCE THEME
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ position: 'relative', overflow: 'hidden', padding: '48px 0 52px' }}>
-          {/* Large amber glow */}
+        <section style={{ position: 'relative', overflow: 'hidden', padding: '0' }}>
+          {/* Full section background: event photo + dark overlay */}
           <div style={{
-            position: 'absolute', top: '50%', left: '10%',
-            transform: 'translateY(-50%)',
-            width: '600px', height: '600px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(251,146,60,0.22) 0%, rgba(249,115,22,0.12) 35%, transparent 65%)',
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${summitEventPhoto})`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            filter: 'brightness(0.35)',
+          }} />
+          {/* Dark navy overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, rgba(10,20,40,0.55) 0%, rgba(8,18,35,0.72) 100%)',
+          }} />
+          {/* Large amber/orange radial glow */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '18%',
+            transform: 'translate(-50%,-50%)',
+            width: '700px', height: '700px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(251,146,60,0.38) 0%, rgba(249,115,22,0.18) 38%, transparent 65%)',
             pointerEvents: 'none',
           }} />
 
           <div style={{
-            maxWidth: '1200px', margin: '0 auto', padding: '0 24px',
+            maxWidth: '1200px', margin: '0 auto', padding: '48px 24px',
             position: 'relative', zIndex: 1,
-            display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: '32px', alignItems: 'center',
+            display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '40px', alignItems: 'center',
           }}>
 
-            {/* Circular photo */}
+            {/* Circular photo — real image */}
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <div style={{
                 width: '300px', height: '300px', borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg,#1c3040 0%,#1e2d40 50%,#162436 100%)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 0 80px rgba(249,115,22,0.18)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden',
+                border: '2px solid rgba(255,255,255,0.10)',
+                boxShadow: '0 0 0 10px rgba(255,255,255,0.04), 0 0 60px rgba(249,115,22,0.25)',
               }}>
-                <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px', margin: 0, textAlign: 'center' }}>
-                  Event photo
-                </p>
+                <img
+                  src={summitEventPhoto}
+                  alt="Tech Derby Summit event"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+                />
               </div>
             </div>
 
-            {/* Cards column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Outer glass wrapper containing all cards */}
+            <div style={{
+              background: 'rgba(10,22,42,0.55)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '20px',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              padding: '20px',
+              display: 'flex', flexDirection: 'column', gap: '10px',
+            }}>
               {/* Conference Theme card */}
               <div style={{
-                background: 'rgba(255,255,255,0.045)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px', padding: '18px 20px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '14px', padding: '18px 20px',
               }}>
                 <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
                   Conference Theme
@@ -210,35 +232,32 @@ export default function TechDerbySummitPage() {
                 <h2 style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 900, color: '#fff', lineHeight: 1.2 }}>
                   AI, Startups and the Next<br />Digital Economy
                 </h2>
-                <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.6, color: 'rgba(255,255,255,0.58)' }}>
+                <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.65, color: 'rgba(255,255,255,0.65)' }}>
                   Practical conversations on innovation, local talent, responsible leadership and regional growth.
                 </p>
               </div>
 
               {/* Featured session card */}
               <div style={{
-                background: 'rgba(255,255,255,0.045)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px', padding: '16px 20px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '14px', padding: '16px 20px',
               }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#fff' }}>
-                    AI for Business Growth and Productivity
-                  </p>
-                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.38)' }}>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+                  AI for Business Growth and Productivity
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.40)' }}>
                     Featured session
                   </p>
+                  <span style={{
+                    background: '#06b6d4',
+                    borderRadius: '999px', padding: '3px 12px',
+                    fontSize: '11px', fontWeight: 700, color: '#0c1829',
+                  }}>
+                    Live panel
+                  </span>
                 </div>
-                <span style={{
-                  flexShrink: 0,
-                  background: 'rgba(6,182,212,0.15)',
-                  border: '1px solid rgba(6,182,212,0.30)',
-                  borderRadius: '999px', padding: '3px 10px',
-                  fontSize: '11px', fontWeight: 600, color: '#22d3ee',
-                }}>
-                  Live panel
-                </span>
               </div>
 
               {/* Audience + Experience */}
@@ -248,14 +267,14 @@ export default function TechDerbySummitPage() {
                   { label: 'Experience', text: 'Keynotes, panels, networking and collaboration' },
                 ].map((c) => (
                   <div key={c.label} style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.07)',
-                    borderRadius: '14px', padding: '14px 16px',
+                    background: 'rgba(255,255,255,0.055)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    borderRadius: '12px', padding: '14px 16px',
                   }}>
-                    <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.38)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                    <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.40)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
                       {c.label}
                     </p>
-                    <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: '#fff', lineHeight: 1.4 }}>
+                    <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>
                       {c.text}
                     </p>
                   </div>
@@ -321,55 +340,59 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             AGENDA PREVIEW
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ position: 'relative', padding: '52px 0 56px', overflow: 'hidden' }}>
+        <section style={{ position: 'relative', padding: '46px 0 36px', overflow: 'hidden' }}>
           <div style={{
-            position: 'absolute', top: '10%', right: '-80px',
-            width: '450px', height: '450px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 65%)',
+            position: 'absolute', top: '-54px', right: '40px',
+            width: '248px', height: '248px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.12) 42%, rgba(56,189,248,0.04) 66%, transparent 78%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: '-152px', left: '45%',
+            transform: 'translateX(-50%)',
+            width: '376px', height: '780px',
+            background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.32) 0%, rgba(249,115,22,0.14) 34%, rgba(56,189,248,0.08) 58%, transparent 80%)',
             pointerEvents: 'none',
           }} />
           <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
-              <div>
-                <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
-                  Agenda Preview
-                </p>
-                <h2 style={{ margin: '8px 0 0', fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
-                  A day of insight, connection and momentum
-                </h2>
-              </div>
-              <button style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: '10px', padding: '10px 20px',
-                fontSize: '13px', fontWeight: 600, color: '#fff', cursor: 'pointer',
-              }}>
-                View full agenda
-              </button>
+            <button style={{
+              position: 'absolute', top: '-3px', right: '24px',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.20)',
+              borderRadius: '999px', padding: '8px 20px',
+              fontSize: '12px', fontWeight: 700, color: '#fff', cursor: 'pointer',
+            }}>
+              View full agenda
+            </button>
+
+            <div style={{ marginBottom: '22px' }}>
+              <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
+                Agenda Preview
+              </p>
+              <h2 style={{ margin: '9px 0 0', fontSize: 'clamp(2.25rem, 4.8vw, 3.45rem)', fontWeight: 900, color: '#fff', lineHeight: 1.08 }}>
+                A day of insight, connection and momentum
+              </h2>
             </div>
 
-            {/* Timeline */}
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '16px', overflow: 'hidden',
+              background: 'rgba(255,255,255,0.035)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: '20px', overflow: 'hidden',
             }}>
               {agendaItems.map((item, i) => (
                 <div key={item.time} style={{
                   display: 'flex', alignItems: 'flex-start', gap: '24px',
-                  padding: '18px 24px',
+                  padding: '14px 24px',
                   borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                  background: item.keynote ? 'rgba(249,115,22,0.06)' : 'transparent',
                 }}>
                   <span style={{ width: '44px', flexShrink: 0, fontSize: '13px', fontWeight: 800, color: '#22d3ee' }}>
                     {item.time}
                   </span>
                   <div>
-                    <p style={{ margin: 0, fontSize: item.keynote ? '14px' : '13px', fontWeight: 700, color: '#fff' }}>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#fff' }}>
                       {item.title}
                     </p>
-                    <p style={{ margin: '3px 0 0', fontSize: '12px', color: item.keynote ? 'rgba(252,211,77,0.55)' : 'rgba(255,255,255,0.42)' }}>
+                    <p style={{ margin: '3px 0 0', fontSize: '12px', color: 'rgba(230,236,245,0.38)' }}>
                       {item.desc}
                     </p>
                   </div>
@@ -382,54 +405,74 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             WHO SHOULD ATTEND
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ padding: '52px 0 56px' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+        <section style={{ position: 'relative', padding: '18px 0 76px', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: '-300px', left: '45%',
+            transform: 'translateX(-50%)',
+            width: '388px', height: '790px',
+            background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.24) 0%, rgba(249,115,22,0.09) 32%, rgba(56,189,248,0.08) 60%, transparent 82%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: '196px', right: '62px',
+            width: '338px', height: '338px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 45%, transparent 74%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
             <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
               Who Should Attend
             </p>
-            <h2 style={{ margin: '10px 0 28px', fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
+            <h2 style={{ margin: '10px 0 20px', fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 900, color: '#fff', lineHeight: 1.08 }}>
               Built for builders, learners,<br />partners and leaders
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {/* Attendee pill list */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
               <div style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '16px', padding: '20px',
+                background: 'linear-gradient(180deg, rgba(8,20,55,0.92) 0%, rgba(8,19,50,0.95) 100%)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '28px', padding: '20px',
               }}>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {attendees.map((a) => (
                     <li key={a} style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'rgba(255,255,255,0.055)',
+                      border: '1px solid rgba(255,255,255,0.11)',
                       borderRadius: '999px', padding: '8px 16px',
                     }}>
                       <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22d3ee', flexShrink: 0 }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.78)' }}>{a}</span>
+                      <span style={{ fontSize: '12.5px', color: 'rgba(236,244,255,0.92)' }}>{a}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Conference outcomes */}
               <div style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '16px', padding: '20px',
+                position: 'relative', overflow: 'hidden',
+                background: 'linear-gradient(180deg, rgba(35,136,181,0.50) 0%, rgba(81,211,237,0.62) 100%)',
+                border: '1px solid rgba(151,238,255,0.23)',
+                borderRadius: '24px', padding: '20px 22px',
               }}>
+                <div style={{
+                  position: 'absolute', top: '-78px', right: '-74px',
+                  width: '250px', height: '250px', borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(43,121,184,0.30) 0%, rgba(43,121,184,0.13) 45%, transparent 72%)',
+                  pointerEvents: 'none',
+                }} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
                 <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
                   Conference Outcomes
                 </p>
-                <h3 style={{ margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 900, color: '#fff', lineHeight: 1.25 }}>
+                <h3 style={{ margin: '10px 0 0', fontSize: 'clamp(2rem, 3.3vw, 2.5rem)', fontWeight: 900, color: '#fff', lineHeight: 1.08 }}>
                   What this page should<br />make visitors feel
                 </h3>
-                <ul style={{ margin: '20px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ margin: '24px 0 0', display: 'flex', flexDirection: 'column', gap: '17px' }}>
                   {outcomes.map((o) => (
-                    <li key={o} style={{ fontSize: '13px', lineHeight: 1.6, color: 'rgba(180,230,235,0.65)' }}>{o}</li>
+                    <p key={o} style={{ margin: 0, fontSize: '13px', lineHeight: 1.56, color: 'rgba(238,248,255,0.83)' }}>{o}</p>
                   ))}
-                </ul>
+                </div>
+              </div>
               </div>
             </div>
           </div>
@@ -438,38 +481,45 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             SPEAKERS
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ position: 'relative', padding: '52px 0 56px', overflow: 'hidden' }}>
+        <section style={{ position: 'relative', padding: '54px 0 56px', overflow: 'hidden' }}>
           <div style={{
-            position: 'absolute', top: '20%', left: '8%',
-            width: '350px', height: '350px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 65%)',
+            position: 'absolute', top: '-36px', right: '2%',
+            width: '330px', height: '330px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.09) 44%, transparent 72%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: '-180px', left: '48%',
+            transform: 'translateX(-50%)',
+            width: '360px', height: '760px',
+            background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.28) 0%, rgba(249,115,22,0.10) 32%, rgba(56,189,248,0.07) 60%, transparent 82%)',
             pointerEvents: 'none',
           }} />
           <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
             <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
               Speakers
             </p>
-            <h2 style={{ margin: '10px 0 28px', fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
+            <h2 style={{ margin: '10px 0 22px', fontSize: 'clamp(2rem, 3.8vw, 2.8rem)', fontWeight: 900, color: '#fff', lineHeight: 1.12 }}>
               Featured voices and future-facing conversations
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
               {speakers.map((s) => (
                 <div key={s.initials} style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '16px', padding: '22px',
+                  background: 'rgba(7,23,58,0.90)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  borderRadius: '16px', padding: '20px',
                 }}>
                   <div style={{
-                    width: '52px', height: '52px', borderRadius: '50%',
+                    width: '40px', height: '40px', borderRadius: '50%',
                     background: 'linear-gradient(135deg,#22d3ee,#3b82f6)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '16px', fontWeight: 900, color: '#fff',
+                    fontSize: '12px', fontWeight: 900, color: '#fff',
                   }}>
                     {s.initials}
                   </div>
-                  <p style={{ margin: '18px 0 0', fontSize: '15px', fontWeight: 700, color: '#fff' }}>{s.role}</p>
-                  <p style={{ margin: '5px 0 0', fontSize: '12px', lineHeight: 1.55, color: 'rgba(255,255,255,0.52)' }}>{s.area}</p>
+                  <p style={{ margin: '14px 0 0', fontSize: 'clamp(1.5rem, 2.2vw, 2rem)', fontWeight: 800, color: '#fff', lineHeight: 1.12 }}>{s.role}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.5, color: 'rgba(210,223,240,0.62)' }}>{s.area}</p>
                   <p style={{ margin: '18px 0 0', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(34,211,238,0.65)' }}>
                     Photo + Bio Placeholder
                   </p>
@@ -482,23 +532,36 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             PARTNERS & SPONSORS
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{ padding: '52px 0 56px' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+        <section style={{ position: 'relative', padding: '52px 0 54px', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: '-120px', left: '46%',
+            transform: 'translateX(-50%)',
+            width: '360px', height: '700px',
+            background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.28) 0%, rgba(249,115,22,0.10) 32%, rgba(56,189,248,0.08) 60%, transparent 82%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: '46px', right: '4%',
+            width: '320px', height: '320px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56,189,248,0.16) 0%, rgba(56,189,248,0.08) 45%, transparent 74%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
             <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
               Partners and Sponsors
             </p>
-            <h2 style={{ margin: '10px 0 28px', fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
+            <h2 style={{ margin: '10px 0 20px', fontSize: 'clamp(2rem, 3.8vw, 2.8rem)', fontWeight: 900, color: '#fff', lineHeight: 1.12 }}>
               Support the summit. Shape the ecosystem.
             </h2>
 
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '16px', overflow: 'hidden',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: '24px', overflow: 'hidden',
               display: 'grid', gridTemplateColumns: '1fr 1fr',
             }}>
               {/* Left */}
-              <div style={{ padding: '28px 32px' }}>
+              <div style={{ padding: '26px 32px' }}>
                 <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.65, color: 'rgba(255,255,255,0.60)', maxWidth: '320px' }}>
                   Align your organisation with a growing regional platform focused on founders,
                   digital talent, responsible innovation and long-term ecosystem building.
@@ -506,7 +569,7 @@ export default function TechDerbySummitPage() {
                 <div style={{ display: 'flex', gap: '12px', marginTop: '22px', flexWrap: 'wrap' }}>
                   <Link to="/contact" style={{ textDecoration: 'none' }}>
                     <button style={{
-                      height: '40px', padding: '0 20px', borderRadius: '8px',
+                      height: '38px', padding: '0 20px', borderRadius: '999px',
                       background: '#06b6d4', border: 'none', cursor: 'pointer',
                       fontSize: '13px', fontWeight: 700, color: '#0c1829',
                     }}>
@@ -515,7 +578,7 @@ export default function TechDerbySummitPage() {
                   </Link>
                   <Link to="/contact" style={{ textDecoration: 'none' }}>
                     <button style={{
-                      height: '40px', padding: '0 20px', borderRadius: '8px',
+                      height: '38px', padding: '0 20px', borderRadius: '999px',
                       background: 'transparent',
                       border: '1px solid rgba(255,255,255,0.25)',
                       cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff',
@@ -527,13 +590,13 @@ export default function TechDerbySummitPage() {
               </div>
 
               {/* Right – logo grid */}
-              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.07)', padding: '28px 32px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', padding: '24px 28px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', maxWidth: '240px', marginLeft: 'auto' }}>
                   {['Partner logo', 'Sponsor logo', 'University', 'Community'].map((label) => (
                     <div key={label} style={{
-                      height: '76px', borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      height: '64px', borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.11)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.28)' }}>{label}</span>
@@ -548,1159 +611,54 @@ export default function TechDerbySummitPage() {
         {/* ══════════════════════════════════════════════════════════════════
             FINAL CTA
         ══════════════════════════════════════════════════════════════════ */}
-        <section style={{
-          position: 'relative', overflow: 'hidden', padding: '60px 0 72px',
-          background: 'linear-gradient(180deg,#0b2d3c 0%,#0c3a48 40%,#0d4455 100%)',
-        }}>
-          {/* Top hairline glow */}
-          <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
-            background: 'linear-gradient(90deg,transparent,rgba(6,182,212,0.35),transparent)',
-          }} />
-          <div style={{
-            position: 'absolute', top: '-80px', left: '50%', transform: 'translateX(-50%)',
-            width: '700px', height: '260px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 65%)',
-            pointerEvents: 'none',
-          }} />
-
+        <section style={{ position: 'relative', overflow: 'hidden', padding: '22px 0 72px' }}>
           <div style={{
             maxWidth: '1200px', margin: '0 auto', padding: '0 24px',
             position: 'relative', zIndex: 1,
-            display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '32px',
           }}>
-            {/* Text */}
-            <div style={{ maxWidth: '520px' }}>
-              <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#22d3ee' }}>
-                Final Call to Action
-              </p>
-              <h2 style={{ margin: '10px 0 0', fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
-                Join the conversation shaping Derby's next digital chapter
-              </h2>
-              <p style={{ margin: '12px 0 0', fontSize: '13px', lineHeight: 1.65, color: 'rgba(255,255,255,0.58)' }}>
-                Come to learn, connect and contribute. Be part of a summit that gathers the people,
-                ideas and partnerships shaping the next digital economy.
-              </p>
-            </div>
-
-            {/* Buttons stacked */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '180px' }}>
-              <Link to="/events/browse" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  width: '100%', height: '46px', padding: '0 28px', borderRadius: '8px',
-                  background: '#06b6d4', border: 'none', cursor: 'pointer',
-                  fontSize: '14px', fontWeight: 700, color: '#0c1829',
-                }}>
-                  Register Now
-                </button>
-              </Link>
-              <Link to="/contact" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  width: '100%', height: '46px', padding: '0 28px', borderRadius: '8px',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#22d3ee',
-                }}>
-                  Partnership
-                </button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </>
-  );
-}
-
-
-// ── Data ─────────────────────────────────────────────────────────────────────
-
-const agendaItems = [
-  {
-    time: '09:00',
-    title: 'Arrival, registration and networking',
-    desc: 'Coffee, welcome desk and partner conversations',
-  },
-  {
-    time: '09:30',
-    title: 'Opening remarks',
-    desc: 'Welcome to Tech Derby Summit 2026',
-  },
-  {
-    time: '09:45',
-    title: 'Keynote: AI, Startups and the Next Digital Economy',
-    desc: 'A practical view of the opportunity ahead',
-    highlight: true,
-  },
-  {
-    time: '10:30',
-    title: 'Panel: AI for business growth and productivity',
-    desc: 'How organisations are using AI responsibly',
-  },
-  {
-    time: '11:15',
-    title: 'Founder spotlight',
-    desc: 'Stories from startup builders and ecosystem leaders',
-  },
-  {
-    time: '12:00',
-    title: 'Networking and partner showcase',
-    desc: 'Meet founders, educators, employers and investors',
-  },
-];
-
-const themes = [
-  {
-    title: 'AI for Practical Impact',
-    desc: 'Exploring how AI can create real value across business, work and society.',
-    color: 'bg-slate-600',
-  },
-  {
-    title: 'Startups and Entrepreneurship',
-    desc: 'Spotlighting founders, venture growth and the support needed to build well.',
-    color: 'bg-slate-600',
-  },
-  {
-    title: 'Local Talent and Future Skills',
-    desc: 'Connecting learners, emerging talent and employers to meaningful opportunities.',
-    color: 'bg-slate-500',
-  },
-  {
-    title: 'Responsible Innovation',
-    desc: 'Championing leadership, trust, governance and inclusion in digital change.',
-    color: 'bg-slate-500',
-  },
-];
-
-const attendees = [
-  'Startup founders and aspiring entrepreneurs',
-  'Professionals in tech, product, digital and data',
-  'Students, graduates and career changers',
-  'Universities, educators and training providers',
-  'Employers, partners, funders and ecosystem supporters',
-  'Community leaders interested in access and inclusion',
-];
-
-const outcomes = [
-  'That Derby has talent and ambition.',
-  'That this summit is credible, modern and worth attending.',
-  'That the event is part of a wider regional movement through East Mids Tech Week.',
-  'That Tech Derby is convening community, innovation and opportunity in one place.',
-];
-
-const speakers = [
-  { initials: 'KS', role: 'Keynote Speaker', area: 'AI, innovation and business leadership' },
-  { initials: 'FS', role: 'Founder Speaker', area: 'Startup growth and venture building' },
-  { initials: 'EL', role: 'Ecosystem Leader', area: 'Regional collaboration and future skills' },
-];
-
-const stats = [
-  { label: 'Event date', value: '15 June 2026' },
-  { label: 'Location', value: 'Derby' },
-  { label: 'Core focus', value: 'Founders / AI' },
-];
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function TechDerbySummitPage() {
-  return (
-    <>
-      <PageSeo
-        title="Tech Derby Summit 2026 | AI, Startups and the Next Digital Economy"
-        description="A bold regional gathering for founders, professionals, students, educators, employers and ecosystem leaders shaping Derby's digital future. 15 June 2026, Derby."
-      />
-
-      {/* Full page background: dark navy fading to teal at bottom */}
-      <div
-        className="min-h-screen"
-        style={{
-          background: 'linear-gradient(180deg, #0d1b2e 0%, #0d1b2e 40%, #0e2a35 65%, #0a3340 80%, #0b3d45 100%)',
-        }}
-      >
-
-        {/* ── HERO ── */}
-        <section
-          id="about"
-          className="relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(180deg, #10213a 0%, #0d1b2e 100%)',
-          }}
-        >
-          {/* Radial glows */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-[-5%] top-[10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.18),transparent_65%)]" />
-            <div className="absolute right-[5%] top-[5%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.22),transparent_65%)]" />
-            <div className="absolute bottom-[-10%] left-[30%] h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.12),transparent_65%)]" />
-          </div>
-
-          <Container className="relative z-10 pb-16 pt-14 md:pb-20 md:pt-20">
-            {/* Badge */}
-            <div className="mb-6">
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-[#112233] px-4 py-2 text-[11px] font-semibold text-cyan-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                Part of East Mids Tech Week 2026
-              </span>
-            </div>
-
-            {/* Title */}
-            <h1 className="max-w-2xl text-4xl font-black leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl">
-              Tech Derby Summit 2026
-            </h1>
-
-            {/* Subtitle */}
-            <p className="mt-3 text-xl font-semibold text-cyan-400 md:text-2xl">
-              AI, Startups and the Next Digital Economy
-            </p>
-
-            {/* Description */}
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70 md:text-base">
-              A bold regional gathering for founders, professionals, students, educators,
-              employers and ecosystem leaders shaping Derby's digital future.
-            </p>
-
-            {/* CTA buttons */}
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/events/browse">
-                <Button
-                  className="h-11 rounded-lg bg-cyan-500 px-6 text-sm font-bold text-slate-950 shadow-lg hover:bg-cyan-400"
-                >
-                  Register for the Summit
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button
-                  variant="ghost"
-                  className="h-11 rounded-lg border border-white/25 bg-transparent px-6 text-sm font-semibold text-white hover:bg-white/10"
-                >
-                  Become a Partner
-                </Button>
-              </Link>
-            </div>
-
-            {/* Stats row */}
-            <div className="mt-8 flex flex-wrap gap-3">
-              {stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl border border-white/10 bg-white/[4%] px-5 py-3 backdrop-blur-sm"
-                >
-                  <p className="text-sm font-bold text-white">{s.value}</p>
-                  <p className="mt-0.5 text-[11px] text-white/45">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* ── CONFERENCE THEME FEATURE ── */}
-        <section className="relative overflow-hidden py-14 md:py-20">
-          {/* Orange glow behind */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-[5%] top-[20%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.14),transparent_60%)]" />
-          </div>
-          <Container className="relative z-10">
-            <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
-
-              {/* Circular photo */}
-              <div className="flex justify-center lg:justify-start">
-                <div
-                  className="relative h-72 w-72 overflow-hidden rounded-full md:h-[340px] md:w-[340px]"
-                  style={{
-                    background: 'linear-gradient(135deg, #1e3a4a 0%, #243346 50%, #1a2d3e 100%)',
-                    boxShadow: '0 0 60px rgba(249,115,22,0.2), 0 0 0 1px rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-center text-sm text-white/30">Event photo</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info cards stacked */}
-              <div className="flex flex-col gap-3">
-                {/* Conference Theme card */}
-                <div
-                  className="rounded-2xl border border-white/8 p-5"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-                    Conference Theme
-                  </p>
-                  <h2 className="mt-2 text-lg font-black text-white md:text-xl">
-                    AI, Startups and the Next<br />Digital Economy
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">
-                    Practical conversations on innovation, local talent, responsible leadership
-                    and regional growth.
-                  </p>
-                </div>
-
-                {/* Featured session card */}
-                <div
-                  className="rounded-2xl border border-white/8 p-5"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                        Featured session
-                      </p>
-                      <p className="mt-1 text-sm font-bold text-white">
-                        AI for Business Growth and Productivity
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300">
-                      Live panel
-                    </span>
-                  </div>
-                </div>
-
-                {/* Audience + Experience */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    className="rounded-2xl border border-white/8 p-4"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                      Audience
-                    </p>
-                    <p className="mt-1.5 text-sm font-semibold leading-snug text-white">
-                      Founders, students, employers and ecosystem partners
-                    </p>
-                  </div>
-                  <div
-                    className="rounded-2xl border border-white/8 p-4"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                      Experience
-                    </p>
-                    <p className="mt-1.5 text-sm font-semibold leading-snug text-white">
-                      Keynotes, panels, networking and collaboration
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── ABOUT THE SUMMIT ── */}
-        <section
-          id="about-summit"
-          className="relative py-14 md:py-20"
-          style={{
-            background: 'linear-gradient(180deg, transparent 0%, rgba(6,182,212,0.04) 100%)',
-          }}
-        >
-          <Container>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-              About the Summit
-            </p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-white md:text-4xl">
-              A conference rooted in Derby,<br />connected to the wider East Midlands
-            </h2>
-
-            {/* Body text card */}
-            <div
-              className="mt-6 rounded-2xl border border-white/8 p-5 md:p-6"
-              style={{ background: 'rgba(255,255,255,0.04)' }}
-            >
-              <p className="text-sm leading-relaxed text-white/65 md:text-base">
-                Tech Derby Summit 2026 is a meeting point for ideas, ambition and practical
-                action. It brings together those building startups, shaping talent, driving
-                digital transformation and opening doors for others. As part of East Mids Tech
-                Week, the summit places Derby within a wider regional story of innovation,
-                connectivity and future-facing growth.
-              </p>
-            </div>
-
-            {/* Theme 2×2 grid */}
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {themes.map((t) => (
-                <div
-                  key={t.title}
-                  className="flex items-start gap-4 rounded-2xl border border-white/8 p-5"
-                  style={{ background: 'rgba(15,30,50,0.7)' }}
-                >
-                  <span className={`mt-1 h-3 w-3 shrink-0 rounded-full ${t.color}`} />
-                  <div>
-                    <p className="font-bold text-white">{t.title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-white/55">{t.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* ── AGENDA PREVIEW ── */}
-        <section id="agenda" className="relative py-14 md:py-20">
-          {/* Orange glow top-right */}
-          <div className="pointer-events-none absolute right-[-5%] top-[10%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.12),transparent_65%)]" />
-          <Container className="relative z-10">
-            {/* Header row */}
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-                  Agenda Preview
-                </p>
-                <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
-                  A day of insight, connection and momentum
-                </h2>
-              </div>
-              <button className="mt-1 rounded-xl border border-white/20 bg-white/[4%] px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/10">
-                View full agenda
-              </button>
-            </div>
-
-            {/* Timeline card */}
-            <div
-              className="mt-8 overflow-hidden rounded-2xl border border-white/10"
-              style={{ background: 'rgba(255,255,255,0.04)' }}
-            >
-              {agendaItems.map((item, i) => (
-                <div
-                  key={item.time}
-                  className={`flex items-start gap-6 px-6 py-5 ${
-                    i < agendaItems.length - 1 ? 'border-b border-white/[6%]' : ''
-                  }`}
-                  style={
-                    item.highlight
-                      ? { background: 'rgba(249,115,22,0.06)' }
-                      : undefined
-                  }
-                >
-                  <span className="w-12 shrink-0 text-sm font-black text-cyan-400">
-                    {item.time}
-                  </span>
-                  <div>
-                    <p
-                      className={`font-bold text-white ${
-                        item.highlight ? 'text-base' : 'text-sm'
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <p
-                      className={`mt-0.5 text-sm ${
-                        item.highlight ? 'text-amber-300/60' : 'text-white/45'
-                      }`}
-                    >
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* ── WHO SHOULD ATTEND ── */}
-        <section className="relative py-14 md:py-20">
-          {/* Subtle right glow */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_80%_50%,rgba(6,182,212,0.08),transparent_60%)]" />
-          <Container className="relative z-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-              Who Should Attend
-            </p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-white md:text-4xl">
-              Built for builders, learners,<br />partners and leaders
-            </h2>
-
-            <div className="mt-8 grid gap-5 md:grid-cols-2">
-              {/* Attendee pill list */}
-              <div
-                className="rounded-2xl border border-white/8 p-5 md:p-6"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
-              >
-                <ul className="flex flex-col gap-2.5">
-                  {attendees.map((a) => (
-                    <li
-                      key={a}
-                      className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[3%] px-4 py-2.5"
-                    >
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-400" />
-                      <span className="text-sm text-white/80">{a}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Conference outcomes */}
-              <div
-                className="rounded-2xl border border-white/8 p-5 md:p-6"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
-              >
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-                  Conference Outcomes
-                </p>
-                <h3 className="mt-3 text-xl font-black leading-snug text-white">
-                  What this page should<br />make visitors feel
-                </h3>
-                <ul className="mt-6 flex flex-col gap-4">
-                  {outcomes.map((o) => (
-                    <li key={o} className="text-sm leading-relaxed text-cyan-200/65">
-                      {o}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── SPEAKERS ── */}
-        <section id="speakers" className="relative py-14 md:py-20">
-          <div className="pointer-events-none absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.10),transparent_65%)]" />
-          <Container className="relative z-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-              Speakers
-            </p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-white md:text-4xl">
-              Featured voices and future-facing conversations
-            </h2>
-
-            <div className="mt-8 grid gap-5 sm:grid-cols-3">
-              {speakers.map((s) => (
-                <div
-                  key={s.initials}
-                  className="rounded-2xl border border-white/10 p-6"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
-                  {/* Cyan gradient avatar */}
-                  <div
-                    className="flex h-14 w-14 items-center justify-center rounded-full text-lg font-black text-white"
-                    style={{ background: 'linear-gradient(135deg, #22d3ee, #3b82f6)' }}
-                  >
-                    {s.initials}
-                  </div>
-                  <p className="mt-5 text-base font-bold text-white">{s.role}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-white/55">{s.area}</p>
-                  <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-400/80">
-                    Photo + Bio Placeholder
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        {/* ── PARTNERS & SPONSORS ── */}
-        <section id="partners" className="relative py-14 md:py-20">
-          <Container>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-              Partners and Sponsors
-            </p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-white md:text-4xl">
-              Support the summit. Shape the ecosystem.
-            </h2>
-
-            <div
-              className="mt-8 overflow-hidden rounded-2xl border border-white/10"
-              style={{ background: 'rgba(255,255,255,0.04)' }}
-            >
-              <div className="grid md:grid-cols-2">
-                {/* Left */}
-                <div className="p-6 md:p-8">
-                  <p className="max-w-sm text-sm leading-relaxed text-white/65">
-                    Align your organisation with a growing regional platform focused on
-                    founders, digital talent, responsible innovation and long-term ecosystem
-                    building.
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <Link to="/contact">
-                      <Button className="h-10 rounded-lg bg-cyan-500 px-5 text-sm font-bold text-slate-950 hover:bg-cyan-400">
-                        Become a Partner
-                      </Button>
-                    </Link>
-                    <Link to="/contact">
-                      <Button
-                        variant="ghost"
-                        className="h-10 rounded-lg border border-white/25 bg-transparent px-5 text-sm font-semibold text-white hover:bg-white/10"
-                      >
-                        Sponsorship Pack
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Right: 2×2 logo placeholders */}
-                <div className="border-t border-white/[6%] p-6 md:border-l md:border-t-0 md:p-8">
-                  <div className="grid grid-cols-2 gap-3">
-                    {['Partner logo', 'Sponsor logo', 'University', 'Community'].map((label) => (
-                      <div
-                        key={label}
-                        className="flex h-20 items-center justify-center rounded-xl border border-white/10"
-                        style={{ background: 'rgba(255,255,255,0.03)' }}
-                      >
-                        <span className="text-xs font-medium text-white/30">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── FINAL CTA ── */}
-        <section
-          className="relative overflow-hidden py-16 md:py-24"
-          style={{
-            background: 'linear-gradient(180deg, #0b3d45 0%, #0d4a52 50%, #0e5560 100%)',
-          }}
-        >
-          {/* Top cyan glow */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-          <div className="pointer-events-none absolute left-1/2 top-[-60px] h-[240px] w-[600px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.18),transparent_65%)]" />
-
-          <Container className="relative z-10">
-            <div className="flex flex-col items-start gap-8 md:flex-row md:items-center md:justify-between">
-              {/* Text left */}
-              <div className="max-w-xl">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+            <div style={{
+              background: 'linear-gradient(145deg, rgba(35,136,181,0.70) 0%, rgba(81,211,237,0.78) 100%)',
+              border: '1px solid rgba(151,238,255,0.25)',
+              borderRadius: '24px',
+              padding: '16px 20px',
+              display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '24px',
+            }}>
+              <div style={{ maxWidth: '560px' }}>
+                <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#08314a' }}>
                   Final Call to Action
                 </p>
-                <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white md:text-4xl">
+                <h2 style={{ margin: '6px 0 0', fontSize: 'clamp(1.8rem, 3.4vw, 2.45rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
                   Join the conversation shaping Derby's next digital chapter
                 </h2>
-                <p className="mt-4 text-sm leading-relaxed text-white/60 md:text-base">
-                  Come to learn, connect and contribute. Be part of a summit that gathers
-                  the people, ideas and partnerships shaping the next digital economy.
+                <p style={{ margin: '10px 0 0', fontSize: '12.5px', lineHeight: 1.58, color: 'rgba(8,39,58,0.84)' }}>
+                  Come to learn, connect and contribute. Be part of a summit that gathers the
+                  people, ideas and partnerships shaping the next digital economy.
                 </p>
               </div>
 
-              {/* Buttons stacked right */}
-              <div className="flex shrink-0 flex-col gap-3">
-                <Link to="/events/browse">
-                  <Button className="h-12 w-full rounded-lg bg-cyan-500 px-8 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-900/40 hover:bg-cyan-400 md:w-auto">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '170px' }}>
+                <a href="https://www.eventbrite.co.uk/e/east-mids-tech-week-2026-tech-derby-summit-2026-tickets-1986190909477?aff=oddtdtcreator" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <button style={{
+                    width: '100%', height: '38px', padding: '0 22px', borderRadius: '999px',
+                    background: '#06b6d4', border: 'none', cursor: 'pointer',
+                    fontSize: '12px', fontWeight: 700, color: '#0c1829',
+                  }}>
                     Register Now
-                  </Button>
-                </Link>
-                <Link to="/contact">
-                  <Button
-                    variant="ghost"
-                    className="h-12 w-full rounded-lg border border-white/25 bg-transparent px-8 text-sm font-semibold text-cyan-300 hover:bg-white/10 md:w-auto"
-                  >
+                  </button>
+                </a>
+                <Link to="/contact" style={{ textDecoration: 'none' }}>
+                  <button style={{
+                    width: '100%', height: '38px', padding: '0 22px', borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.20)',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#ffffff',
+                  }}>
                     Partnership
-                  </Button>
+                  </button>
                 </Link>
               </div>
             </div>
-          </Container>
-        </section>
-
-      </div>
-    </>
-  );
-}
-
-
-const agendaItems = [
-  {
-    time: '09:00',
-    title: 'Arrival, registration and networking',
-    desc: 'Coffee, welcome desk and partner conversations',
-  },
-  {
-    time: '09:30',
-    title: 'Opening remarks',
-    desc: 'Welcome to Tech Derby Summit 2026',
-  },
-  {
-    time: '09:45',
-    title: 'Keynote: AI, Startups and the Next Digital Economy',
-    desc: 'A practical view of the opportunity ahead',
-    highlight: true,
-  },
-  {
-    time: '10:30',
-    title: 'Panel: AI for business growth and productivity',
-    desc: 'How organisations are using AI responsibly',
-  },
-  {
-    time: '11:15',
-    title: 'Founder spotlight',
-    desc: 'Stories from startup builders and ecosystem leaders',
-  },
-  {
-    time: '12:00',
-    title: 'Networking and partner showcase',
-    desc: 'Meet founders, educators, employers and investors',
-  },
-];
-
-const themes = [
-  {
-    title: 'AI for Practical Impact',
-    desc: 'Exploring how AI can create real value across business, work and society.',
-    dot: 'bg-cyan-400',
-  },
-  {
-    title: 'Startups and Entrepreneurship',
-    desc: 'Spotlighting founders, venture growth and the support needed to build well.',
-    dot: 'bg-blue-400',
-  },
-  {
-    title: 'Local Talent and Future Skills',
-    desc: 'Connecting learners, emerging talent and employers to meaningful opportunities.',
-    dot: 'bg-teal-400',
-  },
-  {
-    title: 'Responsible Innovation',
-    desc: 'Championing leadership, trust, governance and inclusion in digital change.',
-    dot: 'bg-indigo-400',
-  },
-];
-
-const attendees = [
-  'Startup founders and aspiring entrepreneurs',
-  'Professionals in tech, product, digital and data',
-  'Students, graduates and career changers',
-  'Universities, educators and training providers',
-  'Employers, partners, funders and ecosystem supporters',
-  'Community leaders interested in access and inclusion',
-];
-
-const outcomes = [
-  'That Derby has talent and ambition.',
-  'That this summit is credible, modern and worth attending.',
-  'That the event is part of a wider regional movement through East Mids Tech Week.',
-  'That Tech Derby is convening community, innovation and opportunity in one place.',
-];
-
-const speakers = [
-  {
-    initials: 'KS',
-    role: 'Keynote Speaker',
-    area: 'AI, innovation and business leadership',
-  },
-  {
-    initials: 'FS',
-    role: 'Founder Speaker',
-    area: 'Startup growth and venture building',
-  },
-  {
-    initials: 'EL',
-    role: 'Ecosystem Leader',
-    area: 'Regional collaboration and future skills',
-  },
-];
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function TechDerbySummitPage() {
-  return (
-    <>
-      <PageSeo
-        title="Tech Derby Summit 2026 | AI, Startups and the Next Digital Economy"
-        description="A bold regional gathering for founders, professionals, students, educators, employers and ecosystem leaders shaping Derby's digital future. 15 June 2026, Derby."
-      />
-
-      {/* ── PAGE WRAPPER with gradient ── */}
-      <div className="bg-[#060c18]">
-
-        {/* ── HERO ── */}
-        <section id="about" className="relative overflow-hidden py-0">
-          {/* Background layers */}
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(6,182,212,0.22),transparent_52%),radial-gradient(ellipse_at_78%_25%,rgba(37,99,235,0.28),transparent_50%),radial-gradient(ellipse_at_55%_80%,rgba(249,115,22,0.18),transparent_45%)]" />
-            <div
-              className="absolute inset-0 opacity-[0.035]"
-              style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '28px 28px' }}
-            />
           </div>
-
-          <Container className="relative z-10 py-24 md:py-32">
-            <div className="mx-auto max-w-3xl text-center">
-              {/* East Mids Tech Week badge */}
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                Part of East Mids Tech Week 2026
-              </span>
-
-              <h1 className="mt-6 text-5xl font-black leading-[1.06] tracking-tight text-white sm:text-6xl md:text-7xl">
-                Tech Derby Summit 2026
-              </h1>
-
-              <p className="mt-3 text-xl font-semibold text-cyan-300 md:text-2xl">
-                AI, Startups and the Next Digital Economy
-              </p>
-
-              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
-                A bold regional gathering for founders, professionals, students, educators,
-                employers and ecosystem leaders shaping Derby's digital future.
-              </p>
-
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <Link to="/events/browse">
-                  <Button className="h-12 rounded-full bg-cyan-500 px-8 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-900/40 hover:bg-cyan-400">
-                    Register for the Summit
-                  </Button>
-                </Link>
-                <Link to="/contact">
-                  <Button
-                    variant="ghost"
-                    className="h-12 rounded-full border border-white/30 bg-transparent px-8 text-sm font-semibold text-white hover:bg-white/10"
-                  >
-                    Become a Partner
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Stats row */}
-              <div className="mt-10 flex flex-wrap justify-center gap-3">
-                {[
-                  { label: 'Event date', value: '15 June 2026' },
-                  { label: 'Location', value: 'Derby' },
-                  { label: 'Core focus', value: 'Founders / AI' },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="min-w-[130px] rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-left backdrop-blur-sm"
-                  >
-                    <p className="text-base font-bold text-white">{stat.value}</p>
-                    <p className="mt-0.5 text-xs text-white/50">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── CONFERENCE THEME FEATURE ── */}
-        <section className="relative overflow-hidden py-16 md:py-24">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,rgba(249,115,22,0.14),transparent_55%)]" />
-          <Container className="relative">
-            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
-
-              {/* Circular image */}
-              <div className="flex justify-center">
-                <div className="relative h-72 w-72 overflow-hidden rounded-full border border-white/10 shadow-2xl shadow-cyan-900/30 md:h-96 md:w-96">
-                  <div className="h-full w-full bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-center text-sm font-medium text-white/40">Event photo</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info cards */}
-              <div className="flex flex-col gap-4">
-                {/* Theme card */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                    Conference Theme
-                  </p>
-                  <h2 className="mt-2 text-xl font-black text-white md:text-2xl">
-                    AI, Startups and the Next Digital Economy
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-white/65">
-                    Practical conversations on innovation, local talent, responsible leadership
-                    and regional growth.
-                  </p>
-                </div>
-
-                {/* Featured session card */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
-                        Featured session
-                      </p>
-                      <p className="mt-1 text-base font-bold text-white">
-                        AI for Business Growth and Productivity
-                      </p>
-                    </div>
-                    <span className="mt-0.5 shrink-0 rounded-full bg-cyan-400/15 px-3 py-1 text-[11px] font-bold text-cyan-300">
-                      Live panel
-                    </span>
-                  </div>
-                </div>
-
-                {/* Audience / Experience */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                      Audience
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-white">
-                      Founders, students, employers and ecosystem partners
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                      Experience
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-white">
-                      Keynotes, panels, networking and collaboration
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── ABOUT ── */}
-        <section className="relative py-16 md:py-24">
-          <Container>
-            <div className="mx-auto max-w-5xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                About the Summit
-              </p>
-              <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-white md:text-5xl">
-                A conference rooted in Derby, connected to the wider East Midlands
-              </h2>
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                <p className="text-sm leading-relaxed text-white/70 md:text-base">
-                  Tech Derby Summit 2026 is a meeting point for ideas, ambition and practical
-                  action. It brings together those building startups, shaping talent, driving
-                  digital transformation and opening doors for others. As part of East Mids Tech
-                  Week, the summit places Derby within a wider regional story of innovation,
-                  connectivity and future-facing growth.
-                </p>
-              </div>
-
-              {/* Theme cards 2×2 */}
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {themes.map((theme) => (
-                  <div
-                    key={theme.title}
-                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
-                  >
-                    <span className={`mt-1 h-3 w-3 shrink-0 rounded-full ${theme.dot}`} />
-                    <div>
-                      <p className="font-bold text-white">{theme.title}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-white/60">{theme.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── AGENDA ── */}
-        <section id="agenda" className="relative py-16 md:py-24">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(249,115,22,0.12),transparent_55%)]" />
-          <Container className="relative">
-            <div className="mx-auto max-w-5xl">
-              {/* Kicker + view all in same row */}
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                    Agenda Preview
-                  </p>
-                  <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
-                    A day of insight, connection and momentum
-                  </h2>
-                </div>
-                <button className="rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/10">
-                  View full agenda
-                </button>
-              </div>
-
-              {/* Timeline */}
-              <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                {agendaItems.map((item, i) => (
-                  <div
-                    key={item.time}
-                    className={`flex items-start gap-5 px-6 py-5 ${
-                      i < agendaItems.length - 1 ? 'border-b border-white/8' : ''
-                    } ${item.highlight ? 'bg-white/[3%]' : ''}`}
-                  >
-                    <span className="w-14 shrink-0 text-base font-black text-cyan-400">
-                      {item.time}
-                    </span>
-                    <div>
-                      <p className={`font-bold text-white ${item.highlight ? 'text-base' : 'text-sm'}`}>
-                        {item.title}
-                      </p>
-                      <p className={`mt-0.5 text-sm ${item.highlight ? 'text-cyan-200/70' : 'text-white/50'}`}>
-                        {item.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── WHO SHOULD ATTEND ── */}
-        <section className="relative py-16 md:py-24">
-          <Container>
-            <div className="mx-auto max-w-5xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                Who Should Attend
-              </p>
-              <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-white md:text-4xl">
-                Built for builders, learners, partners and leaders
-              </h2>
-
-              <div className="mt-8 grid gap-8 md:grid-cols-2">
-                {/* Attendee list */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                  <ul className="space-y-3">
-                    {attendees.map((a) => (
-                      <li key={a} className="flex items-center gap-3">
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-400" />
-                        <span className="text-sm text-white/80">{a}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Conference outcomes */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                    Conference Outcomes
-                  </p>
-                  <h3 className="mt-2 text-xl font-black text-white">
-                    What this summit should make visitors feel
-                  </h3>
-                  <ul className="mt-5 space-y-4">
-                    {outcomes.map((o) => (
-                      <li key={o} className="text-sm leading-relaxed text-cyan-200/70">
-                        {o}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── SPEAKERS ── */}
-        <section id="speakers" className="relative py-16 md:py-24">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(249,115,22,0.12),transparent_55%)]" />
-          <Container className="relative">
-            <div className="mx-auto max-w-5xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                Speakers
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-white md:text-4xl">
-                Featured voices and future-facing conversations
-              </h2>
-
-              <div className="mt-8 grid gap-5 sm:grid-cols-3">
-                {speakers.map((s) => (
-                  <div
-                    key={s.initials}
-                    className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
-                  >
-                    {/* Avatar */}
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-lg font-black text-white shadow-lg shadow-cyan-900/40">
-                      {s.initials}
-                    </div>
-                    <p className="mt-4 text-base font-bold text-white">{s.role}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-white/60">{s.area}</p>
-                    <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-400/70">
-                      Photo + Bio Placeholder
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── PARTNERS & SPONSORS ── */}
-        <section id="partners" className="relative py-16 md:py-24">
-          <Container>
-            <div className="mx-auto max-w-5xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                Partners and Sponsors
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-white md:text-4xl">
-                Support the summit. Shape the ecosystem.
-              </h2>
-
-              <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                <div className="grid gap-0 md:grid-cols-2">
-                  {/* Left: description + buttons */}
-                  <div className="p-6 md:p-8">
-                    <p className="text-sm leading-relaxed text-white/70">
-                      Align your organisation with a growing regional platform focused on
-                      founders, digital talent, responsible innovation and long-term ecosystem
-                      building.
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <Link to="/contact">
-                        <Button className="h-10 rounded-full bg-cyan-500 px-6 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
-                          Become a Partner
-                        </Button>
-                      </Link>
-                      <Link to="/contact">
-                        <Button
-                          variant="ghost"
-                          className="h-10 rounded-full border border-white/30 bg-transparent px-6 text-sm font-semibold text-white hover:bg-white/10"
-                        >
-                          Sponsorship Pack
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Right: logo placeholder grid */}
-                  <div className="border-t border-white/8 p-6 md:border-l md:border-t-0 md:p-8">
-                    <div className="grid grid-cols-2 gap-3">
-                      {['Partner logo', 'Sponsor logo', 'University', 'Community'].map(
-                        (label) => (
-                          <div
-                            key={label}
-                            className="flex h-20 items-center justify-center rounded-xl border border-white/10 bg-white/5"
-                          >
-                            <span className="text-xs font-medium text-white/35">{label}</span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        {/* ── FINAL CTA ── */}
-        <section className="relative overflow-hidden py-20 md:py-28">
-          {/* Transition to teal gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#060c18] via-[#062a2e] to-[#083d3f]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(6,182,212,0.25),transparent_60%)]" />
-          <Container className="relative">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-400">
-                Final Call to Action
-              </p>
-              <h2 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
-                Join the conversation shaping Derby's next digital chapter
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/65">
-                Come to learn, connect and contribute. Be part of a summit that gathers the
-                people, ideas and partnerships shaping the next digital economy.
-              </p>
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <Link to="/events/browse">
-                  <Button className="h-12 rounded-full bg-cyan-500 px-8 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-900/40 hover:bg-cyan-400">
-                    Register Now
-                  </Button>
-                </Link>
-                <Link to="/contact">
-                  <Button
-                    variant="ghost"
-                    className="h-12 rounded-full border border-white/30 bg-transparent px-8 text-sm font-semibold text-white hover:bg-white/10"
-                  >
-                    Partnership
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </Container>
         </section>
 
       </div>

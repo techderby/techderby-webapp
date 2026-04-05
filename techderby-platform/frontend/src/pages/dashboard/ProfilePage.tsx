@@ -47,8 +47,8 @@ function Input({ value, onChange, placeholder, type = 'text', readOnly }: {
       className={cn(
         'h-11 w-full rounded-xl border px-4 text-sm outline-none transition',
         readOnly
-          ? 'border-white/5 bg-white/3 text-white/70 cursor-default'
-          : 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-sky-500/50 focus:bg-white/8 focus:ring-1 focus:ring-sky-500/20',
+          ? 'border-white/5 bg-transparent text-white/70 cursor-default'
+          : 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-sky-500/50 focus:bg-white/[8%] focus:ring-1 focus:ring-sky-500/20',
       )}
     />
   );

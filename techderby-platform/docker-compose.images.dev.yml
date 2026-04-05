@@ -1,6 +1,6 @@
 # docker-compose.images.dev.yml  ─  dev.techderby.org (pre-built images)
 # Ports: frontend=3001, strapi=1338
-# Used by CI/CD on push to `develop` branch.
+# Used by CI/CD on push to `dev` branch.
 # Run: docker compose -f docker-compose.images.dev.yml --env-file .env.dev up -d
 
 services:

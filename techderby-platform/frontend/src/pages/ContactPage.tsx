@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppNotification } from '../lib/whatsapp';
+import { apiClient } from '../lib/api';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
@@ -22,21 +23,19 @@ export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState(subjectOptions[0]);
   const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  const mailtoLink = useMemo(() => {
-    const emailSubject = encodeURIComponent(`[Website Contact] ${subject}`);
-    const emailBody = encodeURIComponent(
-      `Name: ${name || '-'}\nEmail: ${email || '-'}\n\nMessage:\n${message || '-'}`,
-    );
-    return `mailto:hello@techderby.org?subject=${emailSubject}&body=${emailBody}`;
-  }, [email, message, name, subject]);
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const text =
-      `[Contact Form]\nName: ${name || '-'}\nEmail: ${email || '-'}\nSubject: ${subject || '-'}\nMessage: ${message || '-'}`;
+    setStatus('sending');
+    const text = `[Contact Form]\nName: ${name || '-'}\nEmail: ${email || '-'}\nSubject: ${subject || '-'}\nMessage: ${message || '-'}`;
     sendWhatsAppNotification(text);
-    window.location.href = mailtoLink;
+    try {
+      await apiClient.notify(`[Website Contact] ${subject}`, text, 'Contact Form');
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -77,9 +76,16 @@ export default function ContactPage() {
               <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg md:p-7">
                 <h2 className="text-xl font-black text-slate-900 md:text-2xl">Send us a message</h2>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600 md:text-base">
-                  Complete the form and your email client will open with your details pre-filled.
+                  Fill in the form and we'll get back to you as soon as possible.
                 </p>
 
+                {status === 'success' ? (
+                  <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center" role="alert">
+                    <p className="text-sm font-bold text-emerald-800">Message sent!</p>
+                    <p className="mt-1 text-sm text-emerald-700">Thanks {name}, we'll be in touch soon.</p>
+                    <button type="button" onClick={() => { setStatus('idle'); setName(''); setEmail(''); setMessage(''); }} className="mt-3 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900">Send another message</button>
+                  </div>
+                ) : (
                 <form className="mt-5 space-y-4" aria-label="Contact form" onSubmit={handleSubmit}>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
@@ -139,12 +145,13 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <Button type="submit" className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">Send via email</Button>
-                    <a href={mailtoLink} className="text-sm font-medium text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-900">
-                      Open email draft directly
-                    </a>
+                    <Button type="submit" disabled={status === 'sending'} className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
+                      {status === 'sending' ? 'Sending…' : 'Send message'}
+                    </Button>
+                    {status === 'error' && <p className="text-sm text-red-600">Something went wrong. Please try again.</p>}
                   </div>
                 </form>
+                )}
               </article>
 
             </div>

@@ -20,7 +20,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
       <Container className="flex h-[72px] items-center justify-between gap-4">
         <Link to="/" aria-label="Tech Derby home" className="flex items-center text-2xl font-bold tracking-tight text-white">
-          <img src={brandLogo} alt="Tech Derby" className="h-8 w-auto object-contain" />
+          <img src={brandLogo} alt="Tech Derby" className="h-10 w-auto object-contain" />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-10 md:flex">
@@ -33,9 +33,16 @@ export function Navbar() {
           ))}
         </nav>
 
-        <Link to="/membership" className="hidden md:inline-flex">
-          <Button className="h-9 rounded-full px-5 text-sm">Become a Member</Button>
-        </Link>
+        <div className="hidden md:flex items-center gap-3">
+          <Link to="/login">
+            <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
+              Login
+            </Button>
+          </Link>
+          <Link to="/register">
+            <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
+          </Link>
+        </div>
 
         <button
           type="button"
@@ -51,7 +58,7 @@ export function Navbar() {
         <div className="border-t border-white/10 bg-slate-900 md:hidden">
           <Container className="py-4">
             <nav className="flex flex-col gap-2">
-              {[...links, { to: '/contact', label: 'Contact' }, { to: '/membership', label: 'Membership' }].map((link) => (
+              {[...links, { to: '/contact', label: 'Contact' }].map((link) => (
                 <Link
                   key={link.to + link.label}
                   to={link.to}
@@ -61,6 +68,18 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-2">
+                <Link to="/login" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)}>
+                  <Button className="w-full h-9 text-sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             </nav>
           </Container>
         </div>

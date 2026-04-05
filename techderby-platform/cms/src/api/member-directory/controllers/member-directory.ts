@@ -9,6 +9,7 @@ const PUBLIC_FIELDS = [
   'skills',
   'avatar',
   'memberRole',
+  'linkedinUrl',
   'createdAt',
 ];
 

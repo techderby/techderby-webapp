@@ -62,6 +62,7 @@ export interface DirectoryMember {
   skills?: string[];
   avatar?: string;
   memberRole: MemberRole;
+  linkedinUrl?: string;
   createdAt?: string;
 }
 

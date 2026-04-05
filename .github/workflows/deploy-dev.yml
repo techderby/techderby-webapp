@@ -6,7 +6,7 @@ name: Deploy — Dev (dev.techderby.org)
 
 on:
   push:
-    branches: [develop]
+    branches: [dev]
 
 env:
   DOCKER_IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend

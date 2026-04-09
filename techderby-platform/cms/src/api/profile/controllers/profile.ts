@@ -61,10 +61,10 @@ export default {
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      firstName,
-      lastName,
-      memberRole: 'member',
-      isVisible: true,
+      first_name: firstName,
+      last_name: lastName,
+      member_role: 'member',
+      is_visible: true,
       confirmed: true,
       blocked: false,
       provider: 'local',
@@ -101,9 +101,22 @@ export default {
     // Strip fields users must never self-assign
     const { memberRole, blocked, role, password, email, id, username, ...allowedData } = ctx.request.body ?? {};
 
+    // Map camelCase request keys to snake_case DB columns
+    const camelToSnake: Record<string, string> = {
+      firstName: 'first_name',
+      lastName: 'last_name',
+      socialLinks: 'social_links',
+      isVisible: 'is_visible',
+    };
+
+    const data: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    for (const [key, value] of Object.entries(allowedData)) {
+      const dbKey = camelToSnake[key] ?? key;
+      data[dbKey] = value;
+    }
+
     // Stringify JSON fields for storage
-    const data: Record<string, unknown> = { ...allowedData, updated_at: new Date().toISOString() };
-    for (const f of ['skills', 'certifications', 'socialLinks']) {
+    for (const f of ['skills', 'certifications', 'social_links']) {
       if (data[f] !== undefined && typeof data[f] !== 'string') {
         data[f] = JSON.stringify(data[f]);
       }

@@ -2,6 +2,7 @@ import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
+import { RootLayout } from '../layouts/RootLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -45,71 +46,76 @@ const ChatPage = lazy(() => import('../pages/dashboard/ChatPage'));
 const withLazy = (element: ReactNode) => <Suspense fallback={<p className="p-6">Loading...</p>}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
-  // ── Standalone auth pages ──────────────────────────────────────────────────
-  { path: '/login', element: withLazy(<LoginPage />) },
-  { path: '/register', element: withLazy(<RegisterPage />) },
-  { path: '/forgot-password', element: withLazy(<ForgotPasswordPage />) },
-  { path: '/reset-password', element: withLazy(<ResetPasswordPage />) },
-
-  // ── Dashboard (protected) ─────────────────────────────────────────────────
   {
-    path: '/dashboard',
-    element: (
-      <ProtectedRoute>
-        <DashboardLayout />
-      </ProtectedRoute>
-    ),
-    errorElement: <NotFoundPage />,
+    element: <RootLayout />,
     children: [
-      { index: true, element: withLazy(<DashboardHomePage />) },
-      { path: 'profile', element: withLazy(<ProfilePage />) },
-      { path: 'directory', element: withLazy(<DirectoryPage />) },
-      { path: 'connections', element: withLazy(<ConnectionsPage />) },
-      { path: 'messages', element: withLazy(<ChatPage />) },
-      { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      // ── Standalone auth pages ──────────────────────────────────────────────────
+      { path: '/login', element: withLazy(<LoginPage />) },
+      { path: '/register', element: withLazy(<RegisterPage />) },
+      { path: '/forgot-password', element: withLazy(<ForgotPasswordPage />) },
+      { path: '/reset-password', element: withLazy(<ResetPasswordPage />) },
+
+      // ── Dashboard (protected) ─────────────────────────────────────────────────
+      {
+        path: '/dashboard',
+        element: (
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        ),
+        errorElement: <NotFoundPage />,
+        children: [
+          { index: true, element: withLazy(<DashboardHomePage />) },
+          { path: 'profile', element: withLazy(<ProfilePage />) },
+          { path: 'directory', element: withLazy(<DirectoryPage />) },
+          { path: 'connections', element: withLazy(<ConnectionsPage />) },
+          { path: 'messages', element: withLazy(<ChatPage />) },
+          { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+
+      // ── Public pages ───────────────────────────────────────────────────────────
+      {
+        path: '/',
+        element: <PublicLayout />,
+        errorElement: <NotFoundPage />,
+        children: [
+          { index: true, element: withLazy(<HomePage />) },
+          { path: 'events', element: withLazy(<EventsPage />) },
+          { path: 'events/browse', element: withLazy(<EventRegistrationPage />) },
+          { path: 'events/:slug', element: withLazy(<EventDetailPage />) },
+          { path: 'summit-2026', element: withLazy(<TechDerbySummitPage />) },
+          { path: 'about', element: withLazy(<AboutPage />) },
+          { path: 'programmes', element: withLazy(<ProgrammesPage />) },
+          { path: 'tech-derby-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },
+          { path: 'programmes/pre-seed-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },
+          { path: 'programmes/tech-star-women', element: withLazy(<TechStarWomenPage />) },
+          { path: 'programmes/pre-seed-accelerator/apply', element: withLazy(<AcceleratorApplicationPage />) },
+          { path: 'membership', element: withLazy(<MembershipPage />) },
+          { path: 'get-involved', element: withLazy(<GetInvolvedPage />) },
+          { path: 'community', element: withLazy(<CommunityPage />) },
+          { path: 'partners', element: withLazy(<PartnersPage />) },
+          { path: 'wire', element: withLazy(<InsightsPage />) },
+          { path: 'wire/:slug', element: withLazy(<InsightDetailPage />) },
+          { path: 'insights', element: <Navigate to="/wire" replace /> },
+          { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
+          { path: 'contact', element: withLazy(<ContactPage />) },
+          { path: 'privacy-policy', element: withLazy(<PrivacyPolicyPage />) },
+          { path: 'cookie-policy', element: withLazy(<CookiePolicyPage />) },
+          { path: 'data-policy', element: withLazy(<DataPolicyPage />) },
+          { path: 'code-of-conduct', element: withLazy(<CodeOfConductPage />) },
+          { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
+          { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
+          { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
+          { path: 'admin', element: withLazy(<AdminPage />) },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+
+      // ── Catch-all ─────────────────────────────────────────────────────────────
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-
-  // ── Public pages ───────────────────────────────────────────────────────────
-  {
-    path: '/',
-    element: <PublicLayout />,
-    errorElement: <NotFoundPage />,
-    children: [
-      { index: true, element: withLazy(<HomePage />) },
-      { path: 'events', element: withLazy(<EventsPage />) },
-      { path: 'events/browse', element: withLazy(<EventRegistrationPage />) },
-      { path: 'events/:slug', element: withLazy(<EventDetailPage />) },
-      { path: 'summit-2026', element: withLazy(<TechDerbySummitPage />) },
-      { path: 'about', element: withLazy(<AboutPage />) },
-      { path: 'programmes', element: withLazy(<ProgrammesPage />) },
-      { path: 'tech-derby-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },
-      { path: 'programmes/pre-seed-accelerator', element: withLazy(<TechDerbyAcceleratorPage />) },
-      { path: 'programmes/tech-star-women', element: withLazy(<TechStarWomenPage />) },
-      { path: 'programmes/pre-seed-accelerator/apply', element: withLazy(<AcceleratorApplicationPage />) },
-      { path: 'membership', element: withLazy(<MembershipPage />) },
-      { path: 'get-involved', element: withLazy(<GetInvolvedPage />) },
-      { path: 'community', element: withLazy(<CommunityPage />) },
-      { path: 'partners', element: withLazy(<PartnersPage />) },
-      { path: 'wire', element: withLazy(<InsightsPage />) },
-      { path: 'wire/:slug', element: withLazy(<InsightDetailPage />) },
-      { path: 'insights', element: <Navigate to="/wire" replace /> },
-      { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
-      { path: 'contact', element: withLazy(<ContactPage />) },
-      { path: 'privacy-policy', element: withLazy(<PrivacyPolicyPage />) },
-      { path: 'cookie-policy', element: withLazy(<CookiePolicyPage />) },
-      { path: 'data-policy', element: withLazy(<DataPolicyPage />) },
-      { path: 'code-of-conduct', element: withLazy(<CodeOfConductPage />) },
-      { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
-      { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
-      { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
-      { path: 'admin', element: withLazy(<AdminPage />) },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-
-  // ── Catch-all ─────────────────────────────────────────────────────────────
-  { path: '*', element: <NotFoundPage /> },
 ]);
 

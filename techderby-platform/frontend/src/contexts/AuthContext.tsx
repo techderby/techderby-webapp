@@ -72,7 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storage = localStorage.getItem(JWT_KEY) ? localStorage : sessionStorage;
         storage.setItem(USER_KEY, JSON.stringify(freshUser));
       })
-      .catch(() => clearAuth())
+      .catch((err) => {
+        // Only clear auth on 401 (expired/invalid token).
+        // 403 means the token is valid but the route lacks permissions — keep the session alive.
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
+          clearAuth();
+        }
+      })
       .finally(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

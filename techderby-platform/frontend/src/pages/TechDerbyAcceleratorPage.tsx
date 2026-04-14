@@ -256,11 +256,10 @@ export default function TechDerbyAcceleratorPage() {
             </p>
 
             <div className="accelerator-fade-up accelerator-delay-3 mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link to="/programmes/pre-seed-accelerator/apply">
-                <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  Apply For The Cohort
-                </Button>
-              </Link>
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-6 py-3 text-sm font-semibold text-orange-300">
+                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                Applications for this cohort are now closed
+              </div>
               <a
                 href="#journey"
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
@@ -584,11 +583,10 @@ export default function TechDerbyAcceleratorPage() {
                   you will receive the full programme schedule and onboarding details.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <Link to="/programmes/pre-seed-accelerator/apply">
-                    <Button variant="secondary" className="h-12 rounded-full px-8 shadow-lg shadow-orange-600/20">
-                      Start Application
-                    </Button>
-                  </Link>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-6 py-3 text-sm font-semibold text-orange-300">
+                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    Applications for this cohort are now closed
+                  </div>
                   <Link
                     to="/contact"
                     className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 px-8 text-sm font-semibold text-white transition hover:bg-white/10"

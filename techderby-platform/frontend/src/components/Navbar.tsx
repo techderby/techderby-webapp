@@ -29,6 +29,7 @@ const links: NavItem[] = [
   },
   { to: '/events', label: 'Events' },
   { to: '/wire', label: 'The Wire' },
+  { to: '/articles', label: 'Articles' },
 ];
 
 export function Navbar() {

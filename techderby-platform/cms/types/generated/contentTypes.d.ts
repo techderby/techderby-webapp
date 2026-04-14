@@ -369,6 +369,94 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
+  collectionName: 'articles';
+  info: {
+    displayName: 'Article';
+    pluralName: 'articles';
+    singularName: 'article';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorAvatar: Schema.Attribute.String;
+    authorId: Schema.Attribute.Integer & Schema.Attribute.Required;
+    authorName: Schema.Attribute.String;
+    authorOccupation: Schema.Attribute.String;
+    content: Schema.Attribute.JSON;
+    coverImageUrl: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    excerpt: Schema.Attribute.Text;
+    featuredImage: Schema.Attribute.Media<'images'>;
+    likes: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::article.article'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    readTime: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    reviewNotes: Schema.Attribute.Text;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<
+      ['draft', 'submitted', 'in_review', 'published', 'rejected']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'draft'>;
+    tags: Schema.Attribute.JSON;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    views: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+  };
+}
+
+export interface ApiAuthorApplicationAuthorApplication
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'author_applications';
+  info: {
+    displayName: 'Author Application';
+    pluralName: 'author-applications';
+    singularName: 'author-application';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    applicantId: Schema.Attribute.Integer & Schema.Attribute.Required;
+    applicationStatus: Schema.Attribute.Enumeration<
+      ['pending', 'approved', 'rejected']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    bio: Schema.Attribute.Text & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    expertise: Schema.Attribute.JSON;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::author-application.author-application'
+    > &
+      Schema.Attribute.Private;
+    portfolio: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    reviewedAt: Schema.Attribute.DateTime;
+    reviewedBy: Schema.Attribute.Integer;
+    reviewNotes: Schema.Attribute.Text;
+    sampleWork: Schema.Attribute.Text;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiConnectionConnection extends Struct.CollectionTypeSchema {
   collectionName: 'connections';
   info: {
@@ -1187,6 +1275,8 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::article.article': ApiArticleArticle;
+      'api::author-application.author-application': ApiAuthorApplicationAuthorApplication;
       'api::connection.connection': ApiConnectionConnection;
       'api::event.event': ApiEventEvent;
       'api::mailing-list-subscription.mailing-list-subscription': ApiMailingListSubscriptionMailingListSubscription;

@@ -79,6 +79,51 @@ export const apiClient = {
   // ── Form notifications ────────────────────────────────────────────────────
   notify: (subject: string, text: string, formType: string) =>
     api.post('/api/notify', { subject, text, formType }),
+
+  // ── Articles ──────────────────────────────────────────────────────────────
+  getPublishedArticles: (params?: { page?: number; pageSize?: number; tag?: string }) =>
+    api.get('/api/articles/published', { params }),
+  getArticleBySlug: (slug: string) => api.get(`/api/articles/by-slug/${encodeURIComponent(slug)}`),
+  getMyArticles: () => api.get('/api/articles/my'),
+  getArticleById: (id: number) => api.get(`/api/articles/${id}`),
+  createArticle: (data: { title: string; excerpt?: string; content?: object; tags?: string[]; coverImageUrl?: string }) =>
+    api.post('/api/articles', data),
+  updateArticle: (id: number, data: { title?: string; excerpt?: string; content?: object; tags?: string[]; coverImageUrl?: string }) =>
+    api.put(`/api/articles/${id}`, data),
+  deleteArticle: (id: number) => api.delete(`/api/articles/${id}`),
+  submitArticle: (id: number) => api.post(`/api/articles/${id}/submit`),
+  publishArticle: (id: number) => api.post(`/api/articles/${id}/publish`),
+  rejectArticle: (id: number, reviewNotes?: string) =>
+    api.post(`/api/articles/${id}/reject`, { reviewNotes }),
+  likeArticle: (id: number) => api.post(`/api/articles/${id}/like`),
+  getAdminArticles: (status?: string) =>
+    api.get('/api/articles/admin-list', { params: status ? { status } : {} }),
+
+  // ── Article Comments ──────────────────────────────────────────────────────
+  getArticleComments: (articleId: number) =>
+    api.get('/api/article-comments', { params: { articleId } }),
+  createArticleComment: (articleId: number, body: string) =>
+    api.post('/api/article-comments', { articleId, body }),
+  deleteArticleComment: (id: number) => api.delete(`/api/article-comments/${id}`),
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  getAdminStats: () => api.get('/api/admin/stats'),
+  getAdminUsers: (params?: { search?: string; role?: string; page?: number; pageSize?: number }) =>
+    api.get('/api/admin/users', { params }),
+  createAdminUser: (data: { username: string; email: string; password: string; firstName?: string; lastName?: string; memberRole?: string }) =>
+    api.post('/api/admin/users', data),
+  updateUserRole: (id: number, memberRole: string) =>
+    api.patch(`/api/admin/users/${id}/role`, { memberRole }),
+
+  // ── Author applications ───────────────────────────────────────────────────
+  getMyAuthorApplication: () => api.get('/api/author-applications/mine'),
+  submitAuthorApplication: (data: { bio: string; expertise?: string[]; portfolio?: string; sampleWork?: string }) =>
+    api.post('/api/author-applications', data),
+  getAuthorApplications: (status?: string) =>
+    api.get('/api/author-applications', { params: status ? { status } : {} }),
+  approveAuthorApplication: (id: number) => api.post(`/api/author-applications/${id}/approve`),
+  rejectAuthorApplication: (id: number, reviewNotes?: string) =>
+    api.post(`/api/author-applications/${id}/reject`, { reviewNotes }),
 };
 
 export default api;

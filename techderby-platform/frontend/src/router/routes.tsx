@@ -34,6 +34,8 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+const ArticlesPage = lazy(() => import('../pages/ArticlesPage'));
+const ArticleDetailPage = lazy(() => import('../pages/ArticleDetailPage'));
 
 // Dashboard pages
 const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
@@ -41,6 +43,15 @@ const ProfilePage = lazy(() => import('../pages/dashboard/ProfilePage'));
 const DirectoryPage = lazy(() => import('../pages/dashboard/DirectoryPage'));
 const ConnectionsPage = lazy(() => import('../pages/dashboard/ConnectionsPage'));
 const ChatPage = lazy(() => import('../pages/dashboard/ChatPage'));
+
+// Author & admin pages
+const AuthorApplyPage = lazy(() => import('../pages/dashboard/AuthorApplyPage'));
+const AuthorArticlesPage = lazy(() => import('../pages/dashboard/AuthorArticlesPage'));
+const ArticleEditorPage = lazy(() => import('../pages/dashboard/ArticleEditorPage'));
+const AdminArticlesPage = lazy(() => import('../pages/dashboard/AdminArticlesPage'));
+const AdminAuthorsPage = lazy(() => import('../pages/dashboard/AdminAuthorsPage'));
+const AdminHubPage = lazy(() => import('../pages/dashboard/AdminHubPage'));
+const AdminUsersPage = lazy(() => import('../pages/dashboard/AdminUsersPage'));
 
 const withLazy = (element: ReactNode) => <Suspense fallback={<p className="p-6">Loading...</p>}>{element}</Suspense>;
 
@@ -67,6 +78,17 @@ export const router = createBrowserRouter([
       { path: 'connections', element: withLazy(<ConnectionsPage />) },
       { path: 'messages', element: withLazy(<ChatPage />) },
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      // Author routes
+      { path: 'author/apply', element: withLazy(<AuthorApplyPage />) },
+      { path: 'author/articles', element: withLazy(<AuthorArticlesPage />) },
+      { path: 'author/articles/new', element: withLazy(<ArticleEditorPage />) },
+      { path: 'author/articles/:id/edit', element: withLazy(<ArticleEditorPage />) },
+      // Admin editorial routes
+      { path: 'admin', element: <Navigate to="/dashboard/admin/hub" replace /> },
+      { path: 'admin/hub', element: withLazy(<AdminHubPage />) },
+      { path: 'admin/articles', element: withLazy(<AdminArticlesPage />) },
+      { path: 'admin/authors', element: withLazy(<AdminAuthorsPage />) },
+      { path: 'admin/users', element: withLazy(<AdminUsersPage />) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -94,6 +116,8 @@ export const router = createBrowserRouter([
       { path: 'partners', element: withLazy(<PartnersPage />) },
       { path: 'wire', element: withLazy(<InsightsPage />) },
       { path: 'wire/:slug', element: withLazy(<InsightDetailPage />) },
+      { path: 'articles', element: withLazy(<ArticlesPage />) },
+      { path: 'articles/:slug', element: withLazy(<ArticleDetailPage />) },
       { path: 'insights', element: <Navigate to="/wire" replace /> },
       { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
       { path: 'contact', element: withLazy(<ContactPage />) },

@@ -10,6 +10,7 @@ const footerLinks = {
     { label: 'Programmes', to: '/programmes' },
     { label: 'Events', to: '/events' },
     { label: 'The Wire', to: '/wire' },
+    { label: 'Articles', to: '/articles' },
     { label: 'Get Involved', to: '/get-involved' },
   ],
   programmes: [

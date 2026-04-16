@@ -3,6 +3,8 @@
 # Used by CI/CD on push to `dev` branch.
 # Run: docker compose -f docker-compose.images.dev.yml --env-file .env.dev up -d
 
+name: techderby-dev
+
 services:
   postgres:
     image: postgres:16-alpine

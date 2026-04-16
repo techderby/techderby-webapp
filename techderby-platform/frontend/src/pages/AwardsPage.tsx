@@ -552,21 +552,6 @@ export default function AwardsPage() {
               </div>
             ))}
           </div>
-
-          {/* Important dates */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-900 to-indigo-900 px-6 py-4">
-              <p className="text-sm font-bold uppercase tracking-widest text-white/70">Important Dates</p>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {IMPORTANT_DATES.map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between px-6 py-4">
-                  <span className="text-sm font-semibold text-slate-700">{label}</span>
-                  <span className="text-sm text-slate-400 italic">{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </Container>
       </section>
 

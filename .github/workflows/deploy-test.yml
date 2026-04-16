@@ -97,7 +97,7 @@ jobs:
             echo "DOCKER_IMAGE_CMS=${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms" >> .env.uat
 
             docker compose -f docker-compose.images.uat.yml --env-file .env.uat pull
-            docker compose -f docker-compose.images.uat.yml --env-file .env.uat up -d
+            docker compose -f docker-compose.images.uat.yml --env-file .env.uat up -d --remove-orphans
             docker image prune -f
 
       - name: Notify success

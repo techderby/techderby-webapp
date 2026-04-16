@@ -46,6 +46,7 @@ const ProfilePage = lazy(() => import('../pages/dashboard/ProfilePage'));
 const DirectoryPage = lazy(() => import('../pages/dashboard/DirectoryPage'));
 const ConnectionsPage = lazy(() => import('../pages/dashboard/ConnectionsPage'));
 const ChatPage = lazy(() => import('../pages/dashboard/ChatPage'));
+const AdminUsersPage = lazy(() => import('../pages/dashboard/AdminUsersPage'));
 
 const withLazy = (element: ReactNode) => <Suspense fallback={<p className="p-6">Loading...</p>}>{element}</Suspense>;
 
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
       { path: 'nominations', element: withLazy(<AwardsNominationsAdminPage />) },
       { path: 'judge-applications', element: withLazy(<JudgeApplicationsAdminPage />) },
+      { path: 'users', element: withLazy(<AdminUsersPage />) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

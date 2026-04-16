@@ -3,6 +3,8 @@
 # Used by CI/CD on push to `uat` branch.
 # Run: docker compose -f docker-compose.images.uat.yml --env-file .env.uat up -d
 
+name: techderby-uat
+
 services:
   postgres:
     image: postgres:16-alpine

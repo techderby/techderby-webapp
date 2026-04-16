@@ -34,6 +34,11 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+const AwardsNominationPage = lazy(() => import('../pages/AwardsNominationPage'));
+const AwardsNominationsAdminPage = lazy(() => import('../pages/AwardsNominationsAdminPage'));
+const JudgeApplicationPage = lazy(() => import('../pages/JudgeApplicationPage'));
+const JudgeApplicationsAdminPage = lazy(() => import('../pages/JudgeApplicationsAdminPage'));
+const AwardsPage = lazy(() => import('../pages/AwardsPage'));
 
 // Dashboard pages
 const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
@@ -67,6 +72,8 @@ export const router = createBrowserRouter([
       { path: 'connections', element: withLazy(<ConnectionsPage />) },
       { path: 'messages', element: withLazy(<ChatPage />) },
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      { path: 'nominations', element: withLazy(<AwardsNominationsAdminPage />) },
+      { path: 'judge-applications', element: withLazy(<JudgeApplicationsAdminPage />) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -105,6 +112,10 @@ export const router = createBrowserRouter([
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
       { path: 'admin', element: withLazy(<AdminPage />) },
+      { path: 'admin/nominations', element: <Navigate to="/dashboard/nominations" replace /> },
+      { path: 'awards', element: withLazy(<AwardsPage />) },
+      { path: 'awards/nominate', element: withLazy(<AwardsNominationPage />) },
+      { path: 'awards/judge', element: withLazy(<JudgeApplicationPage />) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

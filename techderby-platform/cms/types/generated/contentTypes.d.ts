@@ -537,6 +537,133 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiJudgeApplicationJudgeApplication
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'judge_applications';
+  info: {
+    displayName: 'Judge Application';
+    pluralName: 'judge-applications';
+    singularName: 'judge-application';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    agreeContact: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    availableForJudging: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currentRole: Schema.Attribute.String & Schema.Attribute.Required;
+    declareFairness: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    email: Schema.Attribute.String & Schema.Attribute.Required;
+    expertiseAreas: Schema.Attribute.Text & Schema.Attribute.Required;
+    expertiseOther: Schema.Attribute.String;
+    fullName: Schema.Attribute.String & Schema.Attribute.Required;
+    judgingCategories: Schema.Attribute.Text & Schema.Attribute.Required;
+    linkedIn: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::judge-application.judge-application'
+    > &
+      Schema.Attribute.Private;
+    motivation: Schema.Attribute.Text & Schema.Attribute.Required;
+    organisation: Schema.Attribute.String & Schema.Attribute.Required;
+    phone: Schema.Attribute.String;
+    previousJudgeDetails: Schema.Attribute.Text;
+    previousJudgeExperience: Schema.Attribute.Enumeration<['yes', 'no']> &
+      Schema.Attribute.Required;
+    professionalBackground: Schema.Attribute.Text & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    willingToCommit: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+  };
+}
+
+export interface ApiNominationNomination extends Struct.CollectionTypeSchema {
+  collectionName: 'nominations';
+  info: {
+    displayName: 'Award Nomination';
+    pluralName: 'nominations';
+    singularName: 'nomination';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    additionalComments: Schema.Attribute.Text;
+    awardCategory: Schema.Attribute.Enumeration<
+      [
+        'Tech Founder of the Year',
+        'Rising Star in Tech',
+        'AI Innovation Award',
+        'Cybersecurity Excellence Award',
+        'Community Impact Award',
+        'Women in Tech Leadership Award',
+        'Startup of the Year',
+        'Digital Transformation Leader',
+        'Tech for Good Award',
+        'Lifetime Achievement Award',
+      ]
+    > &
+      Schema.Attribute.Required;
+    consentAccurate: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    consentContact: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    consentPromotional: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::nomination.nomination'
+    > &
+      Schema.Attribute.Private;
+    measurableAchievements: Schema.Attribute.Text;
+    mediaLinks: Schema.Attribute.Text;
+    nominationType: Schema.Attribute.Enumeration<['self', 'other']> &
+      Schema.Attribute.Required;
+    nominatorEmail: Schema.Attribute.String & Schema.Attribute.Required;
+    nominatorName: Schema.Attribute.String & Schema.Attribute.Required;
+    nominatorOrganisation: Schema.Attribute.String;
+    nominatorRole: Schema.Attribute.String;
+    nomineeEmail: Schema.Attribute.String & Schema.Attribute.Required;
+    nomineeLinkedIn: Schema.Attribute.String;
+    nomineeName: Schema.Attribute.String & Schema.Attribute.Required;
+    nomineeOrganisation: Schema.Attribute.String;
+    nomineeRole: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<
+      ['pending', 'reviewed', 'shortlisted', 'rejected']
+    > &
+      Schema.Attribute.DefaultTo<'pending'>;
+    supportingDocuments: Schema.Attribute.Media<'files' | 'images', true>;
+    techDerbyAlignment: Schema.Attribute.Text & Schema.Attribute.Required;
+    techEcosystemImpact: Schema.Attribute.Text & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    whyNominating: Schema.Attribute.Text & Schema.Attribute.Required;
+  };
+}
+
 export interface ApiPartnerPartner extends Struct.CollectionTypeSchema {
   collectionName: 'partners';
   info: {
@@ -1185,6 +1312,7 @@ declare module '@strapi/strapi' {
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
       'admin::transfer-token': AdminTransferToken;
+      'api::judge-application.judge-application': ApiJudgeApplicationJudgeApplication;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::connection.connection': ApiConnectionConnection;
@@ -1192,6 +1320,7 @@ declare module '@strapi/strapi' {
       'api::mailing-list-subscription.mailing-list-subscription': ApiMailingListSubscriptionMailingListSubscription;
       'api::member.member': ApiMemberMember;
       'api::message.message': ApiMessageMessage;
+      'api::nomination.nomination': ApiNominationNomination;
       'api::partner.partner': ApiPartnerPartner;
       'api::post.post': ApiPostPost;
       'api::programme.programme': ApiProgrammeProgramme;

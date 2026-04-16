@@ -36,8 +36,8 @@ function MemberCard({
   isMe: boolean;
 }) {
   const skills = member.skills?.slice(0, 3) ?? [];
-  const displayName = member.firstName && member.lastName
-    ? `${member.firstName} ${member.lastName}`
+  const displayName = member.first_name && member.last_name
+    ? `${member.first_name} ${member.last_name}`
     : member.username;
 
   return (
@@ -47,7 +47,7 @@ function MemberCard({
           {member.avatar ? (
             <img src={member.avatar} alt="" className="h-12 w-12 rounded-xl object-cover" />
           ) : (
-            getInitials(member.firstName, member.lastName, member.username)
+            getInitials(member.first_name, member.last_name, member.username)
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -71,9 +71,9 @@ function MemberCard({
         <p className="mt-3 text-xs leading-relaxed text-white/50 line-clamp-2">{member.bio}</p>
       ) : null}
 
-      {member.linkedinUrl ? (
+      {member.linkedin_url ? (
         <a
-          href={member.linkedinUrl}
+          href={member.linkedin_url}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${displayName}'s LinkedIn profile (opens in a new tab)`}
@@ -170,14 +170,14 @@ export default function DirectoryPage() {
     const q = search.toLowerCase();
     return members.filter((m) => {
       if (!q) return true;
-      const name = `${m.firstName ?? ''} ${m.lastName ?? ''} ${m.username}`.toLowerCase();
+      const name = `${m.first_name ?? ''} ${m.last_name ?? ''} ${m.username}`.toLowerCase();
       return name.includes(q) || (m.occupation ?? '').toLowerCase().includes(q) || (m.location ?? '').toLowerCase().includes(q);
     });
   }, [members, search]);
 
   function getConnection(memberId: number) {
     return connections.find(
-      (c) => c.requesterId === memberId || c.recipientId === memberId,
+      (c) => c.requester_id === memberId || c.recipient_id === memberId,
     );
   }
 
@@ -190,7 +190,7 @@ export default function DirectoryPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-black text-white">Member Directory</h1>
         <p className="mt-1 text-sm text-white/40">
-          {user?.memberRole === 'admin' || user?.memberRole === 'super-admin'
+          {user?.member_role === 'admin' || user?.member_role === 'super-admin'
             ? 'Showing all community members (admin view).'
             : 'Showing members who have enabled visibility.'}
         </p>

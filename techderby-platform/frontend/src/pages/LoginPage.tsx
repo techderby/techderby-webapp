@@ -30,7 +30,7 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setError(msg === 'Invalid identifier or password' ? 'Incorrect username or password.' : (msg ?? 'Login failed. Please try again.'));
+      setError(msg?.includes('Invalid identifier or password') ? 'Incorrect username or password.' : (msg ?? 'Login failed. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

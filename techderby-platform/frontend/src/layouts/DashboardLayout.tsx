@@ -30,13 +30,24 @@ const NAV_MAIN: NavItem[] = [
   },
 ];
 
+const NAV_ADMIN: NavItem[] = [
+  {
+    to: '/dashboard/nominations', label: 'Award Nominations',
+    icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>,
+  },
+  {
+    to: '/dashboard/judge-applications', label: 'Judge Applications',
+    icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
+  },
+];
+
 const NAV_COMMUNITY = [
   {
-    href: '/events', label: 'Events',
+    to: '/events', label: 'Events',
     icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>,
   },
   {
-    href: '/wire', label: 'The Wire',
+    to: '/wire', label: 'The Wire',
     icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16l-2 2z" /></svg>,
   },
 ];
@@ -73,10 +84,10 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const role = user?.memberRole ?? 'member';
+  const role = user?.member_role ?? 'member';
   const roleMeta = ROLE_META[role] ?? ROLE_META.member;
-  const displayName = user?.firstName && user?.lastName
-    ? `${user.firstName} ${user.lastName}`
+  const displayName = user?.first_name && user?.last_name
+    ? `${user.first_name} ${user.last_name}`
     : user?.username ?? '';
 
   function handleLogout() {
@@ -133,7 +144,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
               )}>
                 {user?.avatar
                   ? <img src={user.avatar} alt="" className="h-10 w-10 rounded-xl object-cover" />
-                  : getInitials(user?.firstName, user?.lastName, user?.username)}
+                  : getInitials(user?.first_name, user?.last_name, user?.username)}
               </div>
               <span className={cn('absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-[1.5px] border-[#07090f]', roleMeta.dot)} />
             </Link>
@@ -158,7 +169,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
               )}>
                 {user?.avatar
                   ? <img src={user.avatar} alt="" className="h-12 w-12 rounded-xl object-cover" />
-                  : getInitials(user?.firstName, user?.lastName, user?.username)}
+                  : getInitials(user?.first_name, user?.last_name, user?.username)}
               </div>
               <span className={cn('absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#07090f]', roleMeta.dot)} />
             </div>
@@ -236,28 +247,79 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
 
         {NAV_COMMUNITY.map((item) =>
           collapsed ? (
-            <Tip key={item.href} label={item.label}>
-              <a
-                href={item.href}
+            <Tip key={item.to} label={item.label}>
+              <Link
+                to={item.to}
+                onClick={onClose}
                 className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-xl text-white/25 transition hover:bg-white/6 hover:text-white/70"
               >
                 {item.icon}
-              </a>
+              </Link>
             </Tip>
           ) : (
-            <a
-              key={item.href}
-              href={item.href}
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={onClose}
               className="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/35 transition-all duration-150 hover:bg-white/[0.04] hover:text-white/80"
             >
               <span className="shrink-0 text-white/20 transition-colors group-hover:text-white/50">{item.icon}</span>
               {item.label}
-              {/* External arrow */}
-              <svg viewBox="0 0 24 24" className="ml-auto h-3 w-3 shrink-0 text-white/15 transition group-hover:text-white/35" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" />
-              </svg>
-            </a>
+            </Link>
           )
+        )}
+
+        {/* Admin-only section */}
+        {(role === 'super-admin' || role === 'admin') && (
+          <>
+            <div className={cn('my-3 border-t border-white/[0.06]', collapsed ? 'mx-0' : 'mx-2')} />
+            {!collapsed && (
+              <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.18]">Admin</p>
+            )}
+            {NAV_ADMIN.map((item) =>
+              collapsed ? (
+                <Tip key={item.to} label={item.label}>
+                  <NavLink
+                    to={item.to}
+                    onClick={onClose}
+                    className={({ isActive }) => cn(
+                      'mb-0.5 flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150',
+                      isActive
+                        ? 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/25 shadow-[0_0_16px_rgba(249,115,22,0.12)]'
+                        : 'text-white/30 hover:bg-white/6 hover:text-white/75',
+                    )}
+                  >
+                    {item.icon}
+                  </NavLink>
+                </Tip>
+              ) : (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onClose}
+                  className={({ isActive }) => cn(
+                    'group relative mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 select-none',
+                    isActive
+                      ? 'bg-gradient-to-r from-orange-500/[0.14] to-transparent text-orange-300'
+                      : 'text-white/40 hover:bg-white/[0.04] hover:text-white/85',
+                  )}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span className={cn(
+                        'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-gradient-to-b from-orange-400 to-amber-400 transition-all duration-200',
+                        isActive ? 'h-5 opacity-100' : 'h-0 opacity-0',
+                      )} />
+                      <span className={cn('shrink-0 transition-colors duration-150', isActive ? 'text-orange-400' : 'text-white/25 group-hover:text-white/55')}>
+                        {item.icon}
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              )
+            )}
+          </>
         )}
       </nav>
 
@@ -352,8 +414,8 @@ export function DashboardLayout() {
           </Link>
 
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white shadow-lg">
-            {user?.firstName && user?.lastName
-              ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+            {user?.first_name && user?.last_name
+              ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
               : (user?.username ?? 'U').slice(0, 2).toUpperCase()}
           </div>
         </header>

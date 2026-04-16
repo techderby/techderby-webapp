@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { ArrowRight, Users, Briefcase, Lightbulb, Calendar } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { AwardsAnnouncementModal } from '../../components/cards/awards-announcement-modal';
 
 export function HomePage() {
   const stats = [
@@ -63,6 +64,8 @@ export function HomePage() {
 
   return (
     <div>
+      <AwardsAnnouncementModal />
+
       {/* Hero Section */}
       <section className="relative min-h-[600px] flex items-center justify-center">
         {/* Background Image with Overlay */}

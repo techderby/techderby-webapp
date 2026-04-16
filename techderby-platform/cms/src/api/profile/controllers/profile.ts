@@ -1,22 +1,14 @@
 const SAFE_FIELDS = [
-  'id', 'username', 'email', 'firstName', 'lastName', 'bio',
-  'location', 'occupation', 'skills', 'certifications', 'isVisible',
-  'avatar', 'socialLinks', 'memberRole', 'createdAt', 'updatedAt',
+  'id', 'username', 'email', 'first_name', 'last_name', 'bio',
+  'location', 'occupation', 'skills', 'certifications', 'is_visible',
+  'avatar', 'social_links', 'member_role', 'created_at', 'updated_at',
 ];
 
 function sanitize(user: Record<string, any>) {
-  // Normalise snake_case columns from raw SQL to camelCase
   const parsed = { ...user };
-  if (parsed.created_at !== undefined && parsed.createdAt === undefined) parsed.createdAt = parsed.created_at;
-  if (parsed.updated_at !== undefined && parsed.updatedAt === undefined) parsed.updatedAt = parsed.updated_at;
-  if (parsed.first_name !== undefined && parsed.firstName === undefined) parsed.firstName = parsed.first_name;
-  if (parsed.last_name !== undefined && parsed.lastName === undefined) parsed.lastName = parsed.last_name;
-  if (parsed.member_role !== undefined && parsed.memberRole === undefined) parsed.memberRole = parsed.member_role;
-  if (parsed.is_visible !== undefined && parsed.isVisible === undefined) parsed.isVisible = parsed.is_visible;
-  if (parsed.social_links !== undefined && parsed.socialLinks === undefined) parsed.socialLinks = parsed.social_links;
 
   // JSON-parse any fields that may be stored as strings
-  for (const f of ['skills', 'certifications', 'socialLinks']) {
+  for (const f of ['skills', 'certifications', 'social_links']) {
     if (typeof parsed[f] === 'string') {
       try { parsed[f] = JSON.parse(parsed[f]); } catch { parsed[f] = null; }
     }
@@ -34,8 +26,41 @@ async function rawFindUser(where: Record<string, unknown>): Promise<Record<strin
 }
 
 export default {
+  async login(ctx: any) {
+    const { identifier, password } = ctx.request.body ?? {};
+
+    if (!identifier || !password) {
+      return ctx.badRequest('identifier and password are required.');
+    }
+
+    // Look up by email or username
+    const knex = strapi.db.connection;
+    const user = await knex('up_users')
+      .where({ email: identifier.toLowerCase() })
+      .orWhere({ username: identifier })
+      .first();
+
+    if (!user) {
+      return ctx.badRequest('Invalid identifier or password.');
+    }
+
+    if (user.blocked) {
+      return ctx.badRequest('Your account has been blocked. Please contact support.');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const bcrypt = require('bcryptjs');
+    const valid: boolean = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return ctx.badRequest('Invalid identifier or password.');
+    }
+
+    const jwt = strapi.plugin('users-permissions').service('jwt').issue({ id: user.id });
+    return ctx.send({ jwt, user: sanitize(user) });
+  },
+
   async register(ctx: any) {
-    const { username, email, password, firstName = '', lastName = '' } = ctx.request.body ?? {};
+    const { username, email, password, first_name = '', last_name = '' } = ctx.request.body ?? {};
 
     if (!username || !email || !password) {
       return ctx.badRequest('username, email and password are required.');
@@ -61,10 +86,10 @@ export default {
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      firstName,
-      lastName,
-      memberRole: 'member',
-      isVisible: true,
+      first_name,
+      last_name,
+      member_role: 'member',
+      is_visible: true,
       confirmed: true,
       blocked: false,
       provider: 'local',
@@ -99,11 +124,11 @@ export default {
     if (!userId) return ctx.unauthorized('You must be logged in.');
 
     // Strip fields users must never self-assign
-    const { memberRole, blocked, role, password, email, id, username, ...allowedData } = ctx.request.body ?? {};
+    const { member_role, blocked, role, password, email, id, username, ...allowedData } = ctx.request.body ?? {};
 
     // Stringify JSON fields for storage
     const data: Record<string, unknown> = { ...allowedData, updated_at: new Date().toISOString() };
-    for (const f of ['skills', 'certifications', 'socialLinks']) {
+    for (const f of ['skills', 'certifications', 'social_links']) {
       if (data[f] !== undefined && typeof data[f] !== 'string') {
         data[f] = JSON.stringify(data[f]);
       }
@@ -171,41 +196,45 @@ export default {
   async forgotPassword(ctx: any) {
     const { email } = ctx.request.body ?? {};
 
-    // Always respond 200 immediately to prevent email enumeration
+    // Always respond 200 immediately to prevent email enumeration.
+    // All subsequent work is fire-and-forget in a single try/catch so that any
+    // database or email failure never overrides this response.
     ctx.send({ ok: true });
 
     if (!email || typeof email !== 'string') return;
 
-    const user = await rawFindUser({ email: email.trim().toLowerCase() });
-    if (!user || user.blocked) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const crypto = require('crypto');
-    const resetToken: string = crypto.randomBytes(32).toString('hex');
-
-    const knex = strapi.db.connection;
-    await knex('up_users').where({ id: user.id }).update({
-      reset_password_token: resetToken,
-      updated_at: new Date().toISOString(),
-    });
-
-    const frontendUrl = process.env.PUBLIC_FRONTEND_URL ?? 'http://localhost:3000';
-    const resetUrl = `${frontendUrl}/reset-password?code=${resetToken}`;
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require('fs');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path');
-    const logoPath = path.join(strapi.dirs.static.public, 'techderbywhitelogo.webp');
-    const logoDataUri = fs.existsSync(logoPath)
-      ? `data:image/webp;base64,${fs.readFileSync(logoPath).toString('base64')}`
-      : null;
-
-    const displayName: string = user.first_name
-      ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
-      : user.username;
-
     try {
+      const user = await rawFindUser({ email: email.trim().toLowerCase() });
+      if (!user || user.blocked) return;
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const crypto = require('crypto');
+      // Embed expiry (1 hour) into the token: `<hex>.<expiresAt>`
+      const expiresAt = Date.now() + 60 * 60 * 1000;
+      const resetToken: string = `${crypto.randomBytes(32).toString('hex')}.${expiresAt}`;
+
+      const knex = strapi.db.connection;
+      await knex('up_users').where({ id: user.id }).update({
+        reset_password_token: resetToken,
+        updated_at: new Date().toISOString(),
+      });
+
+      const frontendUrl = process.env.PUBLIC_FRONTEND_URL ?? 'http://localhost:3000';
+      const resetUrl = `${frontendUrl}/reset-password?code=${resetToken}`;
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const path = require('path');
+      const logoPath = path.join(strapi.dirs.static.public, 'techderbywhitelogo.webp');
+      const logoDataUri = fs.existsSync(logoPath)
+        ? `data:image/webp;base64,${fs.readFileSync(logoPath).toString('base64')}`
+        : null;
+
+      const displayName: string = user.first_name
+        ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
+        : user.username;
+
       await strapi.plugin('email').service('email').send({
         to: user.email,
         subject: 'Reset your Tech Derby password',
@@ -245,7 +274,7 @@ export default {
         text: `Hi ${displayName},\n\nReset your Tech Derby password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
       });
     } catch (err) {
-      strapi.log.error('[forgotPassword] Failed to send reset email:', err);
+      strapi.log.error('[forgotPassword] Background processing failed:', err);
     }
   },
 
@@ -264,6 +293,13 @@ export default {
 
     const user = await rawFindUser({ reset_password_token: code });
     if (!user) {
+      return ctx.badRequest('Invalid or expired reset code.');
+    }
+
+    // Check token expiry — format is `<hex>.<expiresAt>`
+    const dotIndex = (user.reset_password_token as string).lastIndexOf('.');
+    const expiresAt = dotIndex !== -1 ? parseInt((user.reset_password_token as string).slice(dotIndex + 1), 10) : 0;
+    if (!expiresAt || Date.now() > expiresAt) {
       return ctx.badRequest('Invalid or expired reset code.');
     }
 

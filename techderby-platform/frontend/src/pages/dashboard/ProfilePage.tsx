@@ -137,16 +137,16 @@ export default function ProfilePage() {
   const { user, updateProfile } = useAuth();
 
   const [form, setForm] = useState({
-    firstName: user?.firstName ?? '',
-    lastName: user?.lastName ?? '',
+    first_name: user?.first_name ?? '',
+    last_name: user?.last_name ?? '',
     bio: user?.bio ?? '',
     location: user?.location ?? '',
     occupation: user?.occupation ?? '',
     skills: (user?.skills as string[]) ?? [],
     certifications: (user?.certifications as string[]) ?? [],
-    isVisible: user?.isVisible ?? true,
+    is_visible: user?.is_visible ?? true,
     avatar: user?.avatar ?? '',
-    socialLinks: (user?.socialLinks as Record<string, string>) ?? {},
+    social_links: (user?.social_links as Record<string, string>) ?? {},
   });
 
   const [saving, setSaving] = useState(false);
@@ -200,14 +200,14 @@ export default function ProfilePage() {
     }
   }
 
-  const displayName = form.firstName && form.lastName
-    ? `${form.firstName} ${form.lastName}`
+  const displayName = form.first_name && form.last_name
+    ? `${form.first_name} ${form.last_name}`
     : user?.username ?? '';
 
-  const roleKey = user?.memberRole ?? 'member';
+  const roleKey = user?.member_role ?? 'member';
   const roleStyle = ROLE_STYLE[roleKey] ?? ROLE_STYLE.member;
 
-  const completenessFields = [form.firstName, form.lastName, form.bio, form.location, form.occupation];
+  const completenessFields = [form.first_name, form.last_name, form.bio, form.location, form.occupation];
   const filled = completenessFields.filter(Boolean).length + (form.skills.length > 0 ? 1 : 0);
   const total = completenessFields.length + 1;
   const pct = Math.round((filled / total) * 100);
@@ -224,7 +224,7 @@ export default function ProfilePage() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-orange-500 text-2xl font-black text-white shadow-xl ring-4 ring-white/10 overflow-hidden">
                   {form.avatar
                     ? <img src={form.avatar} alt="Profile" className="h-20 w-20 object-cover" />
-                    : getInitials(form.firstName, form.lastName, user?.username)}
+                    : getInitials(form.first_name, form.last_name, user?.username)}
                   {avatarUploading && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
                       <svg className="h-6 w-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
@@ -289,8 +289,8 @@ export default function ProfilePage() {
           </svg>
         }>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="First name"><Input value={form.firstName} onChange={(v) => set('firstName', v)} placeholder="Jane" /></Field>
-            <Field label="Last name"><Input value={form.lastName} onChange={(v) => set('lastName', v)} placeholder="Doe" /></Field>
+            <Field label="First name"><Input value={form.first_name} onChange={(v) => set('first_name', v)} placeholder="Jane" /></Field>
+            <Field label="Last name"><Input value={form.last_name} onChange={(v) => set('last_name', v)} placeholder="Doe" /></Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Username" hint="Cannot be changed after registration."><Input value={user?.username ?? ''} readOnly /></Field>
@@ -306,7 +306,7 @@ export default function ProfilePage() {
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-sky-500 to-orange-500">
                 {form.avatar
                   ? <img src={form.avatar} alt="" className="h-14 w-14 object-cover" />
-                  : <span className="flex h-14 w-14 items-center justify-center text-sm font-black text-white">{getInitials(form.firstName, form.lastName, user?.username)}</span>}
+                  : <span className="flex h-14 w-14 items-center justify-center text-sm font-black text-white">{getInitials(form.first_name, form.last_name, user?.username)}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <button
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" /><circle cx="4" cy="4" r="2" /></svg>
                 </span>
-                <input value={form.socialLinks.linkedin ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, linkedin: e.target.value })} placeholder="linkedin.com/in/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+                <input value={form.social_links.linkedin ?? ''} onChange={(e) => set('social_links', { ...form.social_links, linkedin: e.target.value })} placeholder="linkedin.com/in/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
               </div>
             </Field>
             <Field label="GitHub" optional>
@@ -372,12 +372,12 @@ export default function ProfilePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
                 </span>
-                <input value={form.socialLinks.github ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, github: e.target.value })} placeholder="github.com/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+                <input value={form.social_links.github ?? ''} onChange={(e) => set('social_links', { ...form.social_links, github: e.target.value })} placeholder="github.com/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
               </div>
             </Field>
           </div>
           <Field label="Website / portfolio" optional>
-            <input value={form.socialLinks.website ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, website: e.target.value })} placeholder="https://yourwebsite.com" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+            <input value={form.social_links.website ?? ''} onChange={(e) => set('social_links', { ...form.social_links, website: e.target.value })} placeholder="https://yourwebsite.com" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
           </Field>
         </CardSection>
 
@@ -391,7 +391,7 @@ export default function ProfilePage() {
               <p className="text-sm font-semibold text-white">Visible in member directory</p>
               <p className="mt-0.5 text-xs leading-relaxed text-white/40">Allow other members to see your profile. Admins can always see all members.</p>
             </div>
-            <Toggle checked={form.isVisible} onChange={(v) => set('isVisible', v)} />
+            <Toggle checked={form.is_visible} onChange={(v) => set('is_visible', v)} />
           </div>
           <div className="flex items-center gap-4 rounded-xl border border-orange-500/15 bg-orange-500/5 px-4 py-3.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/15">
@@ -407,7 +407,7 @@ export default function ProfilePage() {
           <div className="rounded-xl border border-white/6 bg-white/3 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Member since</p>
             <p className="mt-0.5 text-sm text-white/60">
-              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+              {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
             </p>
           </div>
         </CardSection>

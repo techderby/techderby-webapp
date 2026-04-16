@@ -26,7 +26,6 @@ coverage
 # Docker files themselves
 Dockerfile*
 .dockerignore
-docker/
 
 # Git
 .git

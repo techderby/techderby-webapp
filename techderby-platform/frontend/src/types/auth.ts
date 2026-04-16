@@ -4,20 +4,20 @@ export interface AuthUser {
   id: number;
   username: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   bio?: string;
   location?: string;
   occupation?: string;
   skills?: string[];
   certifications?: string[];
-  isVisible?: boolean;
+  is_visible?: boolean;
   avatar?: string;
-  socialLinks?: Record<string, string>;
-  memberRole: MemberRole;
+  social_links?: Record<string, string>;
+  member_role: MemberRole;
   confirmed: boolean;
   blocked: boolean;
-  createdAt?: string;
+  created_at?: string;
 }
 
 export interface AuthResponse {
@@ -29,8 +29,8 @@ export interface RegisterInput {
   username: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface LoginInput {
@@ -39,54 +39,54 @@ export interface LoginInput {
 }
 
 export interface ProfileUpdateInput {
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   bio?: string;
   location?: string;
   occupation?: string;
   skills?: string[];
   certifications?: string[];
-  isVisible?: boolean;
+  is_visible?: boolean;
   avatar?: string;
-  socialLinks?: Record<string, string>;
+  social_links?: Record<string, string>;
 }
 
 export interface DirectoryMember {
   id: number;
   username: string;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   bio?: string;
   location?: string;
   occupation?: string;
   skills?: string[];
   avatar?: string;
-  memberRole: MemberRole;
-  linkedinUrl?: string;
-  createdAt?: string;
+  member_role: MemberRole;
+  linkedin_url?: string;
+  created_at?: string;
 }
 
 export interface Connection {
   id: number;
-  requesterId: number;
-  recipientId: number;
+  requester_id: number;
+  recipient_id: number;
   status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
-  otherUser: DirectoryMember | null;
+  created_at: string;
+  other_user: DirectoryMember | null;
   direction: 'sent' | 'received';
 }
 
 export interface Message {
   id: number;
-  fromUserId: number;
-  toUserId: number;
+  from_user_id: number;
+  to_user_id: number;
   content: string;
-  readAt: string | null;
-  createdAt: string;
+  read_at: string | null;
+  created_at: string;
 }
 
 export interface InboxThread {
-  partner: Pick<DirectoryMember, 'id' | 'username' | 'firstName' | 'lastName' | 'occupation' | 'avatar'> | null;
-  latestMessage: Message | null;
-  unreadCount: number;
+  partner: Pick<DirectoryMember, 'id' | 'username' | 'first_name' | 'last_name' | 'occupation' | 'avatar'> | null;
+  latest_message: Message | null;
+  unread_count: number;
 }

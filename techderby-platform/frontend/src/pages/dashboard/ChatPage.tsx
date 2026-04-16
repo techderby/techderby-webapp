@@ -88,8 +88,8 @@ export default function ChatPage() {
 
   const activeThread = inbox.find((t) => t.partner?.id === selectedId);
   const activeName = activeThread?.partner
-    ? (activeThread.partner.firstName && activeThread.partner.lastName
-        ? `${activeThread.partner.firstName} ${activeThread.partner.lastName}`
+    ? (activeThread.partner.first_name && activeThread.partner.last_name
+        ? `${activeThread.partner.first_name} ${activeThread.partner.last_name}`
         : activeThread.partner.username)
     : null;
 
@@ -118,8 +118,8 @@ export default function ChatPage() {
           ) : (
             inbox.map((thread) => {
               const isActive = thread.partner?.id === selectedId;
-              const partnerName = thread.partner?.firstName && thread.partner?.lastName
-                ? `${thread.partner.firstName} ${thread.partner.lastName}`
+              const partnerName = thread.partner?.first_name && thread.partner?.last_name
+                ? `${thread.partner.first_name} ${thread.partner.last_name}`
                 : thread.partner?.username;
 
               return (
@@ -136,23 +136,23 @@ export default function ChatPage() {
                     {thread.partner?.avatar ? (
                       <img src={thread.partner.avatar} alt="" className="h-10 w-10 rounded-xl object-cover" />
                     ) : (
-                      getInitials(thread.partner?.firstName, thread.partner?.lastName, thread.partner?.username)
+                      getInitials(thread.partner?.first_name, thread.partner?.last_name, thread.partner?.username)
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-semibold text-white">{partnerName}</p>
                       <p className="shrink-0 text-[10px] text-white/25">
-                        {thread.latestMessage ? formatTime(thread.latestMessage.createdAt) : ''}
+                        {thread.latest_message ? formatTime(thread.latest_message.created_at) : ''}
                       </p>
                     </div>
-                    <p className={cn('truncate text-xs', thread.unreadCount > 0 ? 'font-semibold text-white/70' : 'text-white/35')}>
-                      {thread.latestMessage?.content ?? 'No messages yet'}
+                    <p className={cn('truncate text-xs', thread.unread_count > 0 ? 'font-semibold text-white/70' : 'text-white/35')}>
+                      {thread.latest_message?.content ?? 'No messages yet'}
                     </p>
                   </div>
-                  {thread.unreadCount > 0 ? (
+                  {thread.unread_count > 0 ? (
                     <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-sky-500 px-1.5 text-[10px] font-black text-white">
-                      {thread.unreadCount}
+                      {thread.unread_count}
                     </span>
                   ) : null}
                 </button>
@@ -191,7 +191,7 @@ export default function ChatPage() {
               {activeThread?.partner ? (
                 <>
                   <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xs font-black text-white', grad(activeThread.partner.id ?? 0))}>
-                    {getInitials(activeThread.partner.firstName, activeThread.partner.lastName, activeThread.partner.username)}
+                    {getInitials(activeThread.partner.first_name, activeThread.partner.last_name, activeThread.partner.username)}
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{activeName}</p>
@@ -215,12 +215,12 @@ export default function ChatPage() {
               ) : (
                 <div className="space-y-1">
                   {messages.map((msg, idx) => {
-                    const isMine = msg.fromUserId === user?.id;
+                    const isMine = msg.from_user_id === user?.id;
                     const prevMsg = messages[idx - 1];
-                    const showAvatar = !isMine && (idx === 0 || prevMsg?.fromUserId !== msg.fromUserId);
+                    const showAvatar = !isMine && (idx === 0 || prevMsg?.from_user_id !== msg.from_user_id);
                     const showDate =
                       idx === 0 ||
-                      new Date(msg.createdAt).toDateString() !== new Date(messages[idx - 1].createdAt).toDateString();
+                      new Date(msg.created_at).toDateString() !== new Date(messages[idx - 1].created_at).toDateString();
 
                     return (
                       <div key={msg.id}>
@@ -228,7 +228,7 @@ export default function ChatPage() {
                           <div className="my-4 flex items-center gap-3">
                             <div className="h-px flex-1 bg-white/8" />
                             <span className="text-[11px] font-semibold text-white/25">
-                              {new Date(msg.createdAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
+                              {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
                             </span>
                             <div className="h-px flex-1 bg-white/8" />
                           </div>
@@ -239,8 +239,8 @@ export default function ChatPage() {
                           {!isMine ? (
                             <div className="mb-0.5 w-7 shrink-0">
                               {showAvatar ? (
-                                <div className={cn('flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-black text-white', grad(msg.fromUserId))}>
-                                  {getInitials(activeThread?.partner?.firstName, activeThread?.partner?.lastName, activeThread?.partner?.username)}
+                                <div className={cn('flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-black text-white', grad(msg.from_user_id))}>
+                                  {getInitials(activeThread?.partner?.first_name, activeThread?.partner?.last_name, activeThread?.partner?.username)}
                                 </div>
                               ) : null}
                             </div>
@@ -258,7 +258,7 @@ export default function ChatPage() {
                               {msg.content}
                             </div>
                             <span className="mt-0.5 px-1 text-[10px] text-white/20 opacity-0 transition group-hover:opacity-100">
-                              {formatTime(msg.createdAt)}
+                              {formatTime(msg.created_at)}
                             </span>
                           </div>
                         </div>

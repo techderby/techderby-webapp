@@ -295,7 +295,7 @@ export default function AuthorApplyPage() {
         {/* Error */}
         {mutation.isError && (
           <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
-            {(mutation.error as any)?.response?.data?.error?.message ?? 'Something went wrong. Please try again.'}
+            {(mutation.error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Something went wrong. Please try again.'}
           </div>
         )}
 

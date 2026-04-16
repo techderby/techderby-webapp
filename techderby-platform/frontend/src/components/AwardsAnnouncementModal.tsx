@@ -65,9 +65,9 @@ export function AwardsAnnouncementModal() {
   function triggerClose(then?: () => void) {
     setClosing(true);
     setTimeout(() => {
+      then?.();
       setClosing(false);
       setVisible(false);
-      then?.();
     }, 220);
   }
 
@@ -88,7 +88,7 @@ export function AwardsAnnouncementModal() {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={triggerClose}
+        onClick={() => triggerClose()}
         aria-hidden="true"
       />
 
@@ -109,7 +109,7 @@ export function AwardsAnnouncementModal() {
           {/* Close */}
           <button
             ref={closeButtonRef}
-            onClick={triggerClose}
+            onClick={() => triggerClose()}
             aria-label="Close announcement"
             className="absolute right-4 top-4 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
           >
@@ -205,7 +205,7 @@ export function AwardsAnnouncementModal() {
         {/* ── Footer ── */}
         <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-8 py-5 sm:flex-row sm:items-center sm:justify-between">
           <button
-            onClick={triggerClose}
+            onClick={() => triggerClose()}
             className="text-sm text-slate-500 underline-offset-4 transition-colors hover:text-slate-800 hover:underline"
           >
             Maybe later

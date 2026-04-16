@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu, type Editor } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -96,7 +96,7 @@ const Indent = Extension.create({
     return {
       Tab: () => {
         const { state, dispatch } = this.editor.view;
-        const { $from, $to } = state.selection;
+        const { $from } = state.selection;
         if ($from.parent.type.name === 'codeBlock') return false;
         if (dispatch) dispatch(state.tr.insertText('    ').scrollIntoView());
         return true;

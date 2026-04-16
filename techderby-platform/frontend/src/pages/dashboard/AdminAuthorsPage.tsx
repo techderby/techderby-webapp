@@ -49,9 +49,6 @@ export default function AdminAuthorsPage() {
     },
   });
 
-  const pendingCount  = applications.filter((a) => a.applicationStatus === 'pending').length;
-  const approvedCount = applications.filter((a) => a.applicationStatus === 'approved').length;
-
   return (
     <div className="p-6 md:p-10">
 

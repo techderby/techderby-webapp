@@ -576,10 +576,11 @@ export default function AwardsNominationPage() {
     } catch (err: unknown) {
       setStatus('error');
       // Surface the CMS error message when available
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string };
       const msg =
-        (err as any)?.response?.data?.error?.message ??
-        (err as any)?.response?.data?.message ??
-        (err as any)?.message ??
+        e?.response?.data?.error?.message ??
+        e?.response?.data?.message ??
+        e?.message ??
         null;
       setSubmitError(
         msg

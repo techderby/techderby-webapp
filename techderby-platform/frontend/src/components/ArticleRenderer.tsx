@@ -134,7 +134,6 @@ export function ArticleRenderer({ content, className }: ArticleRendererProps) {
 
   return (
     <div className={cn('article-renderer', className)}>
-      {/* eslint-disable-next-line react/no-danger */}
       <div dangerouslySetInnerHTML={{ __html: html }} />
 
       <style>{`

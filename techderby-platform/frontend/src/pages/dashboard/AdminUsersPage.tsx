@@ -13,18 +13,6 @@ const ROLE_META: Record<MemberRole, { label: string; badge: string; dot: string 
   member:        { label: 'Member',      badge: 'text-white/40 border-white/10 bg-white/5',             dot: 'bg-slate-400' },
 };
 
-// ── RoleBadge ─────────────────────────────────────────────────────────────────
-function RoleBadge({ role }: { role?: MemberRole | string }) {
-  const r = (role ?? 'member') as MemberRole;
-  const m = ROLE_META[r] ?? ROLE_META.member;
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider', m.badge)}>
-      <span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} />
-      {m.label}
-    </span>
-  );
-}
-
 // ── Avatar ────────────────────────────────────────────────────────────────────
 function UserAvatar({ user }: { user: AdminUser }) {
   const initials = user.first_name && user.last_name
@@ -136,8 +124,9 @@ function CreateUserModal({
   const mutation = useMutation({
     mutationFn: () => apiClient.createAdminUser(form),
     onSuccess: () => { onCreated(); onClose(); },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message ?? err?.response?.data?.message ?? 'Failed to create user';
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
+      const msg = e?.response?.data?.error?.message ?? e?.response?.data?.message ?? 'Failed to create user';
       setServerError(msg);
     },
   });

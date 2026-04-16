@@ -497,8 +497,8 @@ export default function JudgeApplicationPage() {
     }
 
     if (s === 3) {
-      if (form.expertiseAreas.length === 0) (next as any).expertiseAreas = 'Please select at least one area of expertise.';
-      if (form.judgingCategories.length === 0) (next as any).judgingCategories = 'Please select at least one category.';
+      if (form.expertiseAreas.length === 0) next.expertiseAreas = 'Please select at least one area of expertise.';
+      if (form.judgingCategories.length === 0) next.judgingCategories = 'Please select at least one category.';
     }
 
     if (s === 4) {
@@ -511,7 +511,7 @@ export default function JudgeApplicationPage() {
 
     if (s === 5) {
       if (form.availableForJudging === null || form.willingToCommit === null)
-        (next as any).availabilityGroup = 'Please answer both availability questions.';
+        next.availabilityGroup = 'Please answer both availability questions.';
       if (!form.declareFairness) next.declareFairness = 'You must agree to the declaration to proceed.';
       if (!form.agreeContact) next.agreeContact = 'You must agree to be contacted to proceed.';
     }
@@ -565,10 +565,11 @@ export default function JudgeApplicationPage() {
       scrollToTop();
     } catch (err: unknown) {
       setStatus('error');
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string };
       const msg =
-        (err as any)?.response?.data?.error?.message ??
-        (err as any)?.response?.data?.message ??
-        (err as any)?.message ??
+        e?.response?.data?.error?.message ??
+        e?.response?.data?.message ??
+        e?.message ??
         null;
       setSubmitError(
         msg

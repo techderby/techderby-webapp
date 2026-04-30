@@ -1,28 +1,5 @@
 import { factories } from '@strapi/strapi';
 
-function formatConnection(c: any, userId: number, otherUser: any) {
-  return {
-    id: c.id,
-    requester_id: c.requesterId ?? c.requester_id,
-    recipient_id: c.recipientId ?? c.recipient_id,
-    status: c.status,
-    created_at: c.createdAt ?? c.created_at,
-    direction: (c.requesterId ?? c.requester_id) === userId ? 'sent' : 'received',
-    other_user: otherUser
-      ? {
-          id: otherUser.id,
-          username: otherUser.username,
-          first_name: otherUser.first_name ?? null,
-          last_name: otherUser.last_name ?? null,
-          occupation: otherUser.occupation ?? null,
-          location: otherUser.location ?? null,
-          avatar: otherUser.avatar ?? null,
-          bio: otherUser.bio ?? null,
-        }
-      : null,
-  };
-}
-
 export default factories.createCoreController('api::connection.connection', ({ strapi }) => ({
   // GET /api/connections/mine — all connections involving the current user
   async mine(ctx: any) {
@@ -36,16 +13,29 @@ export default factories.createCoreController('api::connection.connection', ({ s
       orderBy: { createdAt: 'desc' },
     });
 
-    const knex = strapi.db.connection;
-
-    // Enrich with user data via raw knex (custom columns not in Strapi schema)
+    // Enrich with user data
     const enriched = await Promise.all(
       connections.map(async (c: any) => {
-        const otherId = (c.requesterId ?? c.requester_id) === userId
-          ? (c.recipientId ?? c.recipient_id)
-          : (c.requesterId ?? c.requester_id);
-        const other = await knex('up_users').where({ id: otherId }).first();
-        return formatConnection(c, userId, other ?? null);
+        const otherId = c.requesterId === userId ? c.recipientId : c.requesterId;
+        const other = await strapi.db.query('plugin::users-permissions.user').findOne({
+          where: { id: otherId },
+        });
+        return {
+          ...c,
+          otherUser: other
+            ? {
+                id: other.id,
+                username: other.username,
+                firstName: other.firstName,
+                lastName: other.lastName,
+                occupation: other.occupation,
+                location: other.location,
+                avatar: other.avatar,
+                bio: other.bio,
+              }
+            : null,
+          direction: c.requesterId === userId ? 'sent' : 'received',
+        };
       }),
     );
 
@@ -83,7 +73,7 @@ export default factories.createCoreController('api::connection.connection', ({ s
     });
 
     ctx.status = 201;
-    ctx.body = formatConnection(connection, userId, null);
+    ctx.body = connection;
   },
 
   // PUT /api/connections/:id/accept
@@ -105,7 +95,7 @@ export default factories.createCoreController('api::connection.connection', ({ s
       data: { status: 'accepted' },
     });
 
-    ctx.body = formatConnection(updated, userId, null);
+    ctx.body = updated;
   },
 
   // PUT /api/connections/:id/reject
@@ -126,7 +116,7 @@ export default factories.createCoreController('api::connection.connection', ({ s
       data: { status: 'rejected' },
     });
 
-    ctx.body = formatConnection(updated, userId, null);
+    ctx.body = updated;
   },
 
   // DELETE /api/connections/:id — remove a connection

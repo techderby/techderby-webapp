@@ -28,8 +28,8 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     username: '',
     password: '',
@@ -47,8 +47,8 @@ export default function RegisterPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!form.first_name.trim()) e.first_name = 'First name is required';
-    if (!form.last_name.trim()) e.last_name = 'Last name is required';
+    if (!form.firstName.trim()) e.firstName = 'First name is required';
+    if (!form.lastName.trim()) e.lastName = 'Last name is required';
     if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Enter a valid email';
     if (form.username.length < 3) e.username = 'Username must be at least 3 characters';
     if (!/^[a-zA-Z0-9_]+$/.test(form.username)) e.username = 'Username can only contain letters, numbers, and underscores';
@@ -66,8 +66,8 @@ export default function RegisterPage() {
     setServerError('');
     try {
       await register({
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         email: form.email.trim().toLowerCase(),
         username: form.username.trim().toLowerCase(),
         password: form.password,
@@ -146,22 +146,22 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-4">
               {/* Name row */}
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="First name" error={errors.first_name}>
+                <FormField label="First name" error={errors.firstName}>
                   <StyledInput
                     placeholder="Jane"
                     autoComplete="given-name"
-                    value={form.first_name}
-                    onChange={(v) => set('first_name', v)}
-                    hasError={!!errors.first_name}
+                    value={form.firstName}
+                    onChange={(v) => set('firstName', v)}
+                    hasError={!!errors.firstName}
                   />
                 </FormField>
-                <FormField label="Last name" error={errors.last_name}>
+                <FormField label="Last name" error={errors.lastName}>
                   <StyledInput
                     placeholder="Doe"
                     autoComplete="family-name"
-                    value={form.last_name}
-                    onChange={(v) => set('last_name', v)}
-                    hasError={!!errors.last_name}
+                    value={form.lastName}
+                    onChange={(v) => set('lastName', v)}
+                    hasError={!!errors.lastName}
                   />
                 </FormField>
               </div>

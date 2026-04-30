@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AwardsAnnouncementModal } from '../components/AwardsAnnouncementModal';
 import { CTASection } from '../components/CTASection';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
@@ -205,8 +204,6 @@ export default function HomePage() {
 
   return (
     <>
-      <AwardsAnnouncementModal />
-
       <PageSeo
         title="Tech Derby - Tech Meetup and Community in Derby"
         description="Monthly tech meetups in Derby connecting students, founders, and employers. Join 1,400+ community members building Derby's digital future."

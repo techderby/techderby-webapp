@@ -32,9 +32,9 @@ function ConnectionCard({
   onReject?: (id: number) => void;
   onRemove?: (id: number) => void;
 }) {
-  const other = connection.other_user;
-  const displayName = other?.first_name && other?.last_name
-    ? `${other.first_name} ${other.last_name}`
+  const other = connection.otherUser;
+  const displayName = other?.firstName && other?.lastName
+    ? `${other.firstName} ${other.lastName}`
     : other?.username ?? 'Unknown';
 
   return (
@@ -43,7 +43,7 @@ function ConnectionCard({
         {other?.avatar ? (
           <img src={other.avatar} alt="" className="h-11 w-11 rounded-xl object-cover" />
         ) : (
-          getInitials(other?.first_name, other?.last_name, other?.username)
+          getInitials(other?.firstName, other?.lastName, other?.username)
         )}
       </div>
 

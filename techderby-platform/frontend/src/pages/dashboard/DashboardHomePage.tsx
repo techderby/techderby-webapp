@@ -68,7 +68,7 @@ export default function DashboardHomePage() {
 
   const accepted = connections.filter((c) => c.status === 'accepted');
   const pending = connections.filter((c) => c.status === 'pending' && c.direction === 'received');
-  const unread = inbox.reduce((sum, t) => sum + t.unread_count, 0);
+  const unread = inbox.reduce((sum, t) => sum + t.unreadCount, 0);
 
   const greet = () => {
     const h = new Date().getHours();
@@ -77,7 +77,7 @@ export default function DashboardHomePage() {
     return 'Good evening';
   };
 
-  const displayName = user?.first_name ?? user?.username ?? 'Member';
+  const displayName = user?.firstName ?? user?.username ?? 'Member';
   const profileComplete =
     !!(user?.bio && user?.occupation && user?.location && (user?.skills?.length ?? 0) > 0);
 
@@ -205,24 +205,24 @@ export default function DashboardHomePage() {
                   )}
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white">
-                    {getInitials(thread.partner?.first_name, thread.partner?.last_name, thread.partner?.username)}
+                    {getInitials(thread.partner?.firstName, thread.partner?.lastName, thread.partner?.username)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-semibold text-white">
-                        {thread.partner?.first_name && thread.partner?.last_name
-                          ? `${thread.partner.first_name} ${thread.partner.last_name}`
+                        {thread.partner?.firstName && thread.partner?.lastName
+                          ? `${thread.partner.firstName} ${thread.partner.lastName}`
                           : thread.partner?.username}
                       </p>
                       <p className="shrink-0 text-[11px] text-white/30">
-                        {formatRelative(thread.latest_message?.created_at)}
+                        {formatRelative(thread.latestMessage?.createdAt)}
                       </p>
                     </div>
-                    <p className="truncate text-xs text-white/40">{thread.latest_message?.content}</p>
+                    <p className="truncate text-xs text-white/40">{thread.latestMessage?.content}</p>
                   </div>
-                  {thread.unread_count > 0 ? (
+                  {thread.unreadCount > 0 ? (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-black text-white">
-                      {thread.unread_count}
+                      {thread.unreadCount}
                     </span>
                   ) : null}
                 </Link>

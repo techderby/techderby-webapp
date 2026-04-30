@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Container } from './ui/Container';
-import { useAuth } from '../contexts/AuthContext';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 type NavChild = { to: string; label: string; desc: string };
 type NavItem = { to: string; label: string; children?: NavChild[] };
 
 const links: NavItem[] = [
+  { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
   { to: '/community', label: 'Community' },
   {
@@ -29,21 +29,12 @@ const links: NavItem[] = [
   },
   { to: '/events', label: 'Events' },
   { to: '/wire', label: 'The Wire' },
-  { to: '/awards', label: '🏆 Awards' },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-
-  function handleSignOut() {
-    logout();
-    navigate('/');
-    setMobileOpen(false);
-  }
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
@@ -123,25 +114,14 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          {isAuthenticated ? (
-            <>
-              <Link to="/dashboard">
-                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">Dashboard</Button>
-              </Link>
-              <Button onClick={handleSignOut} className="h-9 rounded-full px-5 text-sm">Sign Out</Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
-              </Link>
-            </>
-          )}
+          <Link to="/login">
+            <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
+              Login
+            </Button>
+          </Link>
+          <Link to="/register">
+            <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
+          </Link>
         </div>
 
         <button
@@ -223,25 +203,14 @@ export function Navbar() {
                 Contact
               </Link>
               <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-2">
-                {isAuthenticated ? (
-                  <>
-                    <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">Dashboard</Button>
-                    </Link>
-                    <Button onClick={handleSignOut} className="w-full h-9 text-sm">Sign Out</Button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
-                        Login
-                      </Button>
-                    </Link>
-                    <Link to="/register" onClick={() => setMobileOpen(false)}>
-                      <Button className="w-full h-9 text-sm">Sign Up</Button>
-                    </Link>
-                  </>
-                )}
+                <Link to="/login" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)}>
+                  <Button className="w-full h-9 text-sm">Sign Up</Button>
+                </Link>
               </div>
             </nav>
           </Container>

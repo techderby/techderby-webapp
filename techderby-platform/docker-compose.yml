@@ -48,13 +48,11 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
       PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-http://localhost:3000}
-      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-godchosen}
-      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-osazee.odigie10@gmail.com}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-TechDerby2026}
     ports:
       - "1337:1337"
     volumes:
-      - strapi_uploads:/app/public/uploads
+      - ./cms:/app
+      - /app/node_modules
 
   frontend:
     build:
@@ -70,7 +68,9 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
       - "[::1]:3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
   postgres_data:
-  strapi_uploads:

@@ -96,8 +96,11 @@ jobs:
             echo "DOCKER_IMAGE_FRONTEND=${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend" >> .env.prod
             echo "DOCKER_IMAGE_CMS=${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms" >> .env.prod
 
-            docker compose -f docker-compose.images.yml --env-file .env.prod pull
-            docker compose -f docker-compose.images.yml --env-file .env.prod up -d
+            # Ensure compose consistently tracks this stack and remove stale named containers.
+            docker rm -f techderby-prod-postgres techderby-prod-strapi techderby-prod-frontend 2>/dev/null || true
+
+            docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod pull
+            docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod up -d --remove-orphans
             docker image prune -f
 
       - name: Notify success

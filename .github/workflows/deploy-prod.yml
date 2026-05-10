@@ -101,6 +101,7 @@ jobs:
 
             docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod pull
             docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod up -d --remove-orphans
+            docker compose -p techderby-caddy -f docker-compose.caddy.yml up -d
             docker image prune -f
 
       - name: Notify success

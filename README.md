@@ -130,5 +130,6 @@ git push origin feature/short-description
 
 ## Additional Docs
 
+- Engineering onboarding docs: `docs/README.md`
 - Platform docs: `techderby-platform/README.md`
 - Team notes: `guidelines/Guidelines.md`

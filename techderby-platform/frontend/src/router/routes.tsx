@@ -22,6 +22,7 @@ const PartnersPage = lazy(() => import('../pages/PartnersPage'));
 const InsightsPage = lazy(() => import('../pages/InsightsPage'));
 const InsightDetailPage = lazy(() => import('../pages/InsightDetailPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
+const CreatePosterPage = lazy(() => import('../pages/CreatePosterPage'));
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
 const CookiePolicyPage = lazy(() => import('../pages/CookiePolicyPage'));
 const DataPolicyPage = lazy(() => import('../pages/DataPolicyPage'));
@@ -97,6 +98,7 @@ export const router = createBrowserRouter([
       { path: 'insights', element: <Navigate to="/wire" replace /> },
       { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
       { path: 'contact', element: withLazy(<ContactPage />) },
+      { path: 'create-poster', element: withLazy(<CreatePosterPage />) },
       { path: 'privacy-policy', element: withLazy(<PrivacyPolicyPage />) },
       { path: 'cookie-policy', element: withLazy(<CookiePolicyPage />) },
       { path: 'data-policy', element: withLazy(<DataPolicyPage />) },

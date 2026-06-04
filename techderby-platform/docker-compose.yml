@@ -68,9 +68,14 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
       - "[::1]:3000:3000"
+    # Bind-mount the source so HMR sees host edits. We deliberately do NOT
+    # mount an anonymous volume over /app/node_modules; instead we run
+    # `npm install` at container start so package.json is always the source of
+    # truth. This trades a slightly slower first start for never having stale
+    # node_modules when contributors add or change dependencies.
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   postgres_data:

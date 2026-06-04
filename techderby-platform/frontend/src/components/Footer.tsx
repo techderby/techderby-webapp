@@ -18,6 +18,9 @@ const footerLinks = {
     { label: 'Careers & Skills Pathways', to: '/get-involved' },
     { label: 'Tech Star Women', to: '/programmes/tech-star-women' },
   ],
+  tools: [
+    { label: 'Poster Generation', to: '/create-poster' },
+  ],
   legal: [
     { label: 'Privacy Policy', to: '/privacy-policy' },
     { label: 'Cookie Policy', to: '/cookie-policy' },
@@ -45,7 +48,7 @@ export function Footer() {
 
       <Container className="relative z-10 py-14 md:py-16">
         {/* Main grid */}
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:gap-8">
 
           {/* Brand column */}
           <div>
@@ -105,6 +108,23 @@ export function Footer() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Programmes</p>
             <ul className="mt-4 space-y-2.5">
               {footerLinks.programmes.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-white/60 transition-colors hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tools */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Tools</p>
+            <ul className="mt-4 space-y-2.5">
+              {footerLinks.tools.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}

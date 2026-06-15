@@ -67,6 +67,17 @@ npm install
 npm run dev
 ```
 
+### Adding frontend dependencies
+
+The frontend container bind-mounts `./frontend` and runs `npm install` at startup, so `package.json` is always the source of truth. After adding a new dependency, simply restart the service:
+
+```bash
+# from techderby-platform/
+docker compose up -d frontend
+```
+
+No `--build` or volume cleanup required. (The poster generator at `/create-poster` ships with `@huggingface/transformers` for in-browser AI background removal — added via this workflow.)
+
 ---
 
 ## CI/CD Pipeline

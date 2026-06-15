@@ -233,7 +233,7 @@ export default function HomePage() {
                   href={nextEvent.registrationLink ?? '/events'}
                   target={nextEvent.registrationLink ? '_blank' : undefined}
                   rel="noreferrer noopener"
-                  aria-label={`Next event — ${new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
+                  aria-label={`Next event — June 15${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
                   className="group mb-5 inline-flex items-center gap-2.5 rounded-full border border-orange-400/40 bg-orange-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm transition hover:border-orange-400/60 hover:bg-orange-400/15"
                 >
                   <span className="relative flex h-2 w-2" aria-hidden="true">

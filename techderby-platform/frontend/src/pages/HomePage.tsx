@@ -195,12 +195,16 @@ export default function HomePage() {
   const { data: events = [] } = useEvents();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const nextEvent = events[0];
-  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const upcomingEvents = [...events]
-    .filter((event) => new Date(event.date).getTime() >= now.getTime())
+    .filter((event) => {
+      const eventDate = new Date(event.date);
+      return !Number.isNaN(eventDate.getTime()) && eventDate.getTime() >= today.getTime();
+    })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
+  const nextEvent = upcomingEvents[0] ?? null;
 
   return (
     <>

@@ -70,8 +70,13 @@ type SendResult = {
 function buildCompactEmailHtml(editor: Editor) {
   const body = editor.getHtml({ cleanId: true });
   const css = editor.getCss({ avoidProtected: true, onlyMatched: true });
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body>${body}</body></html>`
-    .replace(/<!--[\s\S]*?-->/g, '')
+  let html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body>${body}</body></html>`;
+  let previous: string;
+  do {
+    previous = html;
+    html = html.replace(/<!--[\s\S]*?-->/g, '');
+  } while (html !== previous);
+  return html
     .replace(/>\s+</g, '><')
     .trim();
 }

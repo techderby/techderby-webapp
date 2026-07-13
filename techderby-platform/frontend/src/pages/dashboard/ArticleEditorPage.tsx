@@ -24,7 +24,7 @@ function previewMarkdown(markdown: string) {
     return segment
       .split('\n')
       .map((line) => {
-        let safe = escapeHtml(line)
+        const safe = escapeHtml(line)
           .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 max-h-96 w-full rounded-xl object-contain" />')
           .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-sky-700 underline">$1</a>')
           .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -174,7 +174,7 @@ export default function ArticleEditorPage() {
                   <select value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)} className="rounded-lg border border-white/10 bg-slate-900 px-2 py-2 text-xs text-white/70">
                     {LANGUAGES.map((language) => <option key={language}>{language}</option>)}
                   </select>
-                  <button type="button" className={toolbarButton} onClick={() => insert(`\n\`\`\`${codeLanguage}\n`, '\n```\n', codeLanguage === 'javascript' ? 'const greeting = \"Hello, Derby\";' : 'Paste code here')}>Code block</button>
+                  <button type="button" className={toolbarButton} onClick={() => insert(`\n\`\`\`${codeLanguage}\n`, '\n```\n', codeLanguage === 'javascript' ? 'const greeting = "Hello, Derby";' : 'Paste code here')}>Code block</button>
                 </div>
                 <div className="flex rounded-lg border border-white/10 p-1">
                   <button type="button" onClick={() => setMode('write')} className={`rounded px-3 py-1 text-xs font-bold ${mode === 'write' ? 'bg-sky-500 text-white' : 'text-white/45'}`}>Write</button>

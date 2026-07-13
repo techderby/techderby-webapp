@@ -63,8 +63,10 @@ export default function ArticlesDashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['articles-dashboard'] }),
   });
 
-  const articles = query.data?.data ?? [];
-  const filtered = useMemo(() => filter === 'all' ? articles : articles.filter((article) => article.workflowStatus === filter), [articles, filter]);
+  const filtered = useMemo(() => {
+    const articles = query.data?.data ?? [];
+    return filter === 'all' ? articles : articles.filter((article) => article.workflowStatus === filter);
+  }, [query.data?.data, filter]);
 
   return (
     <div className="p-6 md:p-10">

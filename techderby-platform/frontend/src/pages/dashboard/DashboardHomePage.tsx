@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import type { Connection, InboxThread } from '../../types/auth';
+import type { ArticleStats, Insight, WriterApplication } from '../../types/content';
 import { cn } from '../../lib/utils';
 
 function StatCard({
@@ -65,6 +66,21 @@ export default function DashboardHomePage() {
     queryKey: ['membersDirectory'],
     queryFn: () => apiClient.getMembersDirectory().then((r) => r.data),
   });
+  const role = user?.memberRole ?? 'member';
+  const isAdmin = role === 'admin' || role === 'super-admin';
+  const isWriter = role === 'editor' || isAdmin;
+  const { data: editorial } = useQuery<{
+    stats: ArticleStats;
+    pendingArticles?: Insight[];
+    pendingApplications?: WriterApplication[];
+  }>({
+    queryKey: ['dashboard-editorial-overview', role],
+    queryFn: async () => {
+      if (isAdmin) return apiClient.getEditorialAdminOverview().then((response) => response.data);
+      return apiClient.getMyArticles().then((response) => ({ stats: response.data.stats }));
+    },
+    enabled: isWriter,
+  });
 
   const accepted = connections.filter((c) => c.status === 'accepted');
   const pending = connections.filter((c) => c.status === 'pending' && c.direction === 'received');
@@ -123,6 +139,36 @@ export default function DashboardHomePage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </Link>
+      ) : null}
+
+      {isWriter && editorial?.stats ? (
+        <section className="mb-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-[0.13em] text-white/50">{isAdmin ? 'Editorial overview' : 'Your writing overview'}</h2>
+            <Link to={isAdmin ? '/dashboard/article-review' : '/dashboard/articles'} className="text-xs font-semibold text-sky-400 hover:text-sky-300">Open workspace →</Link>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              ['Drafts', editorial.stats.draft],
+              ['In review', editorial.stats.pendingReview],
+              ['Published', editorial.stats.published],
+              ['Rejected', editorial.stats.rejected],
+              ['Total reads', editorial.stats.totalReads],
+              ['Comments', editorial.stats.totalComments],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-4">
+                <p className="text-2xl font-black text-white">{value}</p>
+                <p className="mt-1 text-xs text-white/40">{label}</p>
+              </div>
+            ))}
+          </div>
+          {isAdmin && ((editorial.pendingArticles?.length ?? 0) > 0 || (editorial.pendingApplications?.length ?? 0) > 0) ? (
+            <Link to="/dashboard/article-review" className="mt-4 flex items-center justify-between rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-200">
+              <span><strong>{editorial.pendingArticles?.length ?? 0}</strong> article reviews and <strong>{editorial.pendingApplications?.length ?? 0}</strong> writer approvals are waiting.</span>
+              <span>Review now →</span>
+            </Link>
+          ) : null}
+        </section>
       ) : null}
 
       {/* Stats */}

@@ -4,17 +4,10 @@ import { PageSeo } from '../components/PageSeo';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useInsights } from '../hooks/use-content-query';
+import { useAuth } from '../contexts/AuthContext';
+import { ARTICLE_CATEGORIES } from '../constants/article-categories';
 
-const INSIGHT_FILTERS = ['All', 'Career', 'Technical', 'Community'] as const;
-type InsightFilter = (typeof INSIGHT_FILTERS)[number];
-
-function normalizeCategory(category: string) {
-  const value = category.trim().toLowerCase();
-  if (value.includes('career')) return 'Career';
-  if (value.includes('technical') || value.includes('tech')) return 'Technical';
-  if (value.includes('community')) return 'Community';
-  return 'Community';
-}
+const INSIGHT_FILTERS = ['All', ...ARTICLE_CATEGORIES] as const;
 
 function formatInsightDate(value?: string) {
   if (!value) return 'Date unavailable';
@@ -37,24 +30,20 @@ function toAssetUrl(path: string) {
 }
 
 export default function InsightsPage() {
+  const { user } = useAuth();
   const { data = [], isLoading, isError, error } = useInsights();
-  const [activeFilter, setActiveFilter] = useState<InsightFilter>('All');
-
-  const enrichedInsights = useMemo(
-    () =>
-      data.map((insight) => ({
-        ...insight,
-        normalizedCategory: normalizeCategory(insight.category),
-      })),
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+  const availableFilters = useMemo(
+    () => [...new Set([...INSIGHT_FILTERS, ...data.map((insight) => insight.category).filter(Boolean)])],
     [data],
   );
 
   const filteredInsights = useMemo(() => {
-    if (activeFilter === 'All') return enrichedInsights;
-    return enrichedInsights.filter((insight) => insight.normalizedCategory === activeFilter);
-  }, [activeFilter, enrichedInsights]);
+    if (activeFilter === 'All') return data;
+    return data.filter((insight) => insight.category === activeFilter);
+  }, [activeFilter, data]);
 
-  const filterButtonClass = (filter: InsightFilter) =>
+  const filterButtonClass = (filter: string) =>
     `rounded-full border px-4 py-1.5 text-xs font-bold transition ${
       activeFilter === filter
         ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
@@ -64,8 +53,8 @@ export default function InsightsPage() {
   return (
     <>
       <PageSeo
-        title="Tech Derby | The Wire"
-        description="Short, practical notes on tech careers, event highlights, and Derby's local tech ecosystem."
+        title="The Wire | Technical articles from Tech Derby"
+        description="Technical tutorials, practical career insight, and community perspectives written by Tech Derby contributors."
       />
 
       <Section className="relative py-0">
@@ -78,16 +67,22 @@ export default function InsightsPage() {
               The Wire
             </span>
             <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
-              The Wire
+              Ideas, code and insight
               <br />
               <span className="bg-gradient-to-r from-sky-400 to-orange-400 bg-clip-text text-transparent">
-                by Tech Derby.
+                from Derby's tech community.
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">
-              Short, practical notes on tech careers, event highlights, and what is happening in the local ecosystem. We
-              write for students, career changers, and builders who prefer action over noise.
+              Practical technical writing, tutorials, career insight, and informed perspectives from local builders,
+              engineers, founders, students, and community voices.
             </p>
+            <Link
+              to={user ? '/dashboard/writer-application' : '/register'}
+              className="mt-7 inline-flex rounded-full bg-orange-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
+            >
+              Apply to write for The Wire
+            </Link>
           </div>
         </Container>
       </Section>
@@ -101,7 +96,7 @@ export default function InsightsPage() {
                 <h2 className="mt-3 text-3xl font-black text-slate-900">Latest Articles</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                {INSIGHT_FILTERS.map((filter) => (
+                {availableFilters.map((filter) => (
                   <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={filterButtonClass(filter)}>
                     {filter}
                   </button>
@@ -123,21 +118,26 @@ export default function InsightsPage() {
                     <article className="relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-orange-500 opacity-0 transition-opacity group-hover:opacity-100" />
                       <img
-                        src={toAssetUrl(insight.featuredImage)}
+                        src={toAssetUrl(insight.featuredImageUrl || insight.featuredImage)}
                         alt={insight.title}
                         className="h-48 w-full border-b border-slate-200 object-cover"
                         loading="lazy"
                       />
                       <div className="p-5">
                         <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-700">
-                          {insight.normalizedCategory}
+                          {insight.category}
                         </span>
                         <h3 className="mt-3 text-xl font-black leading-tight text-slate-900">{insight.title}</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{textPreview(insight.content)}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{insight.excerpt || textPreview(insight.content)}</p>
                         <div className="mt-4 flex items-center gap-3 text-xs text-slate-500">
                           <span className="font-semibold">{insight.author || 'Tech Derby'}</span>
                           <span aria-hidden="true">·</span>
                           <span>{formatInsightDate(insight.publishedAt ?? insight.createdAt)}</span>
+                        </div>
+                        <div className="mt-3 flex gap-4 text-xs text-slate-400">
+                          <span>{insight.readCount ?? 0} reads</span>
+                          <span>{insight.likeCount ?? 0} likes</span>
+                          <span>{insight.commentCount ?? 0} comments</span>
                         </div>
                       </div>
                     </article>

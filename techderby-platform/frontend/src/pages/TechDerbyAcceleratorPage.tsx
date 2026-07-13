@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { PageSeo } from '../components/PageSeo';
-import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import acceleratorHeroImage from '../assets/images/acc1.jpg';

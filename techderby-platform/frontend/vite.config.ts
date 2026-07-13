@@ -11,10 +11,6 @@ export default defineConfig({
     exclude: ['@huggingface/transformers'],
   },
   server: {
-    watch: {
-      usePolling: true,
-      interval: 300,
-    },
     proxy: {
       '/api': {
         target: proxyTarget,

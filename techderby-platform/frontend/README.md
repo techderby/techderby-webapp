@@ -15,8 +15,8 @@ Public-facing React app for Tech Derby, built with React + Vite + TypeScript + T
 | `/programmes/tech-derby-accelerator` | Pre-seed Accelerator |
 | `/membership` | Membership interest |
 | `/partners` | Partners |
-| `/wire` | Blog / Wire posts |
-| `/wire/:slug` | Post detail |
+| `/insights` | Insights articles |
+| `/insights/:slug` | Insight detail |
 | `/contact` | Contact |
 | `/directory` | Member directory |
 | `/get-involved` | Get involved |

@@ -48,11 +48,16 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
       PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-http://localhost:3000}
+      PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-http://localhost:1337}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "1337:1337"
+    # Run the CMS from the image instead of a Windows bind mount. Strapi scans
+    # and recompiles many files at startup; Docker Desktop can intermittently
+    # return ENOMEM/empty-directory results while traversing a bind mount.
+    # Rebuild the service after CMS code changes (`docker compose up --build`).
     volumes:
-      - ./cms:/app
-      - /app/node_modules
+      - strapi_uploads:/app/public/uploads
 
   frontend:
     build:
@@ -61,21 +66,18 @@ services:
     container_name: techderby-frontend
     restart: unless-stopped
     depends_on:
-      - strapi
+      strapi:
+        condition: service_started
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:1337}
       VITE_PROXY_TARGET: http://strapi:1337
     ports:
       - "127.0.0.1:3000:3000"
       - "[::1]:3000:3000"
-    # Bind-mount the source so HMR sees host edits. We deliberately do NOT
-    # mount an anonymous volume over /app/node_modules; instead we run
-    # `npm install` at container start so package.json is always the source of
-    # truth. This trades a slightly slower first start for never having stale
-    # node_modules when contributors add or change dependencies.
-    volumes:
-      - ./frontend:/app
-    command: sh -c "npm install && npm run dev"
+    # Run from the image to avoid intermittent ENOMEM/file traversal failures
+    # from Docker Desktop's Windows bind mount. Rebuild after frontend changes.
+    command: npm run dev
 
 volumes:
   postgres_data:
+  strapi_uploads:

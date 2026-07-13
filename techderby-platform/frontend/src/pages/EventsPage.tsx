@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
+import { assetUrl } from '../lib/asset-url';
 
 const eventCategories = [
   {
@@ -124,12 +125,12 @@ export default function EventsPage() {
                   See Upcoming Events
                 </Button>
               </Link>
-              <Link to="/partners">
+              <Link to="/contact">
                 <Button
                   variant="ghost"
                   className="h-12 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
                 >
-                  Partner on an Event
+                  Contact Us
                 </Button>
               </Link>
             </div>
@@ -166,8 +167,14 @@ export default function EventsPage() {
 
               <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
                 <div className="grid md:grid-cols-[1fr_1.6fr]">
-                  <div className="flex items-center justify-center bg-slate-900 p-10 md:p-14">
-                    <div className="text-center">
+                  <div className="relative flex min-h-72 items-center justify-center overflow-hidden bg-slate-900 p-10 md:p-14">
+                    {featuredEvent.featuredImage ? (
+                      <>
+                        <img src={assetUrl(featuredEvent.featuredImage)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-slate-950/65" />
+                      </>
+                    ) : null}
+                    <div className="relative text-center">
                       <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">Next Event</p>
                       <p className="mt-3 text-2xl font-black text-white md:text-3xl">
                         {new Date(featuredEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -352,9 +359,9 @@ export default function EventsPage() {
               builders who want to support talent, innovation, and local connection.
             </p>
             <div className="mt-8">
-              <Link to="/partners">
+              <Link to="/contact">
                 <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  Partner on an Event
+                  Contact Us
                 </Button>
               </Link>
             </div>

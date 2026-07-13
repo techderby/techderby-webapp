@@ -1,8 +1,31 @@
 const SAFE_FIELDS = [
   'id', 'username', 'email', 'firstName', 'lastName', 'bio',
   'location', 'occupation', 'skills', 'certifications', 'isVisible',
-  'avatar', 'socialLinks', 'memberRole', 'createdAt', 'updatedAt',
+  'avatar', 'socialLinks', 'memberRole', 'confirmed', 'blocked',
+  'createdAt', 'updatedAt',
 ];
+const PROFILE_FIELDS = [
+  'firstName', 'lastName', 'bio', 'location', 'occupation',
+  'skills', 'certifications', 'isVisible', 'avatar', 'socialLinks',
+] as const;
+const JSON_FIELDS = new Set(['skills', 'certifications', 'socialLinks']);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_PATTERN = /^[a-z0-9._-]+$/;
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const AVATAR_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
+
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function sanitize(user: Record<string, any>) {
   // Normalise snake_case columns from raw SQL to camelCase
@@ -16,7 +39,7 @@ function sanitize(user: Record<string, any>) {
   if (parsed.social_links !== undefined && parsed.socialLinks === undefined) parsed.socialLinks = parsed.social_links;
 
   // JSON-parse any fields that may be stored as strings
-  for (const f of ['skills', 'certifications', 'socialLinks']) {
+  for (const f of JSON_FIELDS) {
     if (typeof parsed[f] === 'string') {
       try { parsed[f] = JSON.parse(parsed[f]); } catch { parsed[f] = null; }
     }
@@ -37,14 +60,29 @@ export default {
   async register(ctx: any) {
     const { username, email, password, firstName = '', lastName = '' } = ctx.request.body ?? {};
 
-    if (!username || !email || !password) {
+    if (
+      typeof username !== 'string' ||
+      typeof email !== 'string' ||
+      typeof password !== 'string' ||
+      !username.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       return ctx.badRequest('username, email and password are required.');
     }
+    if (username.trim().length < 3) return ctx.badRequest('Username must be at least 3 characters.');
+    if (password.length < 8) return ctx.badRequest('Password must be at least 8 characters.');
 
-    const byEmail = await rawFindUser({ email: email.toLowerCase() });
+    const normalisedEmail = email.trim().toLowerCase();
+    const normalisedUsername = username.trim().toLowerCase();
+    if (!EMAIL_PATTERN.test(normalisedEmail)) return ctx.badRequest('A valid email address is required.');
+    if (!USERNAME_PATTERN.test(normalisedUsername)) {
+      return ctx.badRequest('Username may contain letters, numbers, dots, hyphens and underscores only.');
+    }
+    const byEmail = await rawFindUser({ email: normalisedEmail });
     if (byEmail) return ctx.badRequest('Email is already taken.');
 
-    const byUsername = await rawFindUser({ username });
+    const byUsername = await rawFindUser({ username: normalisedUsername });
     if (byUsername) return ctx.badRequest('Username is already taken.');
 
     const role = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'authenticated' } });
@@ -58,13 +96,13 @@ export default {
     const docId = Math.random().toString(36).slice(2, 18);
 
     const inserted = await knex('up_users').insert({
-      username,
-      email: email.toLowerCase(),
+      username: normalisedUsername,
+      email: normalisedEmail,
       password: hashedPassword,
-      firstName,
-      lastName,
-      memberRole: 'member',
-      isVisible: true,
+      first_name: String(firstName).trim(),
+      last_name: String(lastName).trim(),
+      member_role: 'member',
+      is_visible: true,
       confirmed: true,
       blocked: false,
       provider: 'local',
@@ -98,14 +136,26 @@ export default {
     const userId = ctx.state.user?.id;
     if (!userId) return ctx.unauthorized('You must be logged in.');
 
-    // Strip fields users must never self-assign
-    const { memberRole, blocked, role, password, email, id, username, ...allowedData } = ctx.request.body ?? {};
+    const requestData = ctx.request.body ?? {};
+    const data: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-    // Stringify JSON fields for storage
-    const data: Record<string, unknown> = { ...allowedData, updated_at: new Date().toISOString() };
-    for (const f of ['skills', 'certifications', 'socialLinks']) {
-      if (data[f] !== undefined && typeof data[f] !== 'string') {
-        data[f] = JSON.stringify(data[f]);
+    for (const field of PROFILE_FIELDS) {
+      if (requestData[field] === undefined) continue;
+      const column = field.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
+      const value = requestData[field];
+      data[column] = JSON_FIELDS.has(field) && typeof value !== 'string'
+        ? JSON.stringify(value)
+        : value;
+    }
+
+    if (typeof data.first_name === 'string') data.first_name = data.first_name.trim().slice(0, 100);
+    if (typeof data.last_name === 'string') data.last_name = data.last_name.trim().slice(0, 100);
+    if (typeof data.bio === 'string') data.bio = data.bio.trim().slice(0, 2000);
+    if (typeof data.location === 'string') data.location = data.location.trim().slice(0, 200);
+    if (typeof data.occupation === 'string') data.occupation = data.occupation.trim().slice(0, 200);
+    if (typeof data.is_visible !== 'boolean') {
+      if (data.is_visible !== undefined) {
+        return ctx.badRequest('isVisible must be a boolean.');
       }
     }
 
@@ -135,14 +185,17 @@ export default {
     }
 
     const mimeType: string = file.mimetype ?? file.type ?? '';
-    if (!mimeType.startsWith('image/')) {
-      return ctx.badRequest('Only image files are allowed.');
+    const extension = AVATAR_EXTENSIONS[mimeType];
+    if (!extension) {
+      return ctx.badRequest('Only JPEG, PNG and WebP images are allowed.');
+    }
+    if (Number(file.size ?? 0) > MAX_AVATAR_SIZE) {
+      return ctx.badRequest('Avatar images must be 5 MB or smaller.');
     }
 
     // Resolve where the file data lives (disk path or in-memory buffer)
     const srcPath: string | undefined = file.filepath ?? file.path ?? undefined;
-    const ext = (path.extname(file.originalFilename ?? file.name ?? 'avatar.jpg') || '.jpg').toLowerCase();
-    const filename = `avatar-${userId}-${Date.now()}${ext}`;
+    const filename = `avatar-${userId}-${Date.now()}${extension}`;
 
     // Write to Strapi's public/uploads directory
     const uploadDir = path.join(strapi.dirs.static.public, 'uploads');
@@ -182,10 +235,12 @@ export default {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const resetToken: string = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash: string = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     const knex = strapi.db.connection;
     await knex('up_users').where({ id: user.id }).update({
-      reset_password_token: resetToken,
+      reset_password_token: resetTokenHash,
+      reset_password_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       updated_at: new Date().toISOString(),
     });
 
@@ -204,6 +259,7 @@ export default {
     const displayName: string = user.first_name
       ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
       : user.username;
+    const safeDisplayName = escapeHtml(displayName);
 
     try {
       await strapi.plugin('email').service('email').send({
@@ -223,7 +279,7 @@ export default {
           <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.4);">Password reset request</p>
         </td></tr>
         <tr><td style="padding:28px 36px;">
-          <p style="margin:0 0 16px;font-size:15px;color:rgba(255,255,255,0.85);">Hi ${displayName},</p>
+          <p style="margin:0 0 16px;font-size:15px;color:rgba(255,255,255,0.85);">Hi ${safeDisplayName},</p>
           <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:rgba(255,255,255,0.6);">We received a request to reset your password. Click the button below to choose a new one. This link expires in <strong style="color:rgba(255,255,255,0.8);">1 hour</strong>.</p>
           <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
             <tr><td style="border-radius:10px;background:#f97316;">
@@ -262,8 +318,12 @@ export default {
       return ctx.badRequest('Passwords do not match.');
     }
 
-    const user = await rawFindUser({ reset_password_token: code });
-    if (!user) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const crypto = require('crypto');
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    const user = await rawFindUser({ reset_password_token: codeHash });
+    const expiresAt = user?.reset_password_expires_at ?? user?.resetPasswordExpiresAt;
+    if (!user || !expiresAt || new Date(expiresAt).getTime() <= Date.now()) {
       return ctx.badRequest('Invalid or expired reset code.');
     }
 
@@ -275,6 +335,7 @@ export default {
     await knex('up_users').where({ id: user.id }).update({
       password: hashedPassword,
       reset_password_token: null,
+      reset_password_expires_at: null,
       updated_at: new Date().toISOString(),
     });
 

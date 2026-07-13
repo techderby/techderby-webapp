@@ -11,10 +11,9 @@ Implemented in `techderby-platform/frontend/src/router/routes.tsx` and CMS conte
   - Event listing and event detail routes
   - Event browsing/registration route (`/events/browse`)
   - Tech Derby Summit route (`/summit-2026`)
-- Insights/Wire:
-  - Listing (`/wire`)
-  - Detail (`/wire/:slug`)
-  - Redirect compatibility from legacy `/insights` URLs
+- Insights:
+  - Listing (`/insights`)
+  - Detail (`/insights/:slug`)
 - Community pages:
   - Public member directory route (`/directory`)
   - Community page (`/community`)

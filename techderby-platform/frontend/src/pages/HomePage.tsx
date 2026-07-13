@@ -17,9 +17,9 @@ import './tech-derby-accelerator.css';
 /* ─────────────────────── static data ─────────────────────── */
 
 const stats = [
-  { value: '1,400+', label: 'Community members' },
+  { value: '1,400+', label: 'People Reached' },
   { value: '40+', label: 'Industry speakers' },
-  { value: '15+', label: 'Partner organisations' },
+  { value: '15+', label: 'Growoing Collaborator Network' },
   { value: '4 yrs', label: 'Building Derby tech' },
 ];
 

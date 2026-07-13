@@ -169,10 +169,10 @@ export default function ProfilePage() {
       // Make absolute if relative
       const absUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL ?? 'http://localhost:1337'}${url}`;
       set('avatar', absUrl);
-      // Persist immediately so it survives without clicking Save
-      await updateProfile({ ...form, avatar: absUrl });
-    } catch {
-      setAvatarError('Upload failed. Please try again.');
+    } catch (err: unknown) {
+      const apiMessage = (err as { response?: { data?: { error?: { message?: string } } } })
+        ?.response?.data?.error?.message;
+      setAvatarError(apiMessage || 'Upload failed. Please try again.');
     } finally {
       setAvatarUploading(false);
       // Reset input so same file can be re-selected
@@ -325,7 +325,15 @@ export default function ProfilePage() {
                 {form.avatar && !avatarUploading && (
                   <button
                     type="button"
-                    onClick={() => { set('avatar', ''); updateProfile({ ...form, avatar: '' }); }}
+                      onClick={async () => {
+                        setAvatarError('');
+                        try {
+                          set('avatar', '');
+                          await updateProfile({ ...form, avatar: '' });
+                        } catch {
+                          setAvatarError('Could not remove profile photo. Please try again.');
+                        }
+                      }}
                     className="text-xs text-white/30 transition hover:text-red-400"
                   >
                     Remove photo

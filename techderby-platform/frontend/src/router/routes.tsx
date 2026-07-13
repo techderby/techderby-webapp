@@ -22,7 +22,6 @@ const PartnersPage = lazy(() => import('../pages/PartnersPage'));
 const InsightsPage = lazy(() => import('../pages/InsightsPage'));
 const InsightDetailPage = lazy(() => import('../pages/InsightDetailPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
-const CreatePosterPage = lazy(() => import('../pages/CreatePosterPage'));
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
 const CookiePolicyPage = lazy(() => import('../pages/CookiePolicyPage'));
 const DataPolicyPage = lazy(() => import('../pages/DataPolicyPage'));
@@ -35,6 +34,13 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+const NewsletterComposerPage = lazy(() => import('../pages/NewsletterComposerPage'));
+const EventAdminPage = lazy(() => import('../pages/dashboard/EventAdminPage'));
+const WriterApplicationPage = lazy(() => import('../pages/dashboard/WriterApplicationPage'));
+const ArticlesDashboardPage = lazy(() => import('../pages/dashboard/ArticlesDashboardPage'));
+const ArticleEditorPage = lazy(() => import('../pages/dashboard/ArticleEditorPage'));
+const EditorialAdminPage = lazy(() => import('../pages/dashboard/EditorialAdminPage'));
+const WriterManagementPage = lazy(() => import('../pages/dashboard/WriterManagementPage'));
 
 // Dashboard pages
 const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
@@ -68,6 +74,87 @@ export const router = createBrowserRouter([
       { path: 'connections', element: withLazy(<ConnectionsPage />) },
       { path: 'messages', element: withLazy(<ChatPage />) },
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
+      { path: 'writer-application', element: withLazy(<WriterApplicationPage />) },
+      {
+        path: 'articles',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticlesDashboardPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'articles/new',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticleEditorPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'articles/:documentId/edit',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticleEditorPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'article-review',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EditorialAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'writers',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <WriterManagementPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events/new',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events/:documentId/edit',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'mailing-list',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <AdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'mailing-list/compose',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <NewsletterComposerPage />
+          </ProtectedRoute>,
+        ),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -93,12 +180,11 @@ export const router = createBrowserRouter([
       { path: 'get-involved', element: withLazy(<GetInvolvedPage />) },
       { path: 'community', element: withLazy(<CommunityPage />) },
       { path: 'partners', element: withLazy(<PartnersPage />) },
+      { path: 'insights', element: withLazy(<InsightsPage />) },
+      { path: 'insights/:slug', element: withLazy(<InsightDetailPage />) },
       { path: 'wire', element: withLazy(<InsightsPage />) },
       { path: 'wire/:slug', element: withLazy(<InsightDetailPage />) },
-      { path: 'insights', element: <Navigate to="/wire" replace /> },
-      { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
       { path: 'contact', element: withLazy(<ContactPage />) },
-      { path: 'create-poster', element: withLazy(<CreatePosterPage />) },
       { path: 'privacy-policy', element: withLazy(<PrivacyPolicyPage />) },
       { path: 'cookie-policy', element: withLazy(<CookiePolicyPage />) },
       { path: 'data-policy', element: withLazy(<DataPolicyPage />) },
@@ -106,7 +192,7 @@ export const router = createBrowserRouter([
       { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
-      { path: 'admin', element: withLazy(<AdminPage />) },
+      { path: 'admin', element: <Navigate to="/dashboard/mailing-list" replace /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

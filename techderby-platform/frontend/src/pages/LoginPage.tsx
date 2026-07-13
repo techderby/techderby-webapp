@@ -29,8 +29,13 @@ export default function LoginPage() {
       await login({ identifier: identifier.trim(), password }, rememberMe);
       navigate(from, { replace: true });
     } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setError(msg === 'Invalid identifier or password' ? 'Incorrect username or password.' : (msg ?? 'Login failed. Please try again.'));
+      if (status === 429) {
+        setError('Too many sign-in attempts. Please wait a minute and try again.');
+      } else {
+        setError(msg === 'Invalid identifier or password' ? 'Incorrect username or password.' : (msg ?? 'Login failed. Please try again.'));
+      }
     } finally {
       setIsSubmitting(false);
     }

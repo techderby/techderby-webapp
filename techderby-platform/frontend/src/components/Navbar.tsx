@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Container } from './ui/Container';
+import { useAuth } from '../contexts/AuthContext';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 type NavChild = { to: string; label: string; desc: string };
@@ -35,6 +36,9 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const userDisplayName = user?.firstName?.trim() || user?.username || 'Member';
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
@@ -111,17 +115,64 @@ export function Navbar() {
               </div>
             ),
           )}
+          <a
+            href="https://lms.techderby.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[15px] font-medium text-white/90 transition-colors hover:text-white"
+          >
+            Learning Hub
+          </a>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
-              Login
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
-          </Link>
+          {isAuthenticated ? (
+            <div className="relative" onMouseLeave={() => setPersonaMenuOpen(false)}>
+              <button
+                type="button"
+                onClick={() => setPersonaMenuOpen((value) => !value)}
+                className="flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2.5 pr-3 text-sm text-white/85 transition hover:border-white/30 hover:bg-white/10"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white">
+                  {userDisplayName.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="max-w-[120px] truncate">{userDisplayName}</span>
+                <svg className={`h-3.5 w-3.5 transition-transform ${personaMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {personaMenuOpen ? (
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
+                  <p className="px-3 py-2 text-xs text-white/45">Signed in as {userDisplayName}</p>
+                  <Link to="/dashboard" className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/10" onClick={() => setPersonaMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonaMenuOpen(false);
+                      logout();
+                    }}
+                    className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -202,15 +253,45 @@ export function Navbar() {
               >
                 Contact
               </Link>
+              <a
+                href="https://lms.techderby.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md px-2 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-white"
+              >
+                Learning Hub
+              </a>
               <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-2">
-                <Link to="/login" onClick={() => setMobileOpen(false)}>
-                  <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
-                    Login
-                  </Button>
-                </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)}>
-                  <Button className="w-full h-9 text-sm">Sign Up</Button>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-9 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        logout();
+                        setMobileOpen(false);
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setMobileOpen(false)}>
+                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/register" onClick={() => setMobileOpen(false)}>
+                      <Button className="w-full h-9 text-sm">Sign Up</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </Container>

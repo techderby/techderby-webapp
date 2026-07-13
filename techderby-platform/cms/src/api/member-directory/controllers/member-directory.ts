@@ -39,7 +39,9 @@ export default {
     let query = knex('up_users').select('*').orderBy('created_at', 'desc');
 
     if (!isAdmin) {
-      query = query.where({ isVisible: true, blocked: false });
+      query = query
+        .where({ blocked: false })
+        .andWhere((builder: any) => builder.where({ is_visible: true }).orWhereNull('is_visible'));
     }
 
     const users = await query;
@@ -56,7 +58,8 @@ export default {
     const user = await knex('up_users').where({ id }).first();
 
     if (!user) return ctx.notFound();
-    if (!isAdmin && !user.isVisible) return ctx.notFound();
+    const isVisible = user.is_visible ?? user.isVisible ?? true;
+    if (!isAdmin && !isVisible) return ctx.notFound();
 
     ctx.body = pickPublicFields(user);
   },

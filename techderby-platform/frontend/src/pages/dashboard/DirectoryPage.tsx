@@ -27,12 +27,14 @@ function MemberCard({
   connection,
   onConnect,
   onMessage,
+  onViewBio,
   isMe,
 }: {
   member: DirectoryMember;
   connection?: Connection;
   onConnect: (id: number) => void;
   onMessage: (id: number) => void;
+  onViewBio: (member: DirectoryMember) => void;
   isMe: boolean;
 }) {
   const skills = member.skills?.slice(0, 3) ?? [];
@@ -70,6 +72,14 @@ function MemberCard({
       {member.bio ? (
         <p className="mt-3 text-xs leading-relaxed text-white/50 line-clamp-2">{member.bio}</p>
       ) : null}
+
+      <button
+        type="button"
+        onClick={() => onViewBio(member)}
+        className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300 transition hover:bg-sky-500/20"
+      >
+        View bio
+      </button>
 
       {member.linkedinUrl ? (
         <a
@@ -150,6 +160,7 @@ export default function DirectoryPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [bioMember, setBioMember] = useState<DirectoryMember | null>(null);
 
   const { data: members = [], isLoading } = useQuery<DirectoryMember[]>({
     queryKey: ['membersDirectory'],
@@ -233,12 +244,34 @@ export default function DirectoryPage() {
                 connection={getConnection(member.id)}
                 onConnect={(id) => connectMutation.mutate(id)}
                 onMessage={handleMessage}
+                onViewBio={setBioMember}
                 isMe={member.id === user?.id}
               />
             ))}
           </div>
         </>
       )}
+
+      {bioMember ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setBioMember(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-white">
+                  {bioMember.firstName && bioMember.lastName ? `${bioMember.firstName} ${bioMember.lastName}` : bioMember.username}
+                </h2>
+                {bioMember.occupation ? <p className="text-sm text-sky-300">{bioMember.occupation}</p> : null}
+              </div>
+              <button type="button" onClick={() => setBioMember(null)} className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white" aria-label="Close bio">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+              </button>
+            </div>
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+              {bioMember.bio?.trim() || 'This member has not added a bio yet.'}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

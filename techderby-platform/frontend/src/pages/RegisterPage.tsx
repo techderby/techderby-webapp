@@ -177,12 +177,12 @@ export default function RegisterPage() {
                 />
               </FormField>
 
-              <FormField label="Username" hint="Letters, numbers, underscores only" error={errors.username}>
+              <FormField label="Username" hint="Letters, numbers, underscores only (saved in lowercase)" error={errors.username}>
                 <StyledInput
                   placeholder="jane_doe"
                   autoComplete="username"
                   value={form.username}
-                  onChange={(v) => set('username', v)}
+                  onChange={(v) => set('username', v.toLowerCase())}
                   hasError={!!errors.username}
                 />
               </FormField>

@@ -256,7 +256,7 @@ This section documents what was built, where it lives, and how it works.
 | `/programmes/pre-seed-accelerator/apply` | `AcceleratorApplicationPage.tsx` | Application form (sends notify email + optional WhatsApp ping) |
 | `/membership` | `MembershipPage.tsx` | Membership interest form |
 | `/partners` | `PartnersPage.tsx` | Partner directory from CMS |
-| `/wire`, `/wire/:slug` | `InsightsPage.tsx`, `InsightDetailPage.tsx` | Blog. `/insights` and `/insights/:slug` redirect here for legacy URLs |
+| `/insights`, `/insights/:slug` | `InsightsPage.tsx`, `InsightDetailPage.tsx` | Blog and thought leadership articles |
 | `/community`, `/get-involved`, `/contact` | `CommunityPage.tsx`, `GetInvolvedPage.tsx`, `ContactPage.tsx` | Contact and Membership pages also trigger `/api/notify` and optional WhatsApp |
 | `/directory` | `MemberDirectoryPage.tsx` | Public directory (calls `/api/members-directory` — auth optional) |
 | Policy pages | `PrivacyPolicyPage`, `CookiePolicyPage`, `DataPolicyPage`, `CodeOfConductPage`, `AccessibilityPage`, `SafeguardingPage` | Static |

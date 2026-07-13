@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+.newsletter-builder {
+  --gjs-primary-color: #0f172a;
+  --gjs-secondary-color: rgba(255, 255, 255, 0.78);
+  --gjs-tertiary-color: #0ea5e9;
+  --gjs-quaternary-color: #f97316;
+}
+
+.newsletter-builder .gjs-one-bg {
+  background-color: #0f172a;
+}
+
+.newsletter-builder .gjs-two-color {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.newsletter-builder .gjs-three-bg {
+  background-color: #0ea5e9;
+  color: #fff;
+}
+
+.newsletter-builder .gjs-four-color,
+.newsletter-builder .gjs-four-color-h:hover {
+  color: #f97316;
+}
+
 :root {
   --bg: #f8fafc;
   --text: #0f172a;

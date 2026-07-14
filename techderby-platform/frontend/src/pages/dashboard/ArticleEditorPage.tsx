@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { sanitizeHtml, sanitizeMediaUrl } from '../../lib/html-sanitizer';
 import { ARTICLE_CATEGORIES_BY_GROUP } from '../../constants/article-categories';
 import type { Insight } from '../../types/content';
 
@@ -18,7 +19,7 @@ function escapeHtml(value: string) {
 
 function previewMarkdown(markdown: string) {
   const segments = markdown.split(/(```[a-zA-Z0-9_+#.-]*\n[\s\S]*?```)/g);
-  return segments.map((segment) => {
+  return sanitizeHtml(segments.map((segment) => {
     const code = segment.match(/^```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```$/);
     if (code) return `<div class="my-5 overflow-hidden rounded-xl bg-slate-950"><div class="border-b border-slate-700 px-4 py-2 text-xs font-bold uppercase text-slate-400">${escapeHtml(code[1] || 'text')}</div><pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-100"><code>${escapeHtml(code[2])}</code></pre></div>`;
     return segment
@@ -38,7 +39,7 @@ function previewMarkdown(markdown: string) {
         return line.trim() ? `<p class="mb-4 leading-8 text-slate-700">${safe}</p>` : '';
       })
       .join('');
-  }).join('');
+  }).join(''));
 }
 
 export default function ArticleEditorPage() {
@@ -72,7 +73,7 @@ export default function ArticleEditorPage() {
     });
   }, [article]);
 
-  const preview = useMemo(() => image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage), [image, article]);
+  const preview = useMemo(() => sanitizeMediaUrl(image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage)), [image, article]);
   useEffect(() => () => { if (image && preview) URL.revokeObjectURL(preview); }, [image, preview]);
 
   function insert(before: string, after = '', placeholder = 'text') {

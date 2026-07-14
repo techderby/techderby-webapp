@@ -1,6 +1,9 @@
 import { factories } from '@strapi/strapi';
 import { MAILING_LIST_CATEGORIES } from '../../../constants/mailing-list';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sanitizeHtml = require('sanitize-html') as (html: string, options?: Record<string, unknown>) => string;
+
 const SUBSCRIPTION_UID = 'api::mailing-list-subscription.mailing-list-subscription';
 const ADMIN_ROLES = new Set(['admin', 'super-admin']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -141,14 +144,12 @@ function sendCsv(ctx: any, rows: Array<Record<string, unknown>>) {
 }
 
 function htmlToPlainText(html: string) {
-	return html
-		.replace(/<style[\s\S]*?<\/style>/gi, ' ')
-		.replace(/<script[\s\S]*?<\/script>/gi, ' ')
-		.replace(/<[^>]+>/g, ' ')
-		.replace(/&nbsp;/gi, ' ')
-		.replace(/&amp;/gi, '&')
-		.replace(/&lt;/gi, '<')
-		.replace(/&gt;/gi, '>')
+	return sanitizeHtml(html, {
+		allowedTags: [],
+		allowedAttributes: {},
+		disallowedTagsMode: 'discard',
+	})
+		.replace(/\u00a0/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
 }

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { sanitizeMediaUrl } from '../../lib/html-sanitizer';
 import type { Event } from '../../types/content';
 
 type EventForm = {
@@ -138,7 +139,7 @@ export default function EventAdminPage() {
   }, [eventsQuery.data]);
 
   const visibleEvents = groupedEvents[timeline];
-  const displayedImage = previewUrl || assetUrl(editing?.featuredImage);
+  const displayedImage = useMemo(() => sanitizeMediaUrl(previewUrl || assetUrl(editing?.featuredImage)), [previewUrl, editing?.featuredImage]);
 
   useEffect(() => {
     if (!documentId) {

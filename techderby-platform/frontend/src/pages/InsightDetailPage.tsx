@@ -8,6 +8,7 @@ import { Section } from '../components/ui/Section';
 import { useInsightBySlug } from '../hooks/use-content-query';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { sanitizeHtml } from '../lib/html-sanitizer';
 import type { ArticleComment } from '../types/content';
 
 function toAssetUrl(path: string) {
@@ -209,12 +210,9 @@ function looksLikeHtml(content: string): boolean {
 
 function renderContent(content: string): string {
   if (looksLikeHtml(content)) {
-    return content
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi, '')
-      .replace(/javascript:/gi, '');
+    return sanitizeHtml(content);
   }
-  return markdownToHtml(content);
+  return sanitizeHtml(markdownToHtml(content));
 }
 
 export default function InsightDetailPage() {

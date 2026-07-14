@@ -71,6 +71,7 @@ services:
 
 volumes:
   postgres_prod_data:
+    name: techderby-platform_postgres_prod_data
 
 networks:
   techderby-prod:

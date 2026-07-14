@@ -72,6 +72,7 @@ services:
 
 volumes:
   postgres_dev_data:
+    name: techderby-platform_postgres_dev_data
 
 networks:
   techderby-dev:

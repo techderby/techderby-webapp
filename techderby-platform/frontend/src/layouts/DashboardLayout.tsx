@@ -3,6 +3,9 @@ import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 import { cn } from '../lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../lib/api';
+import type { ArticleStats } from '../types/content';
 
 // ── Types & data ──────────────────────────────────────────────────────────────
 type NavItem = { to: string; end?: boolean; label: string; icon: React.ReactNode };
@@ -29,6 +32,58 @@ const NAV_MAIN: NavItem[] = [
     icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
   },
 ];
+
+const NAV_MAILING_LIST: NavItem = {
+  to: '/dashboard/mailing-list',
+  label: 'Mailing List',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  ),
+};
+
+const NAV_ADMIN_EVENTS: NavItem = {
+  to: '/dashboard/events',
+  label: 'Manage Events',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" />
+    </svg>
+  ),
+};
+
+const NAV_ARTICLES: NavItem = {
+  to: '/dashboard/articles',
+  label: 'Articles',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /><path d="M8 7h8M8 11h8" />
+    </svg>
+  ),
+};
+
+const NAV_ARTICLE_REVIEW: NavItem = {
+  to: '/dashboard/article-review',
+  label: 'Article Review',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  ),
+};
+
+const NAV_WRITERS: NavItem = {
+  to: '/dashboard/writers',
+  label: 'Manage Writers',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+};
 
 const NAV_COMMUNITY = [
   {
@@ -74,6 +129,20 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
   const navigate = useNavigate();
 
   const role = user?.memberRole ?? 'member';
+  const isAdmin = role === 'admin' || role === 'super-admin';
+  const isWriter = role === 'editor' || isAdmin;
+  const navItems = isAdmin
+    ? [...NAV_MAIN, NAV_ARTICLES, NAV_ARTICLE_REVIEW, NAV_WRITERS, NAV_ADMIN_EVENTS, NAV_MAILING_LIST]
+    : isWriter
+      ? [...NAV_MAIN, NAV_ARTICLES]
+      : NAV_MAIN;
+  const articleStatsQuery = useQuery<{ stats: ArticleStats }>({
+    queryKey: ['sidebar-article-stats'],
+    queryFn: () => apiClient.getMyArticles().then((response) => response.data),
+    enabled: isWriter,
+    staleTime: 60_000,
+  });
+  const writerBadges = articleStatsQuery.data?.stats?.badges ?? [];
   const roleMeta = ROLE_META[role] ?? ROLE_META.member;
   const displayName = user?.firstName && user?.lastName
     ? `${user.firstName} ${user.lastName}`
@@ -167,6 +236,15 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
             <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest', roleMeta.badge)}>
               {roleMeta.label}
             </span>
+            {writerBadges.length > 0 ? (
+              <div className="mt-2 flex flex-wrap justify-center gap-1">
+                {writerBadges.slice(0, 3).map((badge) => (
+                  <span key={badge} className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[9px] font-bold text-amber-300">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
@@ -179,7 +257,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
           <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.18]">Dashboard</p>
         )}
 
-        {NAV_MAIN.map((item) =>
+        {navItems.map((item) =>
           collapsed ? (
             <Tip key={item.to} label={item.label}>
               <NavLink

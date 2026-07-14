@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { PageSeo } from '../components/PageSeo';
-import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import acceleratorHeroImage from '../assets/images/acc1.jpg';
@@ -256,11 +255,9 @@ export default function TechDerbyAcceleratorPage() {
             </p>
 
             <div className="accelerator-fade-up accelerator-delay-3 mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link to="/programmes/pre-seed-accelerator/apply">
-                <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  Apply For The Cohort
-                </Button>
-              </Link>
+              <span className="inline-flex h-12 items-center justify-center rounded-full border border-orange-400/35 bg-orange-500/15 px-8 text-sm font-semibold text-orange-100">
+                Registration closed for this cohort
+              </span>
               <a
                 href="#journey"
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
@@ -580,20 +577,18 @@ export default function TechDerbyAcceleratorPage() {
                   Turn momentum into measurable progress.
                 </h2>
                 <p className="mt-5 max-w-lg text-base leading-relaxed text-white/70">
-                  Applications are reviewed on clarity, commitment, and execution potential. If selected,
-                  you will receive the full programme schedule and onboarding details.
+                  Registration is now closed for this cohort. Check back for the next intake window
+                  and updated onboarding dates.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <Link to="/programmes/pre-seed-accelerator/apply">
-                    <Button variant="secondary" className="h-12 rounded-full px-8 shadow-lg shadow-orange-600/20">
-                      Start Application
-                    </Button>
-                  </Link>
+                  <span className="inline-flex h-12 items-center justify-center rounded-full border border-orange-300/45 bg-orange-500/15 px-8 text-sm font-semibold text-orange-100">
+                    Registration closed for this cohort
+                  </span>
                   <Link
                     to="/contact"
                     className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 px-8 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Talk To The Team
+                    Check Back With The Team
                   </Link>
                 </div>
               </div>

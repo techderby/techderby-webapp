@@ -11,16 +11,47 @@ export function AdminMembersPage() {
   return (
     <div className="max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
           Member Approvals
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm text-gray-600 sm:text-base">
           Review and approve new member applications
         </p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+        {/* Mobile cards */}
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pendingMembers.map((member) => (
+            <article key={member.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">{member.name}</h2>
+                  <p className="mt-0.5 text-xs text-gray-600">{member.email}</p>
+                </div>
+                <span className="inline-block rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                  {member.type}
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">Submitted: {member.date}</p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Button size="sm" variant="outline" className="w-full text-green-600 border-green-600 hover:bg-green-50">
+                  <Check className="w-4 h-4 mr-1" />
+                  Approve
+                </Button>
+                <Button size="sm" variant="outline" className="w-full text-red-600 border-red-600 hover:bg-red-50">
+                  <X className="w-4 h-4 mr-1" />
+                  Reject
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {/* Tablet/Desktop table */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>

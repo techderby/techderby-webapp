@@ -81,10 +81,17 @@ export default function EventRegistrationPage() {
       return source === 'tech-derby' ? isTechDerbyEvent(event.eventSource) : !isTechDerbyEvent(event.eventSource);
     });
 
-    return sourceFiltered.filter((event) => {
+    const scoped = sourceFiltered.filter((event) => {
       const eventDate = new Date(event.date);
       if (Number.isNaN(eventDate.getTime())) return false;
       return timeScope === 'upcoming' ? eventDate >= now : eventDate < now;
+    });
+
+    // Keep browse results in a deterministic date order.
+    return scoped.sort((a, b) => {
+      const aTime = new Date(a.date).getTime();
+      const bTime = new Date(b.date).getTime();
+      return timeScope === 'upcoming' ? aTime - bTime : bTime - aTime;
     });
   }, [allEvents, source, timeScope]);
 
@@ -163,7 +170,7 @@ export default function EventRegistrationPage() {
         const apiMessage = String((err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? '').toLowerCase();
 
         if (status === 403) {
-          setMailingListError('Mailing list sign-up is temporarily unavailable. Please contact the team while we finish setup.');
+          setMailingListError('Mailing list sign-up is currently unavailable. Please try again shortly.');
         } else if (status === 400 && (apiMessage.includes('unique') || apiMessage.includes('already') || apiMessage.includes('email'))) {
           setMailingListError('This email is already on the mailing list.');
         } else {

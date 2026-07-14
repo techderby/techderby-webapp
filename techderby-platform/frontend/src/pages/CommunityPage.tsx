@@ -39,7 +39,7 @@ const audience = [
     description:
       'Support local talent, connect with the regional ecosystem, and help shape a stronger innovation future for Derby.',
     icon: '🤝',
-    cta: { label: 'Partner with Us', to: '/partners' },
+    cta: { label: 'Contact Us', to: '/contact' },
   },
   {
     title: 'Career Switchers',
@@ -128,12 +128,12 @@ export default function CommunityPage() {
                   See Upcoming Events
                 </Button>
               </Link>
-              <Link to="/partners" className="hidden sm:inline-flex">
+              <Link to="/contact" className="hidden sm:inline-flex">
                 <Button
                   variant="ghost"
                   className="h-12 rounded-full border border-white/20 bg-transparent px-8 text-sm text-white/70 hover:bg-white/10 hover:text-white"
                 >
-                  Partner with Tech Derby
+                  Contact Tech Derby
                 </Button>
               </Link>
             </div>
@@ -333,9 +333,9 @@ export default function CommunityPage() {
                   future of regional tech, there is a place for you in this story.
                 </p>
                 <div className="pt-2">
-                  <Link to="/partners">
+                  <Link to="/contact">
                     <Button className="h-11 rounded-full px-7 text-sm shadow-lg shadow-orange-900/30">
-                      Partner with Tech Derby
+                      Contact Tech Derby
                     </Button>
                   </Link>
                 </div>

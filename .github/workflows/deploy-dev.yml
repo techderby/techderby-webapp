@@ -42,7 +42,7 @@ jobs:
           file: ./techderby-platform/frontend/Dockerfile.prod
           push: true
           build-args: |
-            VITE_API_URL=https://cms-dev.techderby.org
+            VITE_API_URL=https://dev.techderby.org
             VITE_CALLMEBOT_API_KEY=${{ secrets.VITE_CALLMEBOT_API_KEY }}
           tags: |
             ${{ env.DOCKER_IMAGE_FRONTEND }}:${{ steps.vars.outputs.image_tag }}

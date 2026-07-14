@@ -56,6 +56,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://test.techderby.org}
     ports:
       - "1339:1337"
+    volumes:
+      - strapi_uat_uploads:/app/public/uploads
     networks:
       - techderby-uat
 
@@ -73,6 +75,8 @@ services:
 volumes:
   postgres_uat_data:
     name: techderby-platform_postgres_uat_data
+  strapi_uat_uploads:
+    name: techderby-platform_strapi_uat_uploads
 
 networks:
   techderby-uat:

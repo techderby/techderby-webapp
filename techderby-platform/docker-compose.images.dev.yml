@@ -56,6 +56,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://dev.techderby.org}
     ports:
       - "1338:1337"
+    volumes:
+      - strapi_dev_uploads:/app/public/uploads
     networks:
       - techderby-dev
 
@@ -73,6 +75,8 @@ services:
 volumes:
   postgres_dev_data:
     name: techderby-platform_postgres_dev_data
+  strapi_dev_uploads:
+    name: techderby-platform_strapi_dev_uploads
 
 networks:
   techderby-dev:

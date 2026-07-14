@@ -51,6 +51,8 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
       PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-https://techderby.org}
+      PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-https://cms.techderby.org}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://techderby.org,https://www.techderby.org}
     ports:
       - "1337:1337"
     networks:

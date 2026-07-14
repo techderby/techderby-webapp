@@ -1,3 +1,5 @@
+import { MAILING_LIST_CATEGORIES } from '../../../../constants/mailing-list';
+
 export default {
   kind: 'collectionType',
   collectionName: 'mailing_list_subscriptions',
@@ -9,5 +11,11 @@ export default {
   options: { draftAndPublish: false },
   attributes: {
     email: { type: 'email', required: true, unique: true },
+    category: {
+      type: 'enumeration',
+      enum: [...MAILING_LIST_CATEGORIES],
+      default: 'None',
+      required: true,
+    },
   },
 };

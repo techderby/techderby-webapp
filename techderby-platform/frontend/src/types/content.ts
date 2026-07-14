@@ -9,8 +9,10 @@ export type EventSpeakerCard = {
 
 export type Event = {
   id: number;
+  documentId?: string;
   title: string;
   slug: string;
+  featuredImage?: string;
   description: string;
   date: string;
   venue: string;
@@ -23,6 +25,7 @@ export type Event = {
   speakers?: string[];
   speakerCards?: EventSpeakerCard[];
   registrationLink?: string | null;
+  publishedAt?: string;
 };
 
 export type Partner = {
@@ -44,15 +47,63 @@ export type Programme = {
 
 export type Insight = {
   id: number;
+  documentId?: string;
   title: string;
   slug: string;
   featuredImage: string;
+  featuredImageUrl?: string;
   content: string;
   author: string;
+  authorUserId?: number;
+  excerpt?: string;
   tags: string[];
   category: string;
+  workflowStatus?: ArticleStatus;
+  reviewNotes?: string | null;
+  readCount?: number;
+  likeCount?: number;
+  commentCount?: number;
   createdAt?: string;
+  updatedAt?: string;
   publishedAt?: string;
+};
+
+export type ArticleStatus = 'draft' | 'pending-review' | 'published' | 'rejected' | 'update-requested';
+
+export type ArticleStats = {
+  total: number;
+  draft: number;
+  pendingReview: number;
+  published: number;
+  rejected: number;
+  updateRequested: number;
+  totalReads: number;
+  totalLikes: number;
+  totalComments: number;
+  badges: string[];
+  writers?: number;
+  pendingWriters?: number;
+};
+
+export type WriterApplication = {
+  id: number;
+  userId: number;
+  name: string;
+  email: string;
+  motivation: string;
+  experience?: string | null;
+  portfolioUrl?: string | null;
+  topics?: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  reviewNotes?: string | null;
+  createdAt?: string;
+};
+
+export type ArticleComment = {
+  id: number;
+  name: string;
+  content: string;
+  createdAt: string;
 };
 
 export type Member = {

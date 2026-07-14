@@ -1,23 +1,20 @@
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useInsightBySlug } from '../hooks/use-content-query';
+import { apiClient } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import type { ArticleComment } from '../types/content';
 
 function toAssetUrl(path: string) {
   if (!path) return '';
   if (/^https?:\/\//i.test(path)) return path;
   const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:1337';
   return `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
-}
-
-function normalizeCategory(category: string) {
-  const value = category.trim().toLowerCase();
-  if (value.includes('career')) return 'Career';
-  if (value.includes('technical') || value.includes('tech')) return 'Technical';
-  if (value.includes('community')) return 'Community';
-  return 'Community';
 }
 
 function formatInsightDate(value?: string) {
@@ -27,8 +24,17 @@ function formatInsightDate(value?: string) {
   return parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function inlineMarkdown(text: string): string {
+function escapeHtml(text: string) {
   return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function inlineMarkdown(text: string): string {
+  return escapeHtml(text)
     // Images with optional size: ![alt](url){w=50%} or ![alt](url){w=300px}
     .replace(/!\[([^\]]*)\]\(([^)]+)\)(?:\{w=([^}]+)\})?/g, (_m, alt, src, width) => {
       const style = width ? ` style="width:${width};max-width:100%"` : '';
@@ -50,6 +56,19 @@ function processLines(text: string): string {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
+    const fence = line.match(/^```([a-zA-Z0-9_+#.-]*)\s*$/);
+    if (fence) {
+      const language = fence[1] || 'text';
+      const code: string[] = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
+        code.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++;
+      out.push(`<div class="my-6 overflow-hidden rounded-xl border border-slate-700 bg-slate-950"><div class="border-b border-slate-700 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-400">${escapeHtml(language)}</div><pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-100"><code class="language-${escapeHtml(language)}">${escapeHtml(code.join('\n'))}</code></pre></div>`);
+      continue;
+    }
     const heading = line.match(/^(#{1,6})\s+(.*)/);
     if (heading) {
       const level = heading[1].length;
@@ -93,6 +112,7 @@ function processLines(text: string): string {
       !lines[i].match(/^#{1,6}\s+/) &&
       !lines[i].match(/^[-*+]\s+/) &&
       !lines[i].match(/^\d+\.\s+/) &&
+      !lines[i].match(/^```/) &&
       !lines[i].startsWith('> ') &&
       !lines[i].startsWith(':::')
     ) {
@@ -189,14 +209,65 @@ function looksLikeHtml(content: string): boolean {
 
 function renderContent(content: string): string {
   if (looksLikeHtml(content)) {
-    return content;
+    return content
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi, '')
+      .replace(/javascript:/gi, '');
   }
   return markdownToHtml(content);
 }
 
 export default function InsightDetailPage() {
   const { slug = '' } = useParams();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: insight, isLoading, isError, error } = useInsightBySlug(slug);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentName, setCommentName] = useState(user?.firstName || user?.username || '');
+  const [commentEmail, setCommentEmail] = useState(user?.email || '');
+  const [commentContent, setCommentContent] = useState('');
+  const [commentError, setCommentError] = useState('');
+
+  const commentsQuery = useQuery<ArticleComment[]>({
+    queryKey: ['article-comments', insight?.documentId],
+    queryFn: () => apiClient.getArticleComments(insight?.documentId as string).then((response) => response.data?.data ?? []),
+    enabled: Boolean(insight?.documentId),
+  });
+
+  useEffect(() => {
+    setLikeCount(insight?.likeCount ?? 0);
+    if (!insight?.documentId) return;
+    const readKey = `td_article_read_${insight.documentId}`;
+    if (sessionStorage.getItem(readKey)) return;
+    sessionStorage.setItem(readKey, '1');
+    apiClient.recordArticleRead(insight.documentId).catch(() => undefined);
+  }, [insight?.documentId, insight?.likeCount]);
+
+  async function toggleLike() {
+    if (!insight?.documentId) return;
+    let voterToken = localStorage.getItem('td_wire_voter_token');
+    if (!voterToken) {
+      voterToken = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+      localStorage.setItem('td_wire_voter_token', voterToken);
+    }
+    const response = await apiClient.toggleArticleLike(insight.documentId, voterToken);
+    setLiked(Boolean(response.data?.liked));
+    setLikeCount(Number(response.data?.likeCount ?? 0));
+  }
+
+  async function submitComment(event: FormEvent) {
+    event.preventDefault();
+    if (!insight?.documentId) return;
+    setCommentError('');
+    try {
+      await apiClient.addArticleComment(insight.documentId, { name: commentName, email: commentEmail, content: commentContent });
+      setCommentContent('');
+      await queryClient.invalidateQueries({ queryKey: ['article-comments', insight.documentId] });
+    } catch {
+      setCommentError('Your comment could not be added. Please try again.');
+    }
+  }
 
   const title = insight?.title ?? 'Insight';
 
@@ -204,7 +275,7 @@ export default function InsightDetailPage() {
     <>
       <PageSeo
         title={`Tech Derby | ${title}`}
-        description={insight?.content ? insight.content.replace(/<[^>]*>/g, ' ').slice(0, 155) : 'An article from The Wire by Tech Derby.'}
+        description={insight?.content ? insight.content.replace(/<[^>]*>/g, ' ').slice(0, 155) : 'An insight article from Tech Derby.'}
       />
 
       {/* ── HERO ── */}
@@ -226,7 +297,7 @@ export default function InsightDetailPage() {
           {!isLoading && !isError && insight ? (
             <div className="mt-8 max-w-3xl">
               <span className="inline-flex rounded-full bg-sky-500/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-400">
-                {normalizeCategory(insight.category)}
+                {insight.category}
               </span>
               <h1 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
                 {insight.title}
@@ -280,7 +351,7 @@ export default function InsightDetailPage() {
               {/* Featured image */}
               <div className="-mt-20 relative z-10">
                 <img
-                  src={toAssetUrl(insight.featuredImage)}
+                  src={toAssetUrl(insight.featuredImageUrl || insight.featuredImage)}
                   alt={insight.title}
                   className="h-64 w-full rounded-2xl border border-slate-200 object-cover shadow-xl md:h-96"
                   loading="lazy"
@@ -305,6 +376,34 @@ export default function InsightDetailPage() {
                   dangerouslySetInnerHTML={{ __html: renderContent(insight.content) }}
                 />
               </div>
+
+              <div className="mt-10 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <button onClick={toggleLike} className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${liked ? 'bg-orange-500 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:border-orange-300'}`}>
+                  {liked ? 'Liked' : 'Like'} · {likeCount}
+                </button>
+                <span className="text-sm text-slate-500">{insight.readCount ?? 0} reads</span>
+                <span className="text-sm text-slate-500">{commentsQuery.data?.length ?? insight.commentCount ?? 0} comments</span>
+              </div>
+
+              <section className="mt-12 border-t border-slate-200 pt-9">
+                <h2 className="text-2xl font-black text-slate-900">Discussion</h2>
+                <div className="mt-6 space-y-4">
+                  {(commentsQuery.data ?? []).map((comment) => (
+                    <article key={comment.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex justify-between gap-3"><p className="font-bold text-slate-900">{comment.name}</p><time className="text-xs text-slate-400">{formatInsightDate(comment.createdAt)}</time></div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{comment.content}</p>
+                    </article>
+                  ))}
+                  {!commentsQuery.isLoading && !(commentsQuery.data?.length) ? <p className="text-sm text-slate-500">Be the first to comment.</p> : null}
+                </div>
+                <form onSubmit={submitComment} className="mt-7 grid gap-4 rounded-2xl bg-slate-50 p-5 sm:grid-cols-2">
+                  <input required value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
+                  <input type="email" value={commentEmail} onChange={(e) => setCommentEmail(e.target.value)} placeholder="Email (not published)" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
+                  <textarea required value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Join the discussion…" className="min-h-28 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500 sm:col-span-2" />
+                  {commentError ? <p className="text-sm text-red-600 sm:col-span-2">{commentError}</p> : null}
+                  <button className="w-fit rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">Post comment</button>
+                </form>
+              </section>
 
               {/* Footer */}
               <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-8">

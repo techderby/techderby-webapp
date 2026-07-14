@@ -15,6 +15,17 @@ const PUBLIC_ACTIONS = [
 
 const AUTHENTICATED_ACTIONS = [
   ...PUBLIC_ACTIONS,
+  'api::profile.profile.getProfile',
+  'api::profile.profile.updateProfile',
+  'api::profile.profile.uploadAvatar',
+  'api::connection.connection.mine',
+  'api::connection.connection.create',
+  'api::connection.connection.accept',
+  'api::connection.connection.reject',
+  'api::connection.connection.delete',
+  'api::message.message.inbox',
+  'api::message.message.conversation',
+  'api::message.message.create',
   'api::event.event.listForAdmin',
   'api::event.event.createForAdmin',
   'api::event.event.updateForAdmin',

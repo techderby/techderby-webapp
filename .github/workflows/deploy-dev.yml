@@ -96,8 +96,10 @@ jobs:
             echo "DOCKER_IMAGE_FRONTEND=${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend" >> .env.dev
             echo "DOCKER_IMAGE_CMS=${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms" >> .env.dev
 
-            docker compose -f docker-compose.images.dev.yml --env-file .env.dev pull
-            docker compose -f docker-compose.images.dev.yml --env-file .env.dev up -d
+            docker compose -p techderby-platform -f docker-compose.images.dev.yml --env-file .env.dev pull
+            docker compose -p techderby-platform -f docker-compose.images.dev.yml --env-file .env.dev down --remove-orphans || true
+            docker rm -f techderby-dev-frontend techderby-dev-strapi techderby-dev-postgres 2>/dev/null || true
+            docker compose -p techderby-platform -f docker-compose.images.dev.yml --env-file .env.dev up -d --remove-orphans
             docker image prune -f
 
       - name: Notify success

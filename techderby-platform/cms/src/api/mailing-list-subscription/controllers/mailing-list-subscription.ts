@@ -255,6 +255,27 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		ctx.status = 204;
 	},
 
+	async updateCategoryForAdmin(ctx) {
+		if (!(await requireAdmin(ctx))) return;
+		const id = Number(ctx.params?.id);
+		if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('Invalid subscriber id.');
+
+		const category = String(ctx.request.body?.category ?? '').trim();
+		if (!MAILING_LIST_CATEGORIES.includes(category as (typeof MAILING_LIST_CATEGORIES)[number])) {
+			return ctx.badRequest('Select a valid mailing list category.');
+		}
+
+		const existing = await strapi.db.query(SUBSCRIPTION_UID).findOne({ where: { id }, select: ['id'] });
+		if (!existing) return ctx.notFound('Subscriber not found.');
+
+		const updated = await strapi.db.query(SUBSCRIPTION_UID).update({
+			where: { id },
+			data: { category },
+			select: ['id', 'email', 'category', 'createdAt'],
+		});
+		ctx.body = updated;
+	},
+
 	async listSegmentsForAdmin(ctx) {
 		if (!(await requireAdmin(ctx))) return;
 		ctx.body = await listSegmentsWithCounts();

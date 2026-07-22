@@ -44,6 +44,7 @@ const AUTHENTICATED_ACTIONS = [
   'api::editorial.editorial.deleteArticle',
   'api::mailing-list-subscription.mailing-list-subscription.listForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.deleteForAdmin',
+  'api::mailing-list-subscription.mailing-list-subscription.updateCategoryForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.exportCsvForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.importForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.sendNewsletterForAdmin',

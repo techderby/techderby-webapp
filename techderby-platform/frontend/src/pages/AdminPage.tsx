@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
   const [membershipSegmentId, setMembershipSegmentId] = useState<number | ''>('');
   const [isUpdatingRows, setIsUpdatingRows] = useState(false);
+  const [updatingCategoryRowId, setUpdatingCategoryRowId] = useState<number | null>(null);
 
   const [segmentName, setSegmentName] = useState('');
   const [segmentDescription, setSegmentDescription] = useState('');
@@ -346,6 +347,22 @@ export default function AdminPage() {
     }
   }
 
+  async function updateRowCategory(row: MailingListRow, category: MailingListCategory) {
+    if (category === row.category) return;
+    setError(null);
+    setMessage(null);
+    setUpdatingCategoryRowId(row.id);
+    try {
+      await apiClient.updateMailingListSubscriptionCategoryForAdmin(row.id, category);
+      await Promise.all([loadMailingList(false), loadSegments()]);
+      setMessage(`Category updated for ${row.email}.`);
+    } catch {
+      setError(`Could not update the category for ${row.email}.`);
+    } finally {
+      setUpdatingCategoryRowId(null);
+    }
+  }
+
   return (
     <div className="p-6 md:p-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -511,7 +528,19 @@ export default function AdminPage() {
                           />
                         </td>
                         <td className="px-4 py-2.5 text-white/90">{row.email}</td>
-                        <td className="px-4 py-2.5 text-white/70">{row.category}</td>
+                        <td className="px-4 py-2.5 text-white/70">
+                          <select
+                            value={row.category}
+                            disabled={updatingCategoryRowId === row.id}
+                            onChange={(event) => updateRowCategory(row, event.target.value as MailingListCategory)}
+                            aria-label={`Category for ${row.email}`}
+                            className="h-8 max-w-xs rounded-lg border border-white/10 bg-slate-900 px-2 text-xs text-white outline-none disabled:cursor-wait disabled:opacity-50"
+                          >
+                            {MAILING_LIST_CATEGORIES.map((category) => (
+                              <option key={category} value={category}>{category}</option>
+                            ))}
+                          </select>
+                        </td>
                         <td className="px-4 py-2.5 text-white/60">{formatDate(row.createdAt)}</td>
                       </tr>
                     ))

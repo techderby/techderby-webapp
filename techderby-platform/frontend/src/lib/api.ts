@@ -58,6 +58,8 @@ export const apiClient = {
     api.get('/api/mailing-list-subscriptions/admin/list'),
   deleteMailingListSubscriptionForAdmin: (id: number) =>
     api.delete(`/api/mailing-list-subscriptions/admin/subscribers/${id}`),
+  updateMailingListSubscriptionCategoryForAdmin: (id: number, category: string) =>
+    api.put(`/api/mailing-list-subscriptions/admin/subscribers/${id}/category`, { category }),
   exportMailingListCsvForAdmin: () =>
     api.get('/api/mailing-list-subscriptions/admin/export.csv', {
       responseType: 'blob',

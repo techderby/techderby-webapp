@@ -56,6 +56,8 @@ export const apiClient = {
     api.post('/api/mailing-list-subscriptions', { data: { email, category: 'None' } }),
   getMailingListSubscriptionsAdmin: () =>
     api.get('/api/mailing-list-subscriptions/admin/list'),
+  deleteMailingListSubscriptionForAdmin: (id: number) =>
+    api.delete(`/api/mailing-list-subscriptions/admin/subscribers/${id}`),
   exportMailingListCsvForAdmin: () =>
     api.get('/api/mailing-list-subscriptions/admin/export.csv', {
       responseType: 'blob',
@@ -70,6 +72,8 @@ export const apiClient = {
     api.put(`/api/mailing-list-subscriptions/admin/segments/${id}`, data),
   deleteMailingListSegmentForAdmin: (id: number) =>
     api.delete(`/api/mailing-list-subscriptions/admin/segments/${id}`),
+  updateMailingListSegmentMembersForAdmin: (id: number, subscriptionIds: number[], action: 'add' | 'remove') =>
+    api.post(`/api/mailing-list-subscriptions/admin/segments/${id}/members`, { subscriptionIds, action }),
   sendNewsletterForAdmin: (subject: string, html: string, segmentIds: number[] = []) =>
     api.post(
       '/api/mailing-list-subscriptions/admin/send-newsletter',

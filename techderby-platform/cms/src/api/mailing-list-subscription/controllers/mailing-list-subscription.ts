@@ -9,6 +9,7 @@ const MAX_NEWSLETTER_HTML_SIZE = 2_000_000;
 const MAX_NEWSLETTER_IMAGE_SIZE = 5 * 1024 * 1024;
 const SEND_CONCURRENCY = 5;
 const SEGMENT_TABLE = 'mailing_list_segments';
+const SEGMENT_MEMBERSHIP_TABLE = 'mailing_list_segment_memberships';
 const DEFAULT_SEGMENT_NAME = 'All Users';
 const NEWSLETTER_IMAGE_EXTENSIONS: Record<string, string> = {
 	'image/jpeg': '.jpg',
@@ -44,6 +45,42 @@ async function ensureDefaultSegment() {
 	});
 }
 
+function segmentCategories(segment: any): string[] {
+	const supplied: unknown[] = Array.isArray(segment.categories)
+		? segment.categories
+		: (() => {
+			try {
+				const parsed = JSON.parse(String(segment.categories ?? '[]'));
+				return Array.isArray(parsed) ? parsed : [];
+			} catch {
+				return [];
+			}
+		})();
+
+	return [...new Set(supplied.map((value) => normalizeCategory(value)).filter((value) => value !== 'None'))];
+}
+
+async function subscriberIdsForSegment(segment: any): Promise<number[]> {
+	const knex = strapi.db.connection;
+	const baseRows = segment.include_all
+		? await knex('mailing_list_subscriptions').select('id')
+		: segmentCategories(segment).length
+			? await knex('mailing_list_subscriptions').whereIn('category', segmentCategories(segment)).select('id')
+			: [];
+	const subscriberIds = new Set<number>(baseRows.map((row: { id: number }) => Number(row.id)));
+
+	if (!segment.include_all) {
+		const overrides = await knex(SEGMENT_MEMBERSHIP_TABLE).where({ segment_id: segment.id });
+		for (const override of overrides) {
+			const subscriptionId = Number(override.subscription_id);
+			if (override.included) subscriberIds.add(subscriptionId);
+			else subscriberIds.delete(subscriptionId);
+		}
+	}
+
+	return [...subscriberIds];
+}
+
 async function listSegmentsWithCounts() {
 	await ensureDefaultSegment();
 	const knex = strapi.db.connection;
@@ -64,24 +101,8 @@ async function listSegmentsWithCounts() {
 				};
 			}
 
-			const categories = Array.isArray(segment.categories)
-				? segment.categories
-				: (() => {
-					try {
-						const parsed = JSON.parse(String(segment.categories ?? '[]'));
-						return Array.isArray(parsed) ? parsed : [];
-					} catch {
-						return [];
-					}
-				})();
-
-			const normalizedCategories = categories
-				.map((value: unknown) => normalizeCategory(value))
-				.filter((value: string, index: number, array: string[]) => value !== 'None' ? array.indexOf(value) === index : array.indexOf(value) === index);
-
-			const countRow = normalizedCategories.length
-				? await knex('mailing_list_subscriptions').whereIn('category', normalizedCategories).count<{ count: string }>('id as count').first()
-				: { count: '0' };
+			const normalizedCategories = segmentCategories(segment);
+			const subscriberIds = await subscriberIdsForSegment(segment);
 
 			return {
 				id: segment.id,
@@ -89,7 +110,7 @@ async function listSegmentsWithCounts() {
 				description: segment.description ?? '',
 				includeAll: false,
 				categories: normalizedCategories,
-				subscriberCount: Number(countRow?.count ?? 0),
+				subscriberCount: subscriberIds.length,
 			};
 		}),
 	);
@@ -208,7 +229,30 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 			orderBy: { createdAt: 'desc' },
 		});
 
-		ctx.body = rows;
+		const segments = await strapi.db.connection(SEGMENT_TABLE).where({ include_all: false });
+		const membershipBySubscriber = new Map<number, number[]>();
+		for (const segment of segments) {
+			for (const subscriptionId of await subscriberIdsForSegment(segment)) {
+				membershipBySubscriber.set(subscriptionId, [...(membershipBySubscriber.get(subscriptionId) ?? []), Number(segment.id)]);
+			}
+		}
+
+		ctx.body = rows.map((row: any) => ({
+			...row,
+			segmentIds: membershipBySubscriber.get(Number(row.id)) ?? [],
+		}));
+	},
+
+	async deleteForAdmin(ctx) {
+		if (!(await requireAdmin(ctx))) return;
+		const id = Number(ctx.params?.id);
+		if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('Invalid subscriber id.');
+
+		const existing = await strapi.db.query(SUBSCRIPTION_UID).findOne({ where: { id }, select: ['id'] });
+		if (!existing) return ctx.notFound('Subscriber not found.');
+
+		await strapi.db.query(SUBSCRIPTION_UID).delete({ where: { id } });
+		ctx.status = 204;
 	},
 
 	async listSegmentsForAdmin(ctx) {
@@ -294,6 +338,41 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 
 		await knex(SEGMENT_TABLE).where({ id }).delete();
 		ctx.body = await listSegmentsWithCounts();
+	},
+
+	async updateSegmentMembersForAdmin(ctx) {
+		if (!(await requireAdmin(ctx))) return;
+		const id = Number(ctx.params?.id);
+		if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('Invalid segment id.');
+
+		const action = String(ctx.request.body?.action ?? '');
+		if (!['add', 'remove'].includes(action)) return ctx.badRequest('Action must be add or remove.');
+		const suppliedIds = Array.isArray(ctx.request.body?.subscriptionIds) ? ctx.request.body.subscriptionIds : [];
+		const subscriptionIds = [...new Set(suppliedIds.map(Number).filter((value: number) => Number.isInteger(value) && value > 0))];
+		if (!subscriptionIds.length) return ctx.badRequest('Select at least one subscriber.');
+		if (subscriptionIds.length > MAX_IMPORT_SIZE) return ctx.badRequest(`A maximum of ${MAX_IMPORT_SIZE} subscribers can be updated at once.`);
+
+		const knex = strapi.db.connection;
+		const segment = await knex(SEGMENT_TABLE).where({ id }).first();
+		if (!segment) return ctx.notFound('Segment not found.');
+		if (segment.include_all) return ctx.badRequest('The default All Users segment cannot be edited.');
+
+		const existingSubscribers = await knex('mailing_list_subscriptions').whereIn('id', subscriptionIds).select('id');
+		if (existingSubscribers.length !== subscriptionIds.length) return ctx.badRequest('One or more selected subscribers no longer exist.');
+
+		const now = new Date();
+		await knex(SEGMENT_MEMBERSHIP_TABLE)
+			.insert(subscriptionIds.map((subscriptionId) => ({
+				segment_id: id,
+				subscription_id: subscriptionId,
+				included: action === 'add',
+				created_at: now,
+				updated_at: now,
+			})))
+			.onConflict(['segment_id', 'subscription_id'])
+			.merge({ included: action === 'add', updated_at: now });
+
+		ctx.body = { updated: subscriptionIds.length, action };
 	},
 
 	async exportCsvForAdmin(ctx) {
@@ -388,32 +467,15 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 				orderBy: { createdAt: 'asc' },
 			});
 		} else {
-			const categories = new Set<string>();
+			const subscriberIds = new Set<number>();
 			for (const segment of selectedSegments) {
-				const parsedCategories = Array.isArray(segment.categories)
-					? segment.categories
-					: (() => {
-						try {
-							const parsed = JSON.parse(String(segment.categories ?? '[]'));
-							return Array.isArray(parsed) ? parsed : [];
-						} catch {
-							return [];
-						}
-					})();
-
-				for (const value of parsedCategories) {
-					const normalized = normalizeCategory(value);
-					if (normalized !== 'None') categories.add(normalized);
-				}
+				for (const subscriptionId of await subscriberIdsForSegment(segment)) subscriberIds.add(subscriptionId);
 			}
-
-			if (!categories.size) {
-				return ctx.badRequest('Selected segments do not contain any categories.');
-			}
+			if (!subscriberIds.size) return ctx.badRequest('Selected segments do not contain any subscribers.');
 
 			subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({
 				select: ['email'],
-				where: { category: { $in: [...categories] } },
+				where: { id: { $in: [...subscriberIds] } },
 				orderBy: { createdAt: 'asc' },
 			});
 		}

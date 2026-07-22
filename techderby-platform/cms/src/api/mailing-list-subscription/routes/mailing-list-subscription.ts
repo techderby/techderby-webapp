@@ -16,6 +16,11 @@ export default {
 			handler: 'mailing-list-subscription.listForAdmin',
 		},
 		{
+			method: 'DELETE',
+			path: '/mailing-list-subscriptions/admin/subscribers/:id',
+			handler: 'mailing-list-subscription.deleteForAdmin',
+		},
+		{
 			method: 'GET',
 			path: '/mailing-list-subscriptions/admin',
 			handler: 'mailing-list-subscription.listForAdmin',
@@ -79,6 +84,11 @@ export default {
 			method: 'DELETE',
 			path: '/mailing-list-subscriptions/admin/segments/:id',
 			handler: 'mailing-list-subscription.deleteSegmentForAdmin',
+		},
+		{
+			method: 'POST',
+			path: '/mailing-list-subscriptions/admin/segments/:id/members',
+			handler: 'mailing-list-subscription.updateSegmentMembersForAdmin',
 		},
 		{
 			method: 'GET',

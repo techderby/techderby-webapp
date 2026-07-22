@@ -10,6 +10,7 @@ type MailingListRow = {
   email: string;
   category: MailingListCategory;
   createdAt: string;
+  segmentIds: number[];
 };
 
 type ImportResult = {
@@ -58,6 +59,9 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedSegmentId, setSelectedSegmentId] = useState<number | 'all-users'>('all-users');
+  const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
+  const [membershipSegmentId, setMembershipSegmentId] = useState<number | ''>('');
+  const [isUpdatingRows, setIsUpdatingRows] = useState(false);
 
   const [segmentName, setSegmentName] = useState('');
   const [segmentDescription, setSegmentDescription] = useState('');
@@ -75,7 +79,7 @@ export default function AdminPage() {
     const segment = segments.find((entry) => entry.id === selectedSegmentId);
     const inSegment = rows.filter((row) => {
       if (!segment || segment.includeAll) return true;
-      return segment.categories.includes(row.category);
+      return row.segmentIds.includes(segment.id);
     });
     const inCategory = selectedCategory === 'All'
       ? inSegment
@@ -83,6 +87,8 @@ export default function AdminPage() {
     if (!query) return inCategory;
     return inCategory.filter((row) => row.email.toLowerCase().includes(query));
   }, [rows, search, selectedCategory, segments, selectedSegmentId]);
+
+  const allFilteredRowsSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRowIds.includes(row.id));
 
   async function loadMailingList(showSpinner = true) {
     if (showSpinner) setIsLoading(true);
@@ -284,6 +290,62 @@ export default function AdminPage() {
     }
   }
 
+  function toggleAllFilteredRows() {
+    setSelectedRowIds((current) => {
+      if (allFilteredRowsSelected) {
+        const filteredIds = new Set(filteredRows.map((row) => row.id));
+        return current.filter((id) => !filteredIds.has(id));
+      }
+      return [...new Set([...current, ...filteredRows.map((row) => row.id)])];
+    });
+  }
+
+  async function updateSelectedSegmentMembership(action: 'add' | 'remove') {
+    if (!membershipSegmentId) {
+      setError('Select a segment first.');
+      return;
+    }
+    if (!selectedRowIds.length) {
+      setError('Select at least one subscriber.');
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    setIsUpdatingRows(true);
+    try {
+      await apiClient.updateMailingListSegmentMembersForAdmin(membershipSegmentId, selectedRowIds, action);
+      await Promise.all([loadMailingList(false), loadSegments()]);
+      setSelectedRowIds([]);
+      setMessage(`${selectedRowIds.length} subscriber${selectedRowIds.length === 1 ? '' : 's'} ${action === 'add' ? 'added to' : 'removed from'} the segment.`);
+    } catch {
+      setError(`Could not ${action} the selected subscribers ${action === 'add' ? 'to' : 'from'} the segment.`);
+    } finally {
+      setIsUpdatingRows(false);
+    }
+  }
+
+  async function deleteSelectedRows() {
+    if (!selectedRowIds.length) return;
+    if (!window.confirm(`Delete ${selectedRowIds.length} selected subscriber${selectedRowIds.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+
+    setError(null);
+    setMessage(null);
+    setIsUpdatingRows(true);
+    try {
+      await Promise.all(selectedRowIds.map((id) => apiClient.deleteMailingListSubscriptionForAdmin(id)));
+      const deletedCount = selectedRowIds.length;
+      setSelectedRowIds([]);
+      await Promise.all([loadMailingList(false), loadSegments()]);
+      setMessage(`${deletedCount} subscriber${deletedCount === 1 ? '' : 's'} deleted.`);
+    } catch {
+      setError('Could not delete all selected subscribers. Refresh the list before trying again.');
+      await loadMailingList(false);
+    } finally {
+      setIsUpdatingRows(false);
+    }
+  }
+
   return (
     <div className="p-6 md:p-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -390,10 +452,34 @@ export default function AdminPage() {
               {search ? <span>{filteredRows.length} of {rows.length} subscribers match</span> : null}
             </div>
 
+            {selectedRowIds.length > 0 ? (
+              <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3">
+                <span className="mr-1 text-xs font-semibold text-sky-100">{selectedRowIds.length} selected</span>
+                <select
+                  value={membershipSegmentId}
+                  onChange={(event) => setMembershipSegmentId(event.target.value ? Number(event.target.value) : '')}
+                  aria-label="Segment for selected subscribers"
+                  className="h-9 rounded-lg border border-white/15 bg-slate-900 px-3 text-xs text-white outline-none"
+                >
+                  <option value="">Select segment…</option>
+                  {segments.filter((segment) => !segment.includeAll).map((segment) => (
+                    <option key={segment.id} value={segment.id}>{segment.name}</option>
+                  ))}
+                </select>
+                <button type="button" disabled={isUpdatingRows || !membershipSegmentId} onClick={() => updateSelectedSegmentMembership('add')} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40">Add to segment</button>
+                <button type="button" disabled={isUpdatingRows || !membershipSegmentId} onClick={() => updateSelectedSegmentMembership('remove')} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 disabled:opacity-40">Remove from segment</button>
+                <button type="button" disabled={isUpdatingRows} onClick={deleteSelectedRows} className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-40">Delete selected</button>
+                <button type="button" disabled={isUpdatingRows} onClick={() => setSelectedRowIds([])} className="px-2 py-2 text-xs font-semibold text-white/55 hover:text-white">Clear</button>
+              </div>
+            ) : null}
+
             <div className="mt-5 overflow-x-auto rounded-xl border border-white/10">
               <table className="min-w-full divide-y divide-white/10 text-sm">
                 <thead className="bg-white/5">
                   <tr>
+                    <th className="w-12 px-4 py-2.5 text-left">
+                      <input type="checkbox" checked={allFilteredRowsSelected} onChange={toggleAllFilteredRows} aria-label="Select all visible subscribers" className="h-4 w-4 rounded border-white/20 bg-white/5" />
+                    </th>
                     <th className="px-4 py-2.5 text-left font-semibold text-white/80">Email</th>
                     <th className="px-4 py-2.5 text-left font-semibold text-white/80">Category</th>
                     <th className="px-4 py-2.5 text-left font-semibold text-white/80">Subscribed</th>
@@ -402,19 +488,28 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-white/8 bg-transparent">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-4 text-white/45">Loading subscribers...</td>
+                      <td colSpan={4} className="px-4 py-4 text-white/45">Loading subscribers...</td>
                     </tr>
                   ) : rows.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-4 text-white/45">No mailing list subscribers yet.</td>
+                      <td colSpan={4} className="px-4 py-4 text-white/45">No mailing list subscribers yet.</td>
                     </tr>
                   ) : filteredRows.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-10 text-center text-white/45">No subscribers match “{search}”.</td>
+                      <td colSpan={4} className="px-4 py-10 text-center text-white/45">No subscribers match “{search}”.</td>
                     </tr>
                   ) : (
                     filteredRows.map((row) => (
                       <tr key={row.id} className="transition hover:bg-white/[0.03]">
+                        <td className="px-4 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={selectedRowIds.includes(row.id)}
+                            onChange={() => setSelectedRowIds((current) => current.includes(row.id) ? current.filter((id) => id !== row.id) : [...current, row.id])}
+                            aria-label={`Select ${row.email}`}
+                            className="h-4 w-4 rounded border-white/20 bg-white/5"
+                          />
+                        </td>
                         <td className="px-4 py-2.5 text-white/90">{row.email}</td>
                         <td className="px-4 py-2.5 text-white/70">{row.category}</td>
                         <td className="px-4 py-2.5 text-white/60">{formatDate(row.createdAt)}</td>

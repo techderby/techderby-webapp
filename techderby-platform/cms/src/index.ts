@@ -43,6 +43,7 @@ const AUTHENTICATED_ACTIONS = [
   'api::editorial.editorial.unpublishArticle',
   'api::editorial.editorial.deleteArticle',
   'api::mailing-list-subscription.mailing-list-subscription.listForAdmin',
+  'api::mailing-list-subscription.mailing-list-subscription.deleteForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.exportCsvForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.importForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.sendNewsletterForAdmin',
@@ -51,6 +52,7 @@ const AUTHENTICATED_ACTIONS = [
   'api::mailing-list-subscription.mailing-list-subscription.createSegmentForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.updateSegmentForAdmin',
   'api::mailing-list-subscription.mailing-list-subscription.deleteSegmentForAdmin',
+  'api::mailing-list-subscription.mailing-list-subscription.updateSegmentMembersForAdmin',
 ];
 
 const DEFAULT_SEGMENT_NAME = 'All Users';
@@ -295,6 +297,18 @@ async function ensureMailingListSegments() {
       include_all: true,
       created_at: new Date(),
       updated_at: new Date(),
+    });
+  }
+
+  const membershipTable = 'mailing_list_segment_memberships';
+  if (!(await knex.schema.hasTable(membershipTable))) {
+    await knex.schema.createTable(membershipTable, (table: any) => {
+      table.integer('segment_id').notNullable().references('id').inTable(tableName).onDelete('CASCADE');
+      table.integer('subscription_id').notNullable().references('id').inTable('mailing_list_subscriptions').onDelete('CASCADE');
+      table.boolean('included').notNullable();
+      table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+      table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now());
+      table.primary(['segment_id', 'subscription_id']);
     });
   }
 }

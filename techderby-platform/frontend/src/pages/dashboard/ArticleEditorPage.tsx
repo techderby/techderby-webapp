@@ -4,7 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { sanitizeHtml, sanitizeMediaUrl } from '../../lib/html-sanitizer';
 import { ARTICLE_CATEGORIES_BY_GROUP } from '../../constants/article-categories';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Insight } from '../../types/content';
 
 const CATEGORIES = ARTICLE_CATEGORIES_BY_GROUP;
@@ -18,7 +20,7 @@ function escapeHtml(value: string) {
 
 function previewMarkdown(markdown: string) {
   const segments = markdown.split(/(```[a-zA-Z0-9_+#.-]*\n[\s\S]*?```)/g);
-  return segments.map((segment) => {
+  return sanitizeHtml(segments.map((segment) => {
     const code = segment.match(/^```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```$/);
     if (code) return `<div class="my-5 overflow-hidden rounded-xl bg-slate-950"><div class="border-b border-slate-700 px-4 py-2 text-xs font-bold uppercase text-slate-400">${escapeHtml(code[1] || 'text')}</div><pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-100"><code>${escapeHtml(code[2])}</code></pre></div>`;
     return segment
@@ -38,11 +40,12 @@ function previewMarkdown(markdown: string) {
         return line.trim() ? `<p class="mb-4 leading-8 text-slate-700">${safe}</p>` : '';
       })
       .join('');
-  }).join('');
+  }).join(''));
 }
 
 export default function ArticleEditorPage() {
   const { documentId } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -54,9 +57,17 @@ export default function ArticleEditorPage() {
   const [uploadingInline, setUploadingInline] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const role = user?.memberRole ?? 'member';
+  const isAdmin = role === 'admin' || role === 'super-admin';
   const query = useQuery<{ data: Insight[] }>({
-    queryKey: ['my-articles'],
-    queryFn: () => apiClient.getMyArticles().then((response) => response.data),
+    queryKey: ['article-editor', role],
+    queryFn: async () => {
+      if (isAdmin) {
+        const response = await apiClient.getEditorialAdminOverview();
+        return { data: (response.data?.articles ?? []) as Insight[] };
+      }
+      return apiClient.getMyArticles().then((response) => response.data);
+    },
     enabled: Boolean(documentId),
   });
   const article = query.data?.data?.find((item) => item.documentId === documentId);
@@ -72,7 +83,7 @@ export default function ArticleEditorPage() {
     });
   }, [article]);
 
-  const preview = useMemo(() => image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage), [image, article]);
+  const preview = useMemo(() => sanitizeMediaUrl(image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage)), [image, article]);
   useEffect(() => () => { if (image && preview) URL.revokeObjectURL(preview); }, [image, preview]);
 
   function insert(before: string, after = '', placeholder = 'text') {
@@ -109,7 +120,7 @@ export default function ArticleEditorPage() {
     }
   }
 
-  async function save(event: FormEvent, submitForReview = false) {
+  async function save(event: FormEvent, action: 'draft' | 'submit' | 'publish') {
     event.preventDefault();
     if (!documentId && !image) {
       setError('Select a featured image.');
@@ -123,8 +134,13 @@ export default function ArticleEditorPage() {
       if (image) payload.append('featuredImage', image);
       const response = documentId ? await apiClient.updateArticle(documentId, payload) : await apiClient.createArticle(payload);
       const saved = response.data?.data as Insight;
-      if (submitForReview && saved.documentId) await apiClient.submitArticle(saved.documentId);
-      await queryClient.invalidateQueries({ queryKey: ['my-articles'] });
+      if (action === 'submit' && saved.documentId) await apiClient.submitArticle(saved.documentId);
+      if (action === 'publish' && saved.documentId) await apiClient.reviewArticle(saved.documentId, 'published', '');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-articles'] }),
+        queryClient.invalidateQueries({ queryKey: ['articles-dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['editorial-admin'] }),
+      ]);
       navigate('/dashboard/articles');
     } catch (saveError) {
       setError(axios.isAxiosError(saveError) ? saveError.response?.data?.error?.message ?? 'Could not save article.' : 'Could not save article.');
@@ -201,8 +217,8 @@ export default function ArticleEditorPage() {
 
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
           <div className="flex flex-wrap justify-end gap-3">
-            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, false)} className="rounded-xl border border-white/15 px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/5">Save draft</button>
-            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, true)} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">{saving ? 'Saving…' : 'Submit for review'}</button>
+            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, 'draft')} className="rounded-xl border border-white/15 px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/5">Save draft</button>
+            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, isAdmin ? 'publish' : 'submit')} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">{saving ? 'Saving…' : isAdmin ? 'Publish article' : 'Submit for review'}</button>
           </div>
         </form>
       </div>

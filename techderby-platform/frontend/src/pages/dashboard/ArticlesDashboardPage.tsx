@@ -81,9 +81,7 @@ export default function ArticlesDashboardPage() {
                 : 'Write, submit, revise, and track the performance of your work.'}
             </p>
           </div>
-          {!isAdmin ? (
-            <Link to="/dashboard/articles/new" className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">Write an article</Link>
-          ) : null}
+          <Link to="/dashboard/articles/new" className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">Write an article</Link>
         </div>
 
         <div className="mt-7 flex flex-wrap gap-2">

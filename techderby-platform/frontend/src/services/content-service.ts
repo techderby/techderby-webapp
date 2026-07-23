@@ -38,7 +38,7 @@ const eventSchema: z.ZodType<Event, z.ZodTypeDef, unknown> = z.object({
   documentId: z.string().optional(),
   title: z.string(),
   slug: z.string(),
-  featuredImage: z.string().optional().default(''),
+  featuredImage: z.preprocess((value) => value ?? '', z.string()),
   description: z.string(),
   date: z.string(),
   venue: z.string(),

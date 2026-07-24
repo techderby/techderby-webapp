@@ -12,6 +12,30 @@ export default {
 		},
 		{
 			method: 'GET',
+			path: '/mailing-list-subscriptions/unsubscribe/:token',
+			handler: 'mailing-list-subscription.unsubscribeDetails',
+			config: {
+				auth: false,
+			},
+		},
+		{
+			method: 'POST',
+			path: '/mailing-list-subscriptions/unsubscribe/:token',
+			handler: 'mailing-list-subscription.unsubscribe',
+			config: {
+				auth: false,
+			},
+		},
+		{
+			method: 'POST',
+			path: '/mailing-list-subscriptions/unsubscribe/:token/one-click',
+			handler: 'mailing-list-subscription.oneClickUnsubscribe',
+			config: {
+				auth: false,
+			},
+		},
+		{
+			method: 'GET',
 			path: '/mailing-list-subscriptions/admin/list',
 			handler: 'mailing-list-subscription.listForAdmin',
 		},

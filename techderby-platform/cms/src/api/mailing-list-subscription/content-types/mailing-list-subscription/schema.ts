@@ -17,5 +17,30 @@ export default {
       default: 'None',
       required: true,
     },
+    subscriptionStatus: {
+      type: 'enumeration',
+      enum: ['subscribed', 'unsubscribed'],
+      default: 'subscribed',
+      required: true,
+    },
+    unsubscribedAt: { type: 'datetime' },
+    unsubscribeReason: {
+      type: 'enumeration',
+      enum: [
+        'too-many-emails',
+        'content-not-relevant',
+        'no-longer-interested',
+        'did-not-sign-up',
+        'privacy-concerns',
+        'other',
+        'not-provided',
+      ],
+    },
+    unsubscribeReasonDetails: { type: 'text' },
+    unsubscribeSource: {
+      type: 'enumeration',
+      enum: ['confirmation-page', 'email-one-click'],
+    },
+    resubscribedAt: { type: 'datetime' },
   },
 };

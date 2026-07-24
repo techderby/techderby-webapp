@@ -29,5 +29,8 @@
   },
   "strapi": {
     "uuid": "6d4dba8a-a3e0-43ee-a2ec-2b8ef6bd2141"
+  },
+  "devDependencies": {
+    "@types/sanitize-html": "^2.16.1"
   }
 }

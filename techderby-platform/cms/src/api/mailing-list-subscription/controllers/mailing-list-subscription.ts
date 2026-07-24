@@ -1,5 +1,12 @@
 import { factories } from '@strapi/strapi';
 import { MAILING_LIST_CATEGORIES } from '../../../constants/mailing-list';
+import {
+	isValidUnsubscribeToken,
+	subscriptionIdFromToken,
+	unsubscribeHeaders,
+	unsubscribeLinks,
+	type MailingListRecipient,
+} from '../../../utils/mailing-list-unsubscribe';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const sanitizeHtml = require('sanitize-html') as (html: string, options?: Record<string, unknown>) => string;
@@ -14,6 +21,15 @@ const SEND_CONCURRENCY = 5;
 const SEGMENT_TABLE = 'mailing_list_segments';
 const SEGMENT_MEMBERSHIP_TABLE = 'mailing_list_segment_memberships';
 const DEFAULT_SEGMENT_NAME = 'All Users';
+const UNSUBSCRIBE_URL_PLACEHOLDER = '__TECH_DERBY_UNSUBSCRIBE_URL__';
+const UNSUBSCRIBE_REASONS = new Set([
+	'too-many-emails',
+	'content-not-relevant',
+	'no-longer-interested',
+	'did-not-sign-up',
+	'privacy-concerns',
+	'other',
+]);
 const NEWSLETTER_IMAGE_EXTENSIONS: Record<string, string> = {
 	'image/jpeg': '.jpg',
 	'image/png': '.png',
@@ -65,10 +81,13 @@ function segmentCategories(segment: any): string[] {
 
 async function subscriberIdsForSegment(segment: any): Promise<number[]> {
 	const knex = strapi.db.connection;
+	const activeSubscriptions = () => knex('mailing_list_subscriptions').where({ subscription_status: 'subscribed' });
+	const activeRows = await activeSubscriptions().select('id');
+	const activeIds = new Set<number>(activeRows.map((row: { id: number }) => Number(row.id)));
 	const baseRows = segment.include_all
-		? await knex('mailing_list_subscriptions').select('id')
+		? activeRows
 		: segmentCategories(segment).length
-			? await knex('mailing_list_subscriptions').whereIn('category', segmentCategories(segment)).select('id')
+			? await activeSubscriptions().whereIn('category', segmentCategories(segment)).select('id')
 			: [];
 	const subscriberIds = new Set<number>(baseRows.map((row: { id: number }) => Number(row.id)));
 
@@ -76,7 +95,7 @@ async function subscriberIdsForSegment(segment: any): Promise<number[]> {
 		const overrides = await knex(SEGMENT_MEMBERSHIP_TABLE).where({ segment_id: segment.id });
 		for (const override of overrides) {
 			const subscriptionId = Number(override.subscription_id);
-			if (override.included) subscriberIds.add(subscriptionId);
+			if (override.included && activeIds.has(subscriptionId)) subscriberIds.add(subscriptionId);
 			else subscriberIds.delete(subscriptionId);
 		}
 	}
@@ -88,7 +107,10 @@ async function listSegmentsWithCounts() {
 	await ensureDefaultSegment();
 	const knex = strapi.db.connection;
 	const segments = await knex(SEGMENT_TABLE).orderBy('created_at', 'asc');
-	const allCountRow = await knex('mailing_list_subscriptions').count<{ count: string }>('id as count').first();
+	const allCountRow = await knex('mailing_list_subscriptions')
+		.where({ subscription_status: 'subscribed' })
+		.count<{ count: string }>('id as count')
+		.first();
 	const allCount = Number(allCountRow?.count ?? 0);
 
 	const withCounts = await Promise.all(
@@ -153,9 +175,29 @@ function escapeCsv(value: unknown) {
 }
 
 function sendCsv(ctx: any, rows: Array<Record<string, unknown>>) {
-	const lines = [['id', 'email', 'category', 'createdAt'].join(',')];
+	const lines = [[
+		'id',
+		'email',
+		'category',
+		'subscriptionStatus',
+		'subscribedAt',
+		'unsubscribedAt',
+		'unsubscribeReason',
+		'unsubscribeReasonDetails',
+		'unsubscribeSource',
+	].join(',')];
 	for (const row of rows) {
-		lines.push([row.id, row.email, row.category ?? 'None', row.createdAt].map(escapeCsv).join(','));
+		lines.push([
+			row.id,
+			row.email,
+			row.category ?? 'None',
+			row.subscriptionStatus ?? 'subscribed',
+			row.createdAt,
+			row.unsubscribedAt,
+			row.unsubscribeReason,
+			row.unsubscribeReasonDetails,
+			row.unsubscribeSource,
+		].map(escapeCsv).join(','));
 	}
 
 	const timestamp = new Date().toISOString().slice(0, 10);
@@ -198,7 +240,7 @@ function prepareBrandedNewsletter(html: string) {
 			? `<a href="${frontendUrl}" style="text-decoration:none;"><img src="${logoSource}" width="150" alt="Tech Derby" style="display:block;width:150px;max-width:100%;height:auto;border:0;"></a>`
 			: `<a href="${frontendUrl}" style="color:#ffffff;text-decoration:none;font-size:24px;font-weight:800;">Tech Derby</a>`
 	}</td></tr></table>`;
-	const footer = `<table role="presentation" data-td-server-brand="footer" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:26px 36px;background:#0f172a;"><p style="margin:0 0 8px;color:#ffffff;font-size:14px;line-height:21px;font-weight:700;">Learn. Connect. Build Derby's tech future.</p><p style="margin:0;color:#94a3b8;font-size:12px;line-height:19px;">You received this email because you joined the Tech Derby mailing list.</p><p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:18px;">&copy; ${new Date().getFullYear()} Tech Derby &middot; <a href="${frontendUrl}" style="color:#38bdf8;text-decoration:none;">Visit our website</a></p></td></tr></table>`;
+	const footer = `<table role="presentation" data-td-server-brand="footer" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:26px 36px;background:#0f172a;"><p style="margin:0 0 8px;color:#ffffff;font-size:14px;line-height:21px;font-weight:700;">Learn. Connect. Build Derby's tech future.</p><p style="margin:0;color:#94a3b8;font-size:12px;line-height:19px;">You received this email because you joined the Tech Derby mailing list.</p><p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:18px;">&copy; ${new Date().getFullYear()} Tech Derby &middot; <a href="${frontendUrl}" style="color:#38bdf8;text-decoration:none;">Visit our website</a> &middot; <a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#38bdf8;text-decoration:none;">Unsubscribe</a></p></td></tr></table>`;
 
 	let brandedHtml = html;
 	const logoPattern = /<img\b[^>]*data-td-brand-logo=["']true["'][^>]*>/i;
@@ -212,7 +254,13 @@ function prepareBrandedNewsletter(html: string) {
 		brandedHtml = `${masthead}${brandedHtml}`;
 	}
 
-	if (!/data-td-brand-footer=["']true["']/i.test(brandedHtml)) {
+	const brandedFooterPattern = /(<td\b[^>]*data-td-brand-footer=["']true["'][^>]*>)([\s\S]*?)(<\/td>)/i;
+	if (brandedFooterPattern.test(brandedHtml)) {
+		brandedHtml = brandedHtml.replace(
+			brandedFooterPattern,
+			`$1$2<p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:18px;"><a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#38bdf8;text-decoration:none;">Unsubscribe from the mailing list</a></p>$3`,
+		);
+	} else {
 		brandedHtml = /<\/body>/i.test(brandedHtml)
 			? brandedHtml.replace(/<\/body>/i, `${footer}</body>`)
 			: `${brandedHtml}${footer}`;
@@ -221,12 +269,135 @@ function prepareBrandedNewsletter(html: string) {
 	return { html: brandedHtml, attachments };
 }
 
+async function subscriptionFromToken(token: unknown) {
+	const id = subscriptionIdFromToken(token);
+	if (!id) return null;
+	const subscription = await strapi.db.query(SUBSCRIPTION_UID).findOne({
+		where: { id },
+		select: [
+			'id',
+			'email',
+			'subscriptionStatus',
+			'unsubscribedAt',
+			'unsubscribeReason',
+			'unsubscribeReasonDetails',
+			'unsubscribeSource',
+		],
+	});
+	if (!subscription || !isValidUnsubscribeToken(token, subscription as MailingListRecipient)) return null;
+	return subscription as MailingListRecipient & Record<string, any>;
+}
+
 export default factories.createCoreController('api::mailing-list-subscription.mailing-list-subscription', ({ strapi }) => ({
+	async create(ctx) {
+		const email = String(ctx.request.body?.data?.email ?? '').trim().toLowerCase();
+		const category = normalizeCategory(ctx.request.body?.data?.category);
+		if (!EMAIL_PATTERN.test(email)) return ctx.badRequest('Enter a valid email address.');
+
+		const existing = await strapi.db.query(SUBSCRIPTION_UID).findOne({
+			where: { email },
+			select: ['id', 'email', 'subscriptionStatus'],
+		});
+
+		if (existing) {
+			if (existing.subscriptionStatus === 'unsubscribed') {
+				await strapi.db.query(SUBSCRIPTION_UID).update({
+					where: { id: existing.id },
+					data: {
+						category,
+						subscriptionStatus: 'subscribed',
+						resubscribedAt: new Date().toISOString(),
+					},
+				});
+			}
+			ctx.body = { data: { subscribed: true } };
+			return;
+		}
+
+		await strapi.db.query(SUBSCRIPTION_UID).create({
+			data: { email, category, subscriptionStatus: 'subscribed' },
+		});
+		ctx.status = 201;
+		ctx.body = { data: { subscribed: true } };
+	},
+
+	async unsubscribeDetails(ctx) {
+		ctx.set('Cache-Control', 'no-store');
+		const subscription = await subscriptionFromToken(ctx.params?.token);
+		if (!subscription) return ctx.badRequest('This unsubscribe link is invalid.');
+
+		ctx.body = {
+			email: subscription.email,
+			status: subscription.subscriptionStatus ?? 'subscribed',
+			unsubscribedAt: subscription.unsubscribedAt ?? null,
+		};
+	},
+
+	async unsubscribe(ctx) {
+		ctx.set('Cache-Control', 'no-store');
+		const subscription = await subscriptionFromToken(ctx.params?.token);
+		if (!subscription) return ctx.badRequest('This unsubscribe link is invalid.');
+		if (subscription.subscriptionStatus === 'unsubscribed') {
+			ctx.body = { unsubscribed: true, alreadyUnsubscribed: true };
+			return;
+		}
+
+		const reason = String(ctx.request.body?.reason ?? '').trim();
+		const details = String(ctx.request.body?.details ?? '').trim();
+		if (!UNSUBSCRIBE_REASONS.has(reason)) return ctx.badRequest('Select a reason for unsubscribing.');
+		if (reason === 'other' && !details) return ctx.badRequest('Tell us your reason for unsubscribing.');
+		if (details.length > 1_000) return ctx.badRequest('The additional reason must be 1,000 characters or fewer.');
+
+		await strapi.db.query(SUBSCRIPTION_UID).update({
+			where: { id: subscription.id },
+			data: {
+				subscriptionStatus: 'unsubscribed',
+				unsubscribedAt: new Date().toISOString(),
+				unsubscribeReason: reason,
+				unsubscribeReasonDetails: details || null,
+				unsubscribeSource: 'confirmation-page',
+			},
+		});
+		ctx.body = { unsubscribed: true, alreadyUnsubscribed: false };
+	},
+
+	async oneClickUnsubscribe(ctx) {
+		ctx.set('Cache-Control', 'no-store');
+		const subscription = await subscriptionFromToken(ctx.params?.token);
+		if (!subscription) return ctx.badRequest('This unsubscribe link is invalid.');
+
+		if (subscription.subscriptionStatus !== 'unsubscribed') {
+			await strapi.db.query(SUBSCRIPTION_UID).update({
+				where: { id: subscription.id },
+				data: {
+					subscriptionStatus: 'unsubscribed',
+					unsubscribedAt: new Date().toISOString(),
+					unsubscribeReason: 'not-provided',
+					unsubscribeReasonDetails: null,
+					unsubscribeSource: 'email-one-click',
+				},
+			});
+		}
+
+		ctx.body = { unsubscribed: true };
+	},
+
 	async listForAdmin(ctx) {
 		if (!(await requireAdmin(ctx))) return;
 
 		const rows = await strapi.db.query(SUBSCRIPTION_UID).findMany({
-			select: ['id', 'email', 'category', 'createdAt'],
+			select: [
+				'id',
+				'email',
+				'category',
+				'createdAt',
+				'subscriptionStatus',
+				'unsubscribedAt',
+				'unsubscribeReason',
+				'unsubscribeReasonDetails',
+				'unsubscribeSource',
+				'resubscribedAt',
+			],
 			orderBy: { createdAt: 'desc' },
 		});
 
@@ -272,7 +443,7 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		const updated = await strapi.db.query(SUBSCRIPTION_UID).update({
 			where: { id },
 			data: { category },
-			select: ['id', 'email', 'category', 'createdAt'],
+			select: ['id', 'email', 'category', 'createdAt', 'subscriptionStatus'],
 		});
 		ctx.body = updated;
 	},
@@ -379,7 +550,10 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		if (!segment) return ctx.notFound('Segment not found.');
 		if (segment.include_all) return ctx.badRequest('The default All Users segment cannot be edited.');
 
-		const existingSubscribers = await knex('mailing_list_subscriptions').whereIn('id', subscriptionIds).select('id');
+		const existingSubscribers = await knex('mailing_list_subscriptions')
+			.whereIn('id', subscriptionIds)
+			.where({ subscription_status: 'subscribed' })
+			.select('id');
 		if (existingSubscribers.length !== subscriptionIds.length) return ctx.badRequest('One or more selected subscribers no longer exist.');
 
 		const now = new Date();
@@ -401,7 +575,17 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		if (!(await requireAdmin(ctx))) return;
 
 		const rows = await strapi.db.query(SUBSCRIPTION_UID).findMany({
-			select: ['id', 'email', 'category', 'createdAt'],
+			select: [
+				'id',
+				'email',
+				'category',
+				'createdAt',
+				'subscriptionStatus',
+				'unsubscribedAt',
+				'unsubscribeReason',
+				'unsubscribeReasonDetails',
+				'unsubscribeSource',
+			],
 			orderBy: { createdAt: 'desc' },
 		});
 		sendCsv(ctx, rows);
@@ -424,7 +608,7 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 
 		const existingRows = valid.length
 			? await strapi.db.query(SUBSCRIPTION_UID).findMany({
-					select: ['email'],
+					select: ['id', 'email', 'subscriptionStatus'],
 					where: { email: { $in: valid } },
 				})
 			: [];
@@ -432,14 +616,16 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		const toImport = valid.filter((email) => !existing.has(email));
 
 		for (const email of toImport) {
-			await strapi.db.query(SUBSCRIPTION_UID).create({ data: { email, category: 'None' } });
+			await strapi.db.query(SUBSCRIPTION_UID).create({
+				data: { email, category: 'None', subscriptionStatus: 'subscribed' },
+			});
 		}
 
 		ctx.body = {
 			received: supplied.length,
 			valid: valid.length,
 			imported: toImport.length,
-			skippedExisting: valid.length - toImport.length,
+			skippedExisting: existingRows.length,
 			invalid,
 		};
 	},
@@ -481,11 +667,12 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		}
 
 		const includesAll = selectedSegments.some((segment: any) => Boolean(segment.include_all));
-		let subscribers: Array<{ email?: string }> = [];
+		let subscribers: Array<{ id?: number; email?: string }> = [];
 
 		if (includesAll) {
 			subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({
-				select: ['email'],
+				select: ['id', 'email'],
+				where: { subscriptionStatus: 'subscribed' },
 				orderBy: { createdAt: 'asc' },
 			});
 		} else {
@@ -496,40 +683,50 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 			if (!subscriberIds.size) return ctx.badRequest('Selected segments do not contain any subscribers.');
 
 			subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({
-				select: ['email'],
-				where: { id: { $in: [...subscriberIds] } },
+				select: ['id', 'email'],
+				where: {
+					id: { $in: [...subscriberIds] },
+					subscriptionStatus: 'subscribed',
+				},
 				orderBy: { createdAt: 'asc' },
 			});
 		}
 		const recipients = [
-			...new Set(
+			...new Map(
 				subscribers
-					.map((subscriber: { email?: string }) => String(subscriber.email ?? '').trim().toLowerCase())
-					.filter((email: string) => EMAIL_PATTERN.test(email)),
-			),
-		];
+					.map((subscriber) => ({
+						id: Number(subscriber.id),
+						email: String(subscriber.email ?? '').trim().toLowerCase(),
+					}))
+					.filter((subscriber) => Number.isInteger(subscriber.id) && subscriber.id > 0 && EMAIL_PATTERN.test(subscriber.email))
+					.map((subscriber) => [subscriber.email, subscriber]),
+			).values(),
+		] as MailingListRecipient[];
 
 		if (recipients.length === 0) {
 			return ctx.badRequest('There are no subscribers in the mailing list.');
 		}
 
 		const brandedNewsletter = prepareBrandedNewsletter(html);
-		const plainText = htmlToPlainText(brandedNewsletter.html);
 		let sent = 0;
 		let failed = 0;
 
 		for (let index = 0; index < recipients.length; index += SEND_CONCURRENCY) {
 			const batch = recipients.slice(index, index + SEND_CONCURRENCY);
 			const results = await Promise.allSettled(
-				batch.map((email) =>
-					strapi.plugin('email').service('email').send({
-						to: email,
+				batch.map((recipient) => {
+					const links = unsubscribeLinks(recipient);
+					const personalisedHtml = brandedNewsletter.html.split(UNSUBSCRIBE_URL_PLACEHOLDER).join(links.confirmation);
+					const plainText = `${htmlToPlainText(personalisedHtml)}\n\nUnsubscribe: ${links.confirmation}`;
+					return strapi.plugin('email').service('email').send({
+						to: recipient.email,
 						subject,
-						html: brandedNewsletter.html,
+						html: personalisedHtml,
 						text: plainText,
 						attachments: brandedNewsletter.attachments,
-					}),
-				),
+						headers: unsubscribeHeaders(recipient),
+					});
+				}),
 			);
 
 			for (const result of results) {
@@ -608,7 +805,17 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 		}
 
 		const rows = await strapi.db.query('api::mailing-list-subscription.mailing-list-subscription').findMany({
-			select: ['id', 'email', 'createdAt'],
+			select: [
+				'id',
+				'email',
+				'category',
+				'createdAt',
+				'subscriptionStatus',
+				'unsubscribedAt',
+				'unsubscribeReason',
+				'unsubscribeReasonDetails',
+				'unsubscribeSource',
+			],
 			orderBy: { createdAt: 'desc' },
 		});
 		sendCsv(ctx, rows);

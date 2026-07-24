@@ -22,8 +22,11 @@ let lastPageViewNavigationKey: string | null = null;
 function ensureGtag() {
   window.dataLayer = window.dataLayer ?? [];
   if (!window.gtag) {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
+    window.gtag = function gtag() {
+      // Google gtag.js expects each command to be queued as the function's
+      // Arguments object, matching the official installation snippet.
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
     };
   }
   return window.gtag;

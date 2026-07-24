@@ -15,6 +15,13 @@ const WRITER_ROLES = new Set(['editor', 'admin', 'super-admin']);
 const ADMIN_ROLES = new Set(['admin', 'super-admin']);
 const WORKFLOW_STATUSES = new Set(['draft', 'pending-review', 'published', 'rejected', 'update-requested']);
 const MAX_ARTICLE_IMAGE_SIZE = 8 * 1024 * 1024;
+const MAX_WRITER_MOTIVATION_LENGTH = 5_000;
+const MAX_WRITER_EXPERIENCE_LENGTH = 5_000;
+const MAX_WRITER_PORTFOLIO_URL_LENGTH = 2_048;
+const MAX_WRITER_TOPICS = 12;
+const MAX_WRITER_TOPIC_LENGTH = 80;
+const MAX_WRITER_REVIEW_NOTES_LENGTH = 3_000;
+const MAX_WRITER_DECISION_HISTORY = 50;
 const EMAIL_SEND_CONCURRENCY = 5;
 const UNSUBSCRIBE_URL_PLACEHOLDER = '__TECH_DERBY_UNSUBSCRIBE_URL__';
 const ARTICLE_IMAGE_EXTENSIONS: Record<string, string> = {
@@ -96,6 +103,51 @@ function arrayField(value: unknown) {
     // Fall through to comma-separated values.
   }
   return raw.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function parseWriterApplication(body: Record<string, unknown> = {}) {
+  const motivation = field(body.motivation);
+  const experience = field(body.experience);
+  const suppliedPortfolioUrl = field(body.portfolioUrl);
+  const topics = [...new Map(
+    arrayField(body.topics).map((topic) => [topic.toLowerCase(), topic]),
+  ).values()];
+
+  if (motivation.length < 50) throw new InputError('Tell us more about why you want to write (at least 50 characters).');
+  if (motivation.length > MAX_WRITER_MOTIVATION_LENGTH) {
+    throw new InputError(`Your motivation must be ${MAX_WRITER_MOTIVATION_LENGTH.toLocaleString()} characters or fewer.`);
+  }
+  if (experience.length > MAX_WRITER_EXPERIENCE_LENGTH) {
+    throw new InputError(`Your experience must be ${MAX_WRITER_EXPERIENCE_LENGTH.toLocaleString()} characters or fewer.`);
+  }
+  if (suppliedPortfolioUrl.length > MAX_WRITER_PORTFOLIO_URL_LENGTH) {
+    throw new InputError('The portfolio URL is too long.');
+  }
+  if (topics.length > MAX_WRITER_TOPICS) {
+    throw new InputError(`Select no more than ${MAX_WRITER_TOPICS} topics.`);
+  }
+  if (topics.some((topic) => topic.length > MAX_WRITER_TOPIC_LENGTH)) {
+    throw new InputError(`Each topic must be ${MAX_WRITER_TOPIC_LENGTH} characters or fewer.`);
+  }
+
+  let portfolioUrl = '';
+  if (suppliedPortfolioUrl) {
+    try {
+      const parsed = new URL(suppliedPortfolioUrl);
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Unsupported protocol');
+      portfolioUrl = parsed.toString();
+    } catch {
+      throw new InputError('Enter a valid portfolio URL beginning with http:// or https://.');
+    }
+  }
+
+  return { motivation, experience, portfolioUrl, topics };
+}
+
+function writerDecisionHistory(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((entry) => entry && typeof entry === 'object').slice(-MAX_WRITER_DECISION_HISTORY)
+    : [];
 }
 
 function sanitiseArticleHtml(value: string) {
@@ -355,6 +407,36 @@ async function listWritersWithStats() {
   });
 }
 
+async function sendWriterApplicationDecisionEmail(application: any) {
+  const email = field(application.email).toLowerCase();
+  const status = field(application.status);
+  if (!email || !['approved', 'rejected'].includes(status)) return;
+
+  const approved = status === 'approved';
+  const frontendUrl = (process.env.PUBLIC_FRONTEND_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  const applicationUrl = `${frontendUrl}/dashboard/writer-application`;
+  const name = field(application.name) || 'Tech Derby member';
+  const reviewNotes = field(application.reviewNotes);
+  const heading = approved ? 'Your writer application has been approved' : 'An update on your writer application';
+  const summary = approved
+    ? 'You now have writer access and can create, edit and submit articles for The Wire.'
+    : 'Your application was not approved on this occasion. You can review the feedback and submit an updated application.';
+  const action = approved ? 'Open the Articles workspace' : 'Review and update your application';
+  const notesMarkup = reviewNotes
+    ? `<div style="margin:22px 0;padding:18px;border-left:4px solid #0ea5e9;background:#f1f5f9;color:#334155;"><strong>Review feedback</strong><p style="margin:8px 0 0;white-space:pre-line;">${escapeHtml(reviewNotes)}</p></div>`
+    : '';
+  const html = `<!doctype html><html><body style="margin:0;background:#eef2f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:28px 12px;background:#eef2f7;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden;"><tr><td style="height:5px;background:#0ea5e9"></td></tr><tr><td style="padding:28px 36px;background:#0f172a;color:#fff;font-size:24px;font-weight:800;">Tech Derby <span style="color:#38bdf8;">The Wire</span></td></tr><tr><td style="padding:36px;"><p style="margin:0 0 12px;color:#64748b;">Hello ${escapeHtml(name)},</p><h1 style="margin:0;color:#0f172a;font-size:28px;line-height:35px;">${escapeHtml(heading)}</h1><p style="margin:18px 0;color:#475569;font-size:16px;line-height:25px;">${escapeHtml(summary)}</p>${notesMarkup}<a href="${escapeHtml(applicationUrl)}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#f97316;color:#fff;text-decoration:none;font-weight:800;">${escapeHtml(action)} &rarr;</a></td></tr><tr><td style="padding:22px 36px;background:#0f172a;color:#94a3b8;font-size:12px;">This is a service message about your Tech Derby writer application.</td></tr></table></td></tr></table></body></html>`;
+  const text = `Hello ${name},\n\n${heading}\n\n${summary}${reviewNotes ? `\n\nReview feedback:\n${reviewNotes}` : ''}\n\n${action}: ${applicationUrl}`;
+
+  await strapi.plugin('email').service('email').send({
+    from: process.env.SMTP_FROM ?? 'Tech Derby <hello@techderby.org>',
+    to: email,
+    subject: heading,
+    html,
+    text,
+  });
+}
+
 async function sendArticlePublishedEmail(article: any) {
   if (article.mailingListNotifiedAt) return;
   const subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({
@@ -518,21 +600,39 @@ export default {
     const existing = await strapi.db.query(APPLICATION_UID).findOne({ where: { userId: user.id } });
     if (existing?.status === 'pending' || existing?.status === 'approved') return ctx.badRequest('You already have an active writer application.');
 
-    const motivation = field(ctx.request.body?.motivation);
-    const experience = field(ctx.request.body?.experience);
-    const portfolioUrl = field(ctx.request.body?.portfolioUrl);
-    const topics = arrayField(ctx.request.body?.topics);
-    if (motivation.length < 50) return ctx.badRequest('Tell us more about why you want to write (at least 50 characters).');
+    let input: ReturnType<typeof parseWriterApplication>;
+    try {
+      input = parseWriterApplication(ctx.request.body ?? {});
+    } catch (error) {
+      if (error instanceof InputError) return ctx.badRequest(error.message);
+      throw error;
+    }
+    const decisionHistory = writerDecisionHistory(existing?.decisionHistory);
+    if (
+      existing?.status === 'rejected'
+      && existing.reviewedAt
+      && !decisionHistory.some((decision: any) => decision.reviewedAt === existing.reviewedAt)
+    ) {
+      decisionHistory.push({
+        status: 'rejected',
+        reviewNotes: existing.reviewNotes || null,
+        reviewedAt: existing.reviewedAt,
+        reviewedByUserId: existing.reviewedByUserId || null,
+      });
+    }
     const data = {
       userId: user.id,
       name: displayName(user),
       email: user.email,
-      motivation,
-      experience: experience || null,
-      portfolioUrl: portfolioUrl || null,
-      topics,
+      motivation: input.motivation,
+      experience: input.experience || null,
+      portfolioUrl: input.portfolioUrl || null,
+      topics: input.topics,
       status: 'pending',
+      decisionHistory: decisionHistory.slice(-MAX_WRITER_DECISION_HISTORY),
       reviewNotes: null,
+      reviewedAt: null,
+      reviewedByUserId: null,
     };
     const application = existing
       ? await strapi.db.query(APPLICATION_UID).update({ where: { id: existing.id }, data })
@@ -675,15 +775,68 @@ export default {
     const id = Number(ctx.params?.id);
     const status = field(ctx.request.body?.status);
     const reviewNotes = field(ctx.request.body?.reviewNotes);
+    if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('Invalid writer application.');
     if (!['approved', 'rejected'].includes(status)) return ctx.badRequest('Status must be approved or rejected.');
+    if (reviewNotes.length > MAX_WRITER_REVIEW_NOTES_LENGTH) {
+      return ctx.badRequest(`Review notes must be ${MAX_WRITER_REVIEW_NOTES_LENGTH.toLocaleString()} characters or fewer.`);
+    }
+    if (status === 'rejected' && reviewNotes.length < 10) {
+      return ctx.badRequest('Add at least 10 characters of feedback before rejecting an application.');
+    }
     const application = await strapi.db.query(APPLICATION_UID).findOne({ where: { id } });
     if (!application) return ctx.notFound('Application not found.');
-    const updated = await strapi.db.query(APPLICATION_UID).update({
-      where: { id },
-      data: { status, reviewNotes: reviewNotes || null, reviewedAt: new Date().toISOString(), reviewedByUserId: admin.id },
-    });
-    if (status === 'approved') {
-      await strapi.db.connection('up_users').where({ id: application.userId }).update({ member_role: 'editor', updated_at: new Date().toISOString() });
+    if (application.status !== 'pending') return ctx.badRequest('Only pending writer applications can be reviewed.');
+
+    const reviewedAt = new Date().toISOString();
+    const decisionHistory = [
+      ...writerDecisionHistory(application.decisionHistory),
+      {
+        status,
+        reviewNotes: reviewNotes || null,
+        reviewedAt,
+        reviewedByUserId: admin.id,
+      },
+    ].slice(-MAX_WRITER_DECISION_HISTORY);
+
+    let updated: any;
+    try {
+      updated = await strapi.db.transaction(async ({ trx }: any) => {
+        const applicationUpdate = await strapi.db.query(APPLICATION_UID).update({
+          where: { id, status: 'pending' },
+          data: {
+            status,
+            reviewNotes: reviewNotes || null,
+            reviewedAt,
+            reviewedByUserId: admin.id,
+            decisionHistory,
+          },
+        });
+        if (!applicationUpdate) throw new InputError('This writer application has already been reviewed.');
+
+        if (status === 'approved') {
+          const member = await strapi.db.connection('up_users').transacting(trx).where({ id: application.userId }).first('member_role');
+          if (!member) throw new Error(`Writer applicant ${application.userId} no longer exists.`);
+          if (!WRITER_ROLES.has(member.member_role)) {
+            const changed = await strapi.db.connection('up_users').transacting(trx).where({ id: application.userId }).update({
+              member_role: 'editor',
+              updated_at: reviewedAt,
+            });
+            if (changed !== 1) throw new Error(`Writer access could not be granted to user ${application.userId}.`);
+          }
+        }
+
+        return applicationUpdate;
+      });
+    } catch (error) {
+      if (error instanceof InputError) return ctx.badRequest(error.message);
+      strapi.log.error(`[editorial] Failed to review writer application ${id}`, error);
+      return ctx.internalServerError('The writer application could not be reviewed.');
+    }
+
+    try {
+      await sendWriterApplicationDecisionEmail(updated);
+    } catch (error) {
+      strapi.log.error(`[editorial] Writer application ${id} was reviewed but the applicant notification failed`, error);
     }
     ctx.body = { data: updated };
   },

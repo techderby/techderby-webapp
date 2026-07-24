@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Container } from './ui/Container';
 import { useAuth } from '../contexts/AuthContext';
+import { useConsent } from '../contexts/ConsentContext';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import { createMailingListSubscription } from '../services/content-service';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
@@ -39,6 +41,7 @@ const footerLinks = {
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { isAuthenticated, logout } = useAuth();
+  const { openPreferences } = useConsent();
   const [mailingEmail, setMailingEmail] = useState('');
   const [mailingError, setMailingError] = useState<string | null>(null);
   const [mailingMessage, setMailingMessage] = useState<string | null>(null);
@@ -60,6 +63,7 @@ export function Footer() {
 
     try {
       await createMailingListSubscription(normalizedEmail);
+      trackAnalyticsEvent('newsletter_signup', { signup_location: 'footer' });
       setMailingMessage('You are on the list. We will share updates soon.');
       setMailingEmail('');
     } catch (err) {
@@ -256,6 +260,9 @@ export function Footer() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button type="button" onClick={openPreferences} className="text-sm font-medium text-white/60 transition-colors hover:text-white">
+              Cookie settings
+            </button>
             {isAuthenticated ? (
               <>
                 <Link to="/dashboard" className="text-sm font-medium text-white/60 transition-colors hover:text-white">

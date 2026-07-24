@@ -8,14 +8,46 @@ const strictCookies = ['Security-related cookies', 'Session management cookies',
 
 const analyticsUses = ['Understand how visitors use our website', 'Improve content and structure', 'Monitor performance'];
 
-const analyticsData = ['Pages visited', 'Time spent on site', 'Device/browser type'];
+const analyticsData = [
+  'Pages visited and approximate engagement time',
+  'Successful website actions such as membership registration or mailing-list sign-up',
+  'Device, browser and operating-system type',
+  'Referring website and approved campaign parameters',
+  'Approximate region derived by Google from the connection IP address',
+  'A pseudonymous browser identifier',
+];
 
 const functionalCookies = ['Remembering preferences', 'Embedded video playback (e.g., YouTube)', 'Event registration integrations'];
 
 const thirdPartyCookies = [
+  'Google Analytics 4',
   'Event registration integrations (e.g., Eventbrite)',
   'Email marketing tools like Mailchimp',
   'Embedded social media platforms',
+];
+
+const cookieRows = [
+  {
+    name: 'td_consent_v1',
+    provider: 'Tech Derby',
+    purpose: 'Remembers whether you accepted or rejected analytics.',
+    duration: '6 months',
+    category: 'Necessary',
+  },
+  {
+    name: '_ga',
+    provider: 'Google Analytics',
+    purpose: 'Distinguishes one browser from another for aggregate website measurement.',
+    duration: 'Up to 6 months',
+    category: 'Analytics',
+  },
+  {
+    name: '_ga_<measurement-id>',
+    provider: 'Google Analytics',
+    purpose: 'Maintains the state needed to measure a website session.',
+    duration: 'Up to 6 months',
+    category: 'Analytics',
+  },
 ];
 
 function CookieCard({ title, children }: { title: string; children: ReactNode }) {
@@ -42,7 +74,7 @@ export default function CookiePolicyPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">Website Cookies</p>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl">TechDerby Cookie Policy</h1>
             <p className="mt-5 text-base leading-relaxed text-white/85 md:text-lg">
-              Effective Date: <span className="font-semibold text-white">2026-03-01</span>
+              Effective Date: <span className="font-semibold text-white">2026-07-24</span>
             </p>
             <p className="mt-2 text-sm text-white/80">
               This policy should be read alongside our{' '}
@@ -59,7 +91,7 @@ export default function CookiePolicyPage() {
         <Container>
           <div className="mx-auto grid max-w-5xl gap-6">
             <CookieCard title="1. Introduction">
-              <p>This Cookie Policy explains how TechDerby uses cookies and similar technologies on our website.</p>
+              <p>This Cookie Policy explains how TechDerby uses cookies and similar technologies on the public website at techderby.org.</p>
               <p>
                 TechDerby is a community dedicated to connecting and supporting people working in and aspiring to work in
                 technology across Derby and the wider region.
@@ -92,19 +124,20 @@ export default function CookiePolicyPage() {
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="font-semibold text-slate-900">B. Analytics Cookies</p>
-                  <p className="mt-2">We may use analytics tools (e.g., Google Analytics or similar) to:</p>
+                  <p className="mt-2">With your permission, we use Google Analytics 4 to:</p>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     {analyticsUses.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
-                  <p className="mt-2">These cookies collect anonymised information such as:</p>
+                  <p className="mt-2">Analytics uses pseudonymous identifiers. These are not names or email addresses, but may still constitute personal data. Information includes:</p>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     {analyticsData.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
                   <p className="mt-2 font-medium text-slate-900">Analytics cookies are only activated after user consent.</p>
+                  <p className="mt-2">We disable Google Signals, advertising storage, ads personalisation and user-provided data collection in the website tag.</p>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -132,22 +165,51 @@ export default function CookiePolicyPage() {
               </div>
             </CookieCard>
 
-            <CookieCard title="4. How You Control Cookies">
+            <CookieCard title="4. Cookies Used on techderby.org">
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      {['Name', 'Provider', 'Purpose', 'Duration', 'Category'].map((heading) => (
+                        <th key={heading} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">{heading}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {cookieRows.map((cookie) => (
+                      <tr key={cookie.name}>
+                        <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">{cookie.name}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700">{cookie.provider}</td>
+                        <td className="min-w-64 px-4 py-3 text-sm text-slate-700">{cookie.purpose}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{cookie.duration}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700">{cookie.category}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Google Analytics is not loaded on the Tech Derby CMS administration interface. Password-reset and mailing-list unsubscribe query values are not sent to Analytics.
+              </p>
+            </CookieCard>
+
+            <CookieCard title="5. How You Control Cookies">
               <p>When you first visit our website, you will be presented with a cookie banner allowing you to:</p>
               <ul className="list-disc space-y-1 pl-5">
                 <li>Accept all cookies</li>
                 <li>Reject non-essential cookies</li>
                 <li>Manage preferences</li>
               </ul>
+              <p>You can reopen the preference panel at any time using the <strong>Cookie settings</strong> button in the website footer. Withdrawing analytics consent stops future measurement and removes accessible Google Analytics cookies.</p>
               <p>You may also manage cookies through your browser settings.</p>
               <p className="font-medium text-slate-900">Please note: disabling certain cookies may affect website functionality.</p>
             </CookieCard>
 
-            <CookieCard title="5. Updates to This Policy">
+            <CookieCard title="6. Updates to This Policy">
               <p>We may update this Cookie Policy from time to time to reflect changes in law or our services.</p>
             </CookieCard>
 
-            <CookieCard title="6. Contact Us">
+            <CookieCard title="7. Contact Us">
               <p>If you have questions about this Cookie Policy, please contact:</p>
               <p>
                 Email:{' '}

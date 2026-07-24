@@ -7,6 +7,13 @@ const legalFrameworks = ['UK GDPR', 'Data Protection Act 2018', 'Privacy and Ele
 
 const memberData = ['Full Name', 'Email Address', 'Phone Number', 'Job Title', 'Mailing preferences and unsubscribe feedback'];
 const partnerData = ['Company Name', 'Contact Person Name', 'Contact Email Address', 'Contact Phone Number'];
+const analyticsData = [
+  'Pseudonymous browser identifier',
+  'Pages viewed and aggregate engagement information',
+  'Device, browser and operating-system information',
+  'Referring website and approved campaign parameters',
+  'Approximate region derived from the connection IP address',
+];
 
 const reasonsForCollection = [
   'Register members for events',
@@ -17,6 +24,7 @@ const reasonsForCollection = [
   'Manage event logistics and follow-up communication',
   'Respond to enquiries',
   'Record and respect mailing-list unsubscribe preferences and improve our communications',
+  'Measure aggregate use of our public website and improve its content, navigation, events and programmes',
 ];
 
 const rights = [
@@ -44,10 +52,11 @@ const retentionRows = [
   { dataType: 'Sponsorship contracts', period: '6 years' },
   { dataType: 'Active mailing-list subscribers', period: 'While subscribed or until 24 months of inactivity' },
   { dataType: 'Unsubscribe suppression records and feedback', period: 'Only as long as needed to respect the opt-out, demonstrate compliance, and analyse communications; reviewed periodically' },
+  { dataType: 'Google Analytics user-level and event data', period: '2 months; aggregate standard reports may remain available for longer' },
   { dataType: 'Financial transaction records', period: '6 years' },
 ];
 
-const thirdPartyProcessors = ['Event registration and ticketing (e.g., Eventbrite)', 'Transactional email delivery providers', 'Website hosting providers'];
+const thirdPartyProcessors = ['Google Analytics measurement services', 'Event registration and ticketing (e.g., Eventbrite)', 'Transactional email delivery providers', 'Website hosting providers'];
 
 function PolicyCard({
   title,
@@ -130,11 +139,19 @@ export default function PrivacyPolicyPage() {
 
             <PolicyCard id="what-we-collect" title="3. What Personal Data We Collect">
               <p>We collect only the data necessary to operate our community and events effectively.</p>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-900">A. Member Data</p>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     {memberData.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">C. Website Analytics Data</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {analyticsData.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
@@ -169,6 +186,11 @@ export default function PrivacyPolicyPage() {
                 <span className="font-semibold text-slate-900">Consent:</span> When you opt in to receive newsletters or
                 marketing communications. You may withdraw consent at any time by contacting us or using the unsubscribe link
                 in communications.
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Analytics consent:</span> When you actively allow Google Analytics on
+                our public website. Analytics remains disabled until you consent, and you can withdraw this choice at any time
+                through the Cookie settings control.
               </p>
               <p>
                 <span className="font-semibold text-slate-900">Legitimate Interests:</span> For maintaining professional

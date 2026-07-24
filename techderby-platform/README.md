@@ -104,6 +104,7 @@ Deployment is fully automated via GitHub Actions using pre-built Docker Hub imag
 - `DOCKERHUB_USERNAME` — Docker Hub username
 - `DOCKERHUB_TOKEN` — Docker Hub access token
 - `VITE_CALLMEBOT_API_KEY` — WhatsApp notification API key
+- `VITE_GA_MEASUREMENT_ID` — production GA4 measurement ID (`G-...`); analytics is disabled when omitted
 
 **Per environment** (`dev` / `uat` / `prod`):
 - `SERVER_HOST` — VPS IP address

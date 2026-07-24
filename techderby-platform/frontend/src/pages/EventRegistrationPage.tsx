@@ -8,6 +8,7 @@ import { Input } from '../components/ui/Input';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
 import { createMailingListSubscription } from '../services/content-service';
+import { trackAnalyticsEvent } from '../lib/analytics';
 
 const THEME_OPTIONS = ['All', 'AI', 'Data', 'Software', 'Product', 'Careers', 'Networking', 'Community'] as const;
 const AUDIENCE_OPTIONS = ['All', 'Students', 'Founders', 'Hiring', 'Professionals'] as const;
@@ -162,6 +163,7 @@ export default function EventRegistrationPage() {
 
     try {
       await createMailingListSubscription(normalizedEmail);
+      trackAnalyticsEvent('newsletter_signup', { signup_location: 'events_browse' });
       setMailingListMessage('You are on the list. We will send updates and early ticket alerts.');
       setMailingEmail('');
     } catch (err) {

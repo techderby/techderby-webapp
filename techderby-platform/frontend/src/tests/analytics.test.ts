@@ -28,6 +28,8 @@ describe('Google Analytics', () => {
 
     initialiseGoogleConsentMode();
 
+    expect(Object.prototype.toString.call(window.dataLayer?.[0])).toBe('[object Arguments]');
+    expect(Array.isArray(window.dataLayer?.[0])).toBe(false);
     expect(commands()[0]).toEqual([
       'consent',
       'default',

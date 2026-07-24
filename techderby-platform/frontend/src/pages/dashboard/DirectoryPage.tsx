@@ -5,6 +5,8 @@ import { apiClient } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { DirectoryMember, Connection } from '../../types/auth';
 import { cn } from '../../lib/utils';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 
 function getInitials(firstName?: string, lastName?: string, username?: string) {
   if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -160,6 +162,7 @@ export default function DirectoryPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [bioMember, setBioMember] = useState<DirectoryMember | null>(null);
 
   const { data: members = [], isLoading } = useQuery<DirectoryMember[]>({
@@ -185,6 +188,10 @@ export default function DirectoryPage() {
       return name.includes(q) || (m.occupation ?? '').toLowerCase().includes(q) || (m.location ?? '').toLowerCase().includes(q);
     });
   }, [members, search]);
+  const memberPagination = useMemo(
+    () => paginateItems(filtered, currentPage),
+    [currentPage, filtered],
+  );
 
   function getConnection(memberId: number) {
     return connections.find(
@@ -216,7 +223,10 @@ export default function DirectoryPage() {
           type="search"
           placeholder="Search by name, role, or location…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-sky-500/60 focus:ring-2 focus:ring-sky-500/20"
         />
       </div>
@@ -237,7 +247,7 @@ export default function DirectoryPage() {
         <>
           <p className="mb-4 text-xs text-white/30">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((member) => (
+            {memberPagination.items.map((member) => (
               <MemberCard
                 key={member.id}
                 member={member}
@@ -249,6 +259,13 @@ export default function DirectoryPage() {
               />
             ))}
           </div>
+          <Pagination
+            currentPage={memberPagination.page}
+            totalItems={filtered.length}
+            onPageChange={setCurrentPage}
+            itemLabel="members"
+            className="mt-5"
+          />
         </>
       )}
 

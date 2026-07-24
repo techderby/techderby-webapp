@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 
 type WriterRow = {
   id: number;
@@ -36,8 +38,6 @@ function TipIcon({ label, value, children }: { label: string; value: number; chi
 }
 
 export default function WriterManagementPage() {
-  const PAGE_SIZE = 10;
-
   const query = useQuery<{ data: WriterRow[] }>({
     queryKey: ['editorial-writers-admin'],
     queryFn: () => apiClient.getEditorialAdminWriters().then((response) => response.data),
@@ -63,13 +63,10 @@ export default function WriterManagementPage() {
     });
   }, [searchTerm, writers]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredWriters.length / PAGE_SIZE));
-  const clampedPage = Math.min(currentPage, totalPages);
-
-  const paginatedWriters = useMemo(() => {
-    const start = (clampedPage - 1) * PAGE_SIZE;
-    return filteredWriters.slice(start, start + PAGE_SIZE);
-  }, [clampedPage, filteredWriters]);
+  const writerPagination = useMemo(
+    () => paginateItems(filteredWriters, currentPage),
+    [currentPage, filteredWriters],
+  );
 
   const showFilteredEmpty = !query.isLoading && writers.length > 0 && filteredWriters.length === 0;
   const showUnfilteredEmpty = !query.isLoading && writers.length === 0;
@@ -102,15 +99,15 @@ export default function WriterManagementPage() {
             </label>
 
             <p className="text-xs text-white/50 md:text-right">
-              Showing {filteredWriters.length === 0 ? 0 : (clampedPage - 1) * PAGE_SIZE + 1}
+              Showing {writerPagination.start}
               {' '}-{' '}
-              {Math.min(clampedPage * PAGE_SIZE, filteredWriters.length)} of {filteredWriters.length} roles
+              {writerPagination.end} of {filteredWriters.length} roles
             </p>
           </div>
         </div>
 
         <div className="mt-6 space-y-3">
-          {paginatedWriters.map((writer) => (
+          {writerPagination.items.map((writer) => (
             <article key={writer.id} className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 md:grid-cols-[1fr_auto] md:items-center">
               <div>
                 <h2 className="text-lg font-black text-white">{writer.fullName}</h2>
@@ -151,29 +148,13 @@ export default function WriterManagementPage() {
           ) : null}
 
           {!query.isLoading && filteredWriters.length > 0 ? (
-            <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                disabled={clampedPage === 1}
-                className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/80 transition hover:border-sky-400/40 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Previous
-              </button>
-
-              <p className="text-xs font-semibold text-white/60">
-                Page {clampedPage} of {totalPages}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                disabled={clampedPage >= totalPages}
-                className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/80 transition hover:border-sky-400/40 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={writerPagination.page}
+              totalItems={filteredWriters.length}
+              onPageChange={setCurrentPage}
+              itemLabel="roles"
+              className="mt-6"
+            />
           ) : null}
         </div>
       </div>

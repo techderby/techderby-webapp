@@ -53,6 +53,7 @@ export type Insight = {
   featuredImage: string;
   featuredImageUrl?: string;
   content: string;
+  contentFormat?: 'markdown' | 'html' | null;
   author: string;
   authorUserId?: number;
   excerpt?: string;

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
+import { Pagination } from '../components/Pagination';
+import { paginateItems } from '../lib/pagination';
 import { apiClient } from '../lib/api';
 import { MAILING_LIST_CATEGORIES, type MailingListCategory, type MailingListSegment } from '../constants/mailing-list';
 
@@ -11,6 +13,12 @@ type MailingListRow = {
   category: MailingListCategory;
   createdAt: string;
   segmentIds: number[];
+  subscriptionStatus: 'subscribed' | 'unsubscribed';
+  unsubscribedAt?: string | null;
+  unsubscribeReason?: string | null;
+  unsubscribeReasonDetails?: string | null;
+  unsubscribeSource?: 'confirmation-page' | 'email-one-click' | null;
+  resubscribedAt?: string | null;
 };
 
 type ImportResult = {
@@ -21,10 +29,19 @@ type ImportResult = {
   invalid: number;
 };
 
-type AdminTab = 'mailing-list' | 'segments';
+type AdminTab = 'mailing-list' | 'unsubscribe-insights' | 'segments';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
+const UNSUBSCRIBE_REASON_LABELS: Record<string, string> = {
+  'too-many-emails': 'Too many emails',
+  'content-not-relevant': 'Content not relevant',
+  'no-longer-interested': 'No longer interested',
+  'did-not-sign-up': 'Does not remember signing up',
+  'privacy-concerns': 'Privacy concerns',
+  other: 'Other',
+  'not-provided': 'No reason provided',
+};
 
 function getFilenameFromDisposition(disposition?: string) {
   if (!disposition) return `mailing-list-subscriptions-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -57,7 +74,9 @@ export default function AdminPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'subscribed' | 'unsubscribed'>('subscribed');
   const [selectedSegmentId, setSelectedSegmentId] = useState<number | 'all-users'>('all-users');
   const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
   const [membershipSegmentId, setMembershipSegmentId] = useState<number | ''>('');
@@ -73,7 +92,25 @@ export default function AdminPage() {
   const [editingDescription, setEditingDescription] = useState('');
   const [editingCategories, setEditingCategories] = useState<MailingListCategory[]>([]);
 
-  const totalSubscribers = rows.length;
+  const totalSubscribers = rows.filter((row) => row.subscriptionStatus !== 'unsubscribed').length;
+  const totalUnsubscribed = rows.filter((row) => row.subscriptionStatus === 'unsubscribed').length;
+  const unsubscribeRate = rows.length ? Math.round((totalUnsubscribed / rows.length) * 1_000) / 10 : 0;
+  const unsubscribeReasonCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.filter((row) => row.subscriptionStatus === 'unsubscribed').forEach((row) => {
+      const reason = row.unsubscribeReason || 'not-provided';
+      counts.set(reason, (counts.get(reason) ?? 0) + 1);
+    });
+    return [...counts.entries()]
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((first, second) => second.count - first.count);
+  }, [rows]);
+  const recentUnsubscribes = useMemo(
+    () => rows
+      .filter((row) => row.subscriptionStatus === 'unsubscribed')
+      .sort((first, second) => new Date(second.unsubscribedAt ?? 0).getTime() - new Date(first.unsubscribedAt ?? 0).getTime()),
+    [rows],
+  );
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -85,11 +122,19 @@ export default function AdminPage() {
     const inCategory = selectedCategory === 'All'
       ? inSegment
       : inSegment.filter((row) => row.category === selectedCategory);
-    if (!query) return inCategory;
-    return inCategory.filter((row) => row.email.toLowerCase().includes(query));
-  }, [rows, search, selectedCategory, segments, selectedSegmentId]);
+    const inStatus = selectedStatus === 'all'
+      ? inCategory
+      : inCategory.filter((row) => (row.subscriptionStatus ?? 'subscribed') === selectedStatus);
+    if (!query) return inStatus;
+    return inStatus.filter((row) => row.email.toLowerCase().includes(query));
+  }, [rows, search, selectedCategory, selectedStatus, segments, selectedSegmentId]);
 
-  const allFilteredRowsSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRowIds.includes(row.id));
+  const mailingListPagination = useMemo(
+    () => paginateItems(filteredRows, currentPage),
+    [currentPage, filteredRows],
+  );
+  const paginatedRows = mailingListPagination.items;
+  const allFilteredRowsSelected = paginatedRows.length > 0 && paginatedRows.every((row) => selectedRowIds.includes(row.id));
 
   async function loadMailingList(showSpinner = true) {
     if (showSpinner) setIsLoading(true);
@@ -294,10 +339,10 @@ export default function AdminPage() {
   function toggleAllFilteredRows() {
     setSelectedRowIds((current) => {
       if (allFilteredRowsSelected) {
-        const filteredIds = new Set(filteredRows.map((row) => row.id));
+        const filteredIds = new Set(paginatedRows.map((row) => row.id));
         return current.filter((id) => !filteredIds.has(id));
       }
-      return [...new Set([...current, ...filteredRows.map((row) => row.id)])];
+      return [...new Set([...current, ...paginatedRows.map((row) => row.id)])];
     });
   }
 
@@ -328,7 +373,10 @@ export default function AdminPage() {
 
   async function deleteSelectedRows() {
     if (!selectedRowIds.length) return;
-    if (!window.confirm(`Delete ${selectedRowIds.length} selected subscriber${selectedRowIds.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    if (!window.confirm(
+      `Permanently delete ${selectedRowIds.length} selected mailing-list record${selectedRowIds.length === 1 ? '' : 's'}? `
+      + 'This erases unsubscribe feedback and suppression history and cannot be undone. Use this only for data erasure, not a normal opt-out.',
+    )) return;
 
     setError(null);
     setMessage(null);
@@ -372,7 +420,9 @@ export default function AdminPage() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-3 py-2 text-xs text-white/40">
-            Total subscribers: <span className="font-semibold text-white/75">{totalSubscribers}</span>
+            Active subscribers: <span className="font-semibold text-white/75">{totalSubscribers}</span>
+            <span className="text-white/20">·</span>
+            Unsubscribed: <span className="font-semibold text-white/75">{totalUnsubscribed}</span>
             {isRefreshing ? <span className="text-sky-400">Refreshing…</span> : null}
           </div>
           <Link
@@ -398,6 +448,13 @@ export default function AdminPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTab('unsubscribe-insights')}
+          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${activeTab === 'unsubscribe-insights' ? 'bg-sky-500 text-white' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+        >
+          Unsubscribe insights
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('segments')}
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${activeTab === 'segments' ? 'bg-sky-500 text-white' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
         >
@@ -417,7 +474,10 @@ export default function AdminPage() {
                 <input
                   type="search"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   placeholder="Search subscribers by email…"
                   aria-label="Search subscribers"
                   className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-10 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-sky-500/60 focus:ring-2 focus:ring-sky-500/20"
@@ -426,10 +486,24 @@ export default function AdminPage() {
 
               <div className="flex flex-wrap items-center gap-3">
                 <select
+                  value={selectedStatus}
+                  onChange={(event) => {
+                    setSelectedStatus(event.target.value as 'all' | 'subscribed' | 'unsubscribed');
+                    setCurrentPage(1);
+                  }}
+                  className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none"
+                  aria-label="Subscription status"
+                >
+                  <option value="subscribed" className="bg-white text-slate-900">Active subscribers</option>
+                  <option value="unsubscribed" className="bg-white text-slate-900">Unsubscribed</option>
+                  <option value="all" className="bg-white text-slate-900">All statuses</option>
+                </select>
+                <select
                   value={selectedSegmentId}
                   onChange={(event) => {
                     const raw = event.target.value;
                     setSelectedSegmentId(raw === 'all-users' ? 'all-users' : Number(raw));
+                    setCurrentPage(1);
                   }}
                   className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none"
                 >
@@ -440,7 +514,10 @@ export default function AdminPage() {
                 </select>
                 <select
                   value={selectedCategory}
-                  onChange={(event) => setSelectedCategory(event.target.value)}
+                  onChange={(event) => {
+                    setSelectedCategory(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none"
                 >
                   <option value="All" className="bg-white text-slate-900">All categories</option>
@@ -499,24 +576,25 @@ export default function AdminPage() {
                     </th>
                     <th className="px-4 py-2.5 text-left font-semibold text-white/80">Email</th>
                     <th className="px-4 py-2.5 text-left font-semibold text-white/80">Category</th>
-                    <th className="px-4 py-2.5 text-left font-semibold text-white/80">Subscribed</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-white/80">Status</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-white/80">Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/8 bg-transparent">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-4 text-white/45">Loading subscribers...</td>
+                      <td colSpan={5} className="px-4 py-4 text-white/45">Loading subscribers...</td>
                     </tr>
                   ) : rows.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-4 text-white/45">No mailing list subscribers yet.</td>
+                      <td colSpan={5} className="px-4 py-4 text-white/45">No mailing list subscribers yet.</td>
                     </tr>
                   ) : filteredRows.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-10 text-center text-white/45">No subscribers match “{search}”.</td>
+                      <td colSpan={5} className="px-4 py-10 text-center text-white/45">No subscribers match the current filters.</td>
                     </tr>
                   ) : (
-                    filteredRows.map((row) => (
+                    paginatedRows.map((row) => (
                       <tr key={row.id} className="transition hover:bg-white/[0.03]">
                         <td className="px-4 py-2.5">
                           <input
@@ -541,12 +619,112 @@ export default function AdminPage() {
                             ))}
                           </select>
                         </td>
-                        <td className="px-4 py-2.5 text-white/60">{formatDate(row.createdAt)}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${
+                            row.subscriptionStatus === 'unsubscribed'
+                              ? 'bg-amber-500/15 text-amber-200'
+                              : 'bg-emerald-500/15 text-emerald-200'
+                          }`}>
+                            {row.subscriptionStatus === 'unsubscribed' ? 'Unsubscribed' : 'Active'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-white/60">
+                          {formatDate(row.subscriptionStatus === 'unsubscribed' && row.unsubscribedAt ? row.unsubscribedAt : row.createdAt)}
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+            </div>
+            <Pagination
+              currentPage={mailingListPagination.page}
+              totalItems={filteredRows.length}
+              onPageChange={setCurrentPage}
+              itemLabel="subscribers"
+              className="mt-4"
+            />
+          </>
+        ) : activeTab === 'unsubscribe-insights' ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-3">
+              <article className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-200/70">Active subscribers</p>
+                <p className="mt-2 text-3xl font-black text-white">{totalSubscribers}</p>
+              </article>
+              <article className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-200/70">Unsubscribed</p>
+                <p className="mt-2 text-3xl font-black text-white">{totalUnsubscribed}</p>
+              </article>
+              <article className="rounded-xl border border-sky-500/20 bg-sky-500/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-200/70">Recorded unsubscribe rate</p>
+                <p className="mt-2 text-3xl font-black text-white">{unsubscribeRate}%</p>
+                <p className="mt-1 text-xs text-white/40">Based on retained mailing-list records</p>
+              </article>
+            </div>
+
+            <div className="mt-5 grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+              <section className="rounded-xl border border-white/10 bg-black/10 p-5">
+                <h2 className="text-sm font-black text-white">Reasons given</h2>
+                <p className="mt-1 text-xs text-white/40">Feedback submitted on the unsubscribe page or by an email client.</p>
+                <div className="mt-5 space-y-4">
+                  {unsubscribeReasonCounts.length === 0 ? (
+                    <p className="text-sm text-white/45">No unsubscribe reasons have been captured yet.</p>
+                  ) : unsubscribeReasonCounts.map(({ reason: recordedReason, count }) => {
+                    const percentage = totalUnsubscribed ? Math.round((count / totalUnsubscribed) * 100) : 0;
+                    return (
+                      <div key={recordedReason}>
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-semibold text-white/75">{UNSUBSCRIBE_REASON_LABELS[recordedReason] ?? recordedReason}</span>
+                          <span className="text-white/45">{count} · {percentage}%</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/5">
+                          <div className="h-full rounded-full bg-sky-500" style={{ width: `${percentage}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="overflow-hidden rounded-xl border border-white/10 bg-black/10">
+                <div className="p-5">
+                  <h2 className="text-sm font-black text-white">Recent unsubscribe activity</h2>
+                  <p className="mt-1 text-xs text-white/40">The full dataset, including feedback, is also included in the CSV export.</p>
+                </div>
+                <div className="max-h-[520px] overflow-auto border-t border-white/10">
+                  <table className="min-w-full divide-y divide-white/10 text-xs">
+                    <thead className="sticky top-0 bg-slate-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-white/70">Subscriber</th>
+                        <th className="px-4 py-3 text-left font-semibold text-white/70">Reason</th>
+                        <th className="px-4 py-3 text-left font-semibold text-white/70">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {recentUnsubscribes.length === 0 ? (
+                        <tr><td colSpan={3} className="px-4 py-8 text-center text-white/40">No unsubscribe activity yet.</td></tr>
+                      ) : recentUnsubscribes.map((row) => (
+                        <tr key={row.id} className="align-top">
+                          <td className="px-4 py-3 text-white/80">
+                            {row.email}
+                            <span className="mt-1 block text-[11px] text-white/35">
+                              {row.unsubscribeSource === 'email-one-click' ? 'Email client one-click' : 'Confirmation page'}
+                            </span>
+                          </td>
+                          <td className="max-w-xs px-4 py-3 text-white/60">
+                            <span className="font-semibold text-white/75">{UNSUBSCRIBE_REASON_LABELS[row.unsubscribeReason ?? 'not-provided'] ?? row.unsubscribeReason}</span>
+                            {row.unsubscribeReasonDetails ? <span className="mt-1 block whitespace-pre-wrap text-white/45">{row.unsubscribeReasonDetails}</span> : null}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-white/50">
+                            {row.unsubscribedAt ? formatDate(row.unsubscribedAt) : 'Unknown'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
           </>
         ) : (
@@ -673,7 +851,7 @@ export default function AdminPage() {
 
         {importResult ? (
           <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200">
-            Received: {importResult.received} · Valid: {importResult.valid} · Imported: {importResult.imported} · Existing: {importResult.skippedExisting} · Invalid: {importResult.invalid}
+            Received: {importResult.received} · Valid: {importResult.valid} · Imported: {importResult.imported} · Existing or suppressed: {importResult.skippedExisting} · Invalid: {importResult.invalid}
           </div>
         ) : null}
 

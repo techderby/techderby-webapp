@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 import type { ArticleStats, Insight, WriterApplication } from '../../types/content';
 
 type Overview = {
@@ -14,6 +16,7 @@ type Overview = {
 export default function EditorialAdminPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<'reviews' | 'writers' | 'all'>('reviews');
+  const [currentPage, setCurrentPage] = useState(1);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedArticle, setSelectedArticle] = useState<Insight | null>(null);
   const query = useQuery<Overview>({
@@ -41,6 +44,15 @@ export default function EditorialAdminPage() {
   });
 
   const articles = useMemo(() => tab === 'reviews' ? query.data?.pendingArticles ?? [] : query.data?.articles ?? [], [query.data, tab]);
+  const applications = useMemo(() => query.data?.pendingApplications ?? [], [query.data?.pendingApplications]);
+  const articlePagination = useMemo(
+    () => paginateItems(articles, currentPage),
+    [articles, currentPage],
+  );
+  const applicationPagination = useMemo(
+    () => paginateItems(applications, currentPage),
+    [applications, currentPage],
+  );
   const button = 'rounded-lg px-3 py-2 text-xs font-bold transition disabled:opacity-50';
 
   return (
@@ -58,7 +70,16 @@ export default function EditorialAdminPage() {
             ['writers', `Writer applications (${query.data?.pendingApplications.length ?? 0})`],
             ['all', 'All articles'],
           ].map(([value, label]) => (
-            <button key={value} onClick={() => setTab(value as typeof tab)} className={`rounded-full px-4 py-2 text-xs font-bold ${tab === value ? 'bg-sky-500 text-white' : 'border border-white/10 bg-white/5 text-white/50'}`}>{label}</button>
+            <button
+              key={value}
+              onClick={() => {
+                setTab(value as typeof tab);
+                setCurrentPage(1);
+              }}
+              className={`rounded-full px-4 py-2 text-xs font-bold ${tab === value ? 'bg-sky-500 text-white' : 'border border-white/10 bg-white/5 text-white/50'}`}
+            >
+              {label}
+            </button>
           ))}
         </div>
 
@@ -66,7 +87,7 @@ export default function EditorialAdminPage() {
 
         {tab === 'writers' ? (
           <div className="mt-6 space-y-4">
-            {(query.data?.pendingApplications ?? []).map((application) => (
+            {applicationPagination.items.map((application) => (
               <article key={application.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="flex flex-wrap justify-between gap-4">
                   <div><h2 className="font-bold text-white">{application.name}</h2><p className="text-xs text-white/35">{application.email}</p></div>
@@ -86,7 +107,7 @@ export default function EditorialAdminPage() {
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            {articles.map((article) => (
+            {articlePagination.items.map((article) => (
               <article key={article.documentId ?? article.id} className="grid gap-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5 md:grid-cols-[150px_1fr]">
                 <div className="aspect-[16/11] overflow-hidden rounded-xl bg-white/5">
                   {article.featuredImageUrl || article.featuredImage ? <img src={assetUrl(article.featuredImageUrl || article.featuredImage)} alt="" className="h-full w-full object-cover" /> : null}
@@ -132,6 +153,14 @@ export default function EditorialAdminPage() {
             {!query.isLoading && articles.length === 0 ? <p className="rounded-2xl border border-white/10 p-8 text-center text-sm text-white/35">No articles in this view.</p> : null}
           </div>
         )}
+
+        <Pagination
+          currentPage={tab === 'writers' ? applicationPagination.page : articlePagination.page}
+          totalItems={tab === 'writers' ? applications.length : articles.length}
+          onPageChange={setCurrentPage}
+          itemLabel={tab === 'writers' ? 'applications' : 'articles'}
+          className="mt-4"
+        />
 
         {selectedArticle ? (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedArticle(null)}>

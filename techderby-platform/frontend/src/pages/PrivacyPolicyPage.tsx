@@ -5,7 +5,7 @@ import { Section } from '../components/ui/Section';
 
 const legalFrameworks = ['UK GDPR', 'Data Protection Act 2018', 'Privacy and Electronic Communications Regulations (PECR)'];
 
-const memberData = ['Full Name', 'Email Address', 'Phone Number', 'Job Title'];
+const memberData = ['Full Name', 'Email Address', 'Phone Number', 'Job Title', 'Mailing preferences and unsubscribe feedback'];
 const partnerData = ['Company Name', 'Contact Person Name', 'Contact Email Address', 'Contact Phone Number'];
 
 const reasonsForCollection = [
@@ -16,6 +16,7 @@ const reasonsForCollection = [
   'Share educational resources and community news',
   'Manage event logistics and follow-up communication',
   'Respond to enquiries',
+  'Record and respect mailing-list unsubscribe preferences and improve our communications',
 ];
 
 const rights = [
@@ -41,11 +42,12 @@ const retentionRows = [
   { dataType: 'Volunteer data', period: '6 years after leaving' },
   { dataType: 'Partner data', period: '6 years after the last engagement' },
   { dataType: 'Sponsorship contracts', period: '6 years' },
-  { dataType: 'Newsletter subscribers', period: 'Until users unsubscribe or 24 months of inactivity' },
+  { dataType: 'Active mailing-list subscribers', period: 'While subscribed or until 24 months of inactivity' },
+  { dataType: 'Unsubscribe suppression records and feedback', period: 'Only as long as needed to respect the opt-out, demonstrate compliance, and analyse communications; reviewed periodically' },
   { dataType: 'Financial transaction records', period: '6 years' },
 ];
 
-const thirdPartyProcessors = ['Event registration and ticketing (e.g., Eventbrite)', 'Email marketing tools like Mailchimp', 'Website hosting providers'];
+const thirdPartyProcessors = ['Event registration and ticketing (e.g., Eventbrite)', 'Transactional email delivery providers', 'Website hosting providers'];
 
 function PolicyCard({
   title,
@@ -79,7 +81,7 @@ export default function PrivacyPolicyPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">Legal and Compliance</p>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl">TechDerby Privacy Policy</h1>
             <p className="mt-5 text-base leading-relaxed text-white/85 md:text-lg">
-              Effective Date: <span className="font-semibold text-white">2026-03-01</span>
+              Effective Date: <span className="font-semibold text-white">2026-07-24</span>
             </p>
             <p className="mt-1 text-sm text-white/75 md:text-base">
               ICO Registration Number: ZA000000 (placeholder - to be updated upon registration)

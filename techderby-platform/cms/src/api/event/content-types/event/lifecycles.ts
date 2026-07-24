@@ -1,4 +1,12 @@
 import nodemailer from 'nodemailer';
+import {
+  unsubscribeHeaders,
+  unsubscribeLinks,
+  type MailingListRecipient,
+} from '../../../../utils/mailing-list-unsubscribe';
+
+const SEND_CONCURRENCY = 5;
+const UNSUBSCRIBE_URL_PLACEHOLDER = '__TECH_DERBY_UNSUBSCRIBE_URL__';
 
 type EventRecord = {
   id: number;
@@ -121,7 +129,7 @@ type EventNotificationKind = 'new' | 'updated';
 
 async function sendPublishNotification(
   event: EventRecord,
-  recipients: string[],
+  recipients: MailingListRecipient[],
   kind: EventNotificationKind = 'new',
 ) {
   const host = process.env.SMTP_HOST;
@@ -167,6 +175,8 @@ async function sendPublishNotification(
     '',
     'See you there!',
     'Tech Derby',
+    '',
+    `Unsubscribe: ${UNSUBSCRIBE_URL_PLACEHOLDER}`,
   ].join('\n');
 
   const safeTitle = escapeHtml(eventTitle);
@@ -257,7 +267,7 @@ async function sendPublishNotification(
             <td class="email-padding" style="padding:26px 38px;background:#0f172a;">
               <p style="margin:0 0 8px;color:#ffffff;font-size:14px;line-height:21px;font-weight:700;">Learn. Connect. Build Derby's tech future.</p>
               <p style="margin:0;color:#94a3b8;font-size:12px;line-height:19px;">You received this email because you joined the Tech Derby mailing list.</p>
-              <p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:18px;">&copy; ${new Date().getFullYear()} Tech Derby &middot; <a href="${safeSiteUrl}" style="color:#38bdf8;text-decoration:none;">Visit our website</a></p>
+              <p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:18px;">&copy; ${new Date().getFullYear()} Tech Derby &middot; <a href="${safeSiteUrl}" style="color:#38bdf8;text-decoration:none;">Visit our website</a> &middot; <a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#38bdf8;text-decoration:none;">Unsubscribe</a></p>
             </td>
           </tr>
         </table>
@@ -267,18 +277,29 @@ async function sendPublishNotification(
 </body>
 </html>`;
 
-  // Use BCC to avoid exposing subscribers' email addresses.
-  await transporter.sendMail({
-    from,
-    to: from,
-    bcc: recipients,
-    subject: isUpdate ? `Event updated: ${eventTitle}` : `You're invited: ${eventTitle}`,
-    text,
-    html,
-    attachments,
-  });
+  let sent = 0;
+  for (let index = 0; index < recipients.length; index += SEND_CONCURRENCY) {
+    const batch = recipients.slice(index, index + SEND_CONCURRENCY);
+    const results = await Promise.allSettled(batch.map((recipient) => {
+      const links = unsubscribeLinks(recipient);
+      return transporter.sendMail({
+        from,
+        to: recipient.email,
+        subject: isUpdate ? `Event updated: ${eventTitle}` : `You're invited: ${eventTitle}`,
+        text: text.split(UNSUBSCRIBE_URL_PLACEHOLDER).join(links.confirmation),
+        html: html.split(UNSUBSCRIBE_URL_PLACEHOLDER).join(links.confirmation),
+        attachments,
+        headers: unsubscribeHeaders(recipient),
+      });
+    }));
 
-  return true;
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') sent += 1;
+      else strapi.log.error('Failed to send an event notification email', result.reason);
+    });
+  }
+
+  return sent > 0;
 }
 
 export async function notifyEventSubscribers(
@@ -293,11 +314,17 @@ export async function notifyEventSubscribers(
 
   const subscribers = await strapi.db
     .query('api::mailing-list-subscription.mailing-list-subscription')
-    .findMany({ select: ['email'] });
+    .findMany({
+      select: ['id', 'email'],
+      where: { subscriptionStatus: 'subscribed' },
+    });
 
   const recipients = subscribers
-    .map((subscriber: { email?: string }) => subscriber.email?.trim())
-    .filter((email: string | undefined): email is string => Boolean(email));
+    .map((subscriber: { id?: number; email?: string }) => ({
+      id: Number(subscriber.id),
+      email: String(subscriber.email ?? '').trim().toLowerCase(),
+    }))
+    .filter((subscriber: MailingListRecipient) => Number.isInteger(subscriber.id) && subscriber.id > 0 && Boolean(subscriber.email));
 
   if (recipients.length === 0) {
     strapi.log.info('Event publish notification skipped: no mailing list subscribers found.');

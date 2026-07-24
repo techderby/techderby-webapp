@@ -1,60 +1,27 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import { RichArticleEditor } from '../../components/editor/RichArticleEditor';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
-import { sanitizeHtml, sanitizeMediaUrl } from '../../lib/html-sanitizer';
+import { articleContentForEditor } from '../../lib/article-content';
+import { sanitizeMediaUrl } from '../../lib/html-sanitizer';
 import { ARTICLE_CATEGORIES_BY_GROUP } from '../../constants/article-categories';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Insight } from '../../types/content';
 
 const CATEGORIES = ARTICLE_CATEGORIES_BY_GROUP;
-const LANGUAGES = ['javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust', 'php', 'ruby', 'html', 'css', 'sql', 'bash', 'json', 'yaml', 'plaintext'];
-const EMPTY = { title: '', excerpt: '', category: 'News - Technology', tags: '', content: '' };
+const EMPTY = { title: '', excerpt: '', category: 'News - Technology', tags: '', content: '<p></p>' };
 const input = 'mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-sky-500/60';
-
-function escapeHtml(value: string) {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function previewMarkdown(markdown: string) {
-  const segments = markdown.split(/(```[a-zA-Z0-9_+#.-]*\n[\s\S]*?```)/g);
-  return sanitizeHtml(segments.map((segment) => {
-    const code = segment.match(/^```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```$/);
-    if (code) return `<div class="my-5 overflow-hidden rounded-xl bg-slate-950"><div class="border-b border-slate-700 px-4 py-2 text-xs font-bold uppercase text-slate-400">${escapeHtml(code[1] || 'text')}</div><pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-100"><code>${escapeHtml(code[2])}</code></pre></div>`;
-    return segment
-      .split('\n')
-      .map((line) => {
-        const safe = escapeHtml(line)
-          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 max-h-96 w-full rounded-xl object-contain" />')
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-sky-700 underline">$1</a>')
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-          .replace(/`([^`]+)`/g, '<code class="rounded bg-slate-100 px-1 py-0.5 font-mono">$1</code>');
-        if (/^### /.test(line)) return `<h3 class="mb-2 mt-6 text-xl font-black">${safe.slice(4)}</h3>`;
-        if (/^## /.test(line)) return `<h2 class="mb-3 mt-7 text-2xl font-black">${safe.slice(3)}</h2>`;
-        if (/^# /.test(line)) return `<h1 class="mb-4 mt-8 text-3xl font-black">${safe.slice(2)}</h1>`;
-        if (/^[-*] /.test(line)) return `<div class="ml-5 list-item">${safe.slice(2)}</div>`;
-        if (/^> /.test(line)) return `<blockquote class="my-4 border-l-4 border-sky-300 pl-4 italic text-slate-500">${safe.slice(2)}</blockquote>`;
-        return line.trim() ? `<p class="mb-4 leading-8 text-slate-700">${safe}</p>` : '';
-      })
-      .join('');
-  }).join(''));
-}
 
 export default function ArticleEditorPage() {
   const { documentId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const inlineImageRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [image, setImage] = useState<File | null>(null);
-  const [mode, setMode] = useState<'write' | 'preview'>('write');
-  const [codeLanguage, setCodeLanguage] = useState('javascript');
-  const [uploadingInline, setUploadingInline] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const role = user?.memberRole ?? 'member';
@@ -79,44 +46,25 @@ export default function ArticleEditorPage() {
       excerpt: article.excerpt ?? '',
       category: article.category,
       tags: article.tags.join(', '),
-      content: article.content,
+      content: articleContentForEditor(article.content, article.contentFormat),
     });
   }, [article]);
 
-  const preview = useMemo(() => sanitizeMediaUrl(image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage)), [image, article]);
+  const preview = useMemo(
+    () => sanitizeMediaUrl(image ? URL.createObjectURL(image) : assetUrl(article?.featuredImageUrl || article?.featuredImage)),
+    [image, article],
+  );
   useEffect(() => () => { if (image && preview) URL.revokeObjectURL(preview); }, [image, preview]);
 
-  function insert(before: string, after = '', placeholder = 'text') {
-    const textarea = textareaRef.current;
-    const start = textarea?.selectionStart ?? form.content.length;
-    const end = textarea?.selectionEnd ?? start;
-    const selected = form.content.slice(start, end) || placeholder;
-    const next = `${form.content.slice(0, start)}${before}${selected}${after}${form.content.slice(end)}`;
-    setForm((current) => ({ ...current, content: next }));
-    window.setTimeout(() => {
-      textareaRef.current?.focus();
-      textareaRef.current?.setSelectionRange(start + before.length, start + before.length + selected.length);
-    }, 0);
-  }
-
-  function insertLine(prefix: string, placeholder: string) {
-    insert(`\n${prefix}`, '\n', placeholder);
-  }
-
   async function uploadInlineImages(files: File[]) {
-    if (!files.length) return;
-    setUploadingInline(true);
+    if (!files.length) return [];
     setError('');
     try {
       const response = await apiClient.uploadArticleAssets(files);
-      const urls = (response.data?.data as string[]).map(assetUrl);
-      const markdown = urls.map((url, index) => `![${files[index]?.name.replace(/\.[^.]+$/, '') || 'Article image'}](${url})`).join('\n\n');
-      insert('\n', '\n', markdown);
+      return (response.data?.data as string[]).map(assetUrl);
     } catch (uploadError) {
       setError(axios.isAxiosError(uploadError) ? uploadError.response?.data?.error?.message ?? 'Could not upload inline image.' : 'Could not upload inline image.');
-    } finally {
-      setUploadingInline(false);
-      if (inlineImageRef.current) inlineImageRef.current.value = '';
+      return [];
     }
   }
 
@@ -131,6 +79,7 @@ export default function ArticleEditorPage() {
     try {
       const payload = new FormData();
       Object.entries(form).forEach(([key, value]) => payload.append(key, value));
+      payload.append('contentFormat', 'html');
       if (image) payload.append('featuredImage', image);
       const response = documentId ? await apiClient.updateArticle(documentId, payload) : await apiClient.createArticle(payload);
       const saved = response.data?.data as Insight;
@@ -152,14 +101,12 @@ export default function ArticleEditorPage() {
   if (documentId && query.isLoading) return <div className="p-10 text-sm text-white/45">Loading article…</div>;
   if (documentId && !query.isLoading && !article) return <div className="p-10 text-sm text-red-300">Article not found.</div>;
 
-  const toolbarButton = 'rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/65 transition hover:bg-white/10 hover:text-white';
-
   return (
     <div className="p-6 md:p-10">
       <div className="mx-auto max-w-5xl">
         <Link to="/dashboard/articles" className="text-sm font-semibold text-sky-400">← Back to articles</Link>
         <h1 className="mt-4 text-3xl font-black text-white">{documentId ? 'Edit article' : 'Write an article'}</h1>
-        <p className="mt-2 text-sm text-white/45">Use the formatting buttons below or write Markdown directly. No technical knowledge is required.</p>
+        <p className="mt-2 text-sm text-white/45">Create and format your article visually. The editor preview matches the published article.</p>
 
         <form className="mt-7 space-y-6">
           <section className="grid gap-5 rounded-2xl border border-white/10 bg-white/[0.04] p-6 md:grid-cols-2">
@@ -178,31 +125,13 @@ export default function ArticleEditorPage() {
             <label className="text-sm font-semibold text-white/70">Tags<input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className={input} placeholder="AI, Derby, React, leadership" /></label>
 
             <div className="md:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-xl border border-white/10 bg-slate-950/60 p-3">
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" className={toolbarButton} onClick={() => insertLine('## ', 'Section heading')}>Heading</button>
-                  <button type="button" className={toolbarButton} onClick={() => insert('**', '**', 'bold text')}>Bold</button>
-                  <button type="button" className={toolbarButton} onClick={() => insert('*', '*', 'italic text')}>Italic</button>
-                  <button type="button" className={toolbarButton} onClick={() => insertLine('- ', 'List item')}>Bulleted list</button>
-                  <button type="button" className={toolbarButton} onClick={() => insert('[', '](https://example.com)', 'link text')}>Link</button>
-                  <button type="button" className={toolbarButton} onClick={() => inlineImageRef.current?.click()}>{uploadingInline ? 'Uploading…' : 'Inline image'}</button>
-                  <input ref={inlineImageRef} type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => uploadInlineImages(Array.from(e.target.files ?? []))} />
-                  <select value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)} className="rounded-lg border border-white/10 bg-slate-900 px-2 py-2 text-xs text-white/70">
-                    {LANGUAGES.map((language) => <option key={language}>{language}</option>)}
-                  </select>
-                  <button type="button" className={toolbarButton} onClick={() => insert(`\n\`\`\`${codeLanguage}\n`, '\n```\n', codeLanguage === 'javascript' ? 'const greeting = "Hello, Derby";' : 'Paste code here')}>Code block</button>
-                </div>
-                <div className="flex rounded-lg border border-white/10 p-1">
-                  <button type="button" onClick={() => setMode('write')} className={`rounded px-3 py-1 text-xs font-bold ${mode === 'write' ? 'bg-sky-500 text-white' : 'text-white/45'}`}>Write</button>
-                  <button type="button" onClick={() => setMode('preview')} className={`rounded px-3 py-1 text-xs font-bold ${mode === 'preview' ? 'bg-sky-500 text-white' : 'text-white/45'}`}>Preview</button>
-                </div>
-              </div>
-              {mode === 'write' ? (
-                <textarea ref={textareaRef} required value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className="min-h-[520px] w-full rounded-b-xl border border-t-0 border-white/10 bg-white/5 p-4 font-mono text-sm leading-7 text-white outline-none placeholder:text-white/25 focus:border-sky-500/60" placeholder="Start writing here…" />
-              ) : (
-                <div className="min-h-[520px] rounded-b-xl border border-t-0 border-white/10 bg-white p-6 text-slate-900" dangerouslySetInnerHTML={{ __html: previewMarkdown(form.content) }} />
-              )}
-              <p className="mt-2 text-xs text-white/35">Inline images are uploaded and inserted at your cursor. Code blocks display the selected language and preserve formatting.</p>
+              <span className="mb-2 block text-sm font-semibold text-white/70">Article content *</span>
+              <RichArticleEditor
+                value={form.content}
+                disabled={saving}
+                onChange={(content) => setForm((current) => ({ ...current, content }))}
+                onUploadImages={uploadInlineImages}
+              />
             </div>
           </section>
 

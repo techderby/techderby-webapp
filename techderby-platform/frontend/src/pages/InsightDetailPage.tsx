@@ -7,8 +7,8 @@ import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useInsightBySlug } from '../hooks/use-content-query';
 import { apiClient } from '../lib/api';
+import { renderArticleContent } from '../lib/article-content';
 import { useAuth } from '../contexts/AuthContext';
-import { sanitizeHtml } from '../lib/html-sanitizer';
 import type { ArticleComment } from '../types/content';
 
 function toAssetUrl(path: string) {
@@ -23,196 +23,6 @@ function formatInsightDate(value?: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
   return parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function escapeHtml(text: string) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function inlineMarkdown(text: string): string {
-  return escapeHtml(text)
-    // Images with optional size: ![alt](url){w=50%} or ![alt](url){w=300px}
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)(?:\{w=([^}]+)\})?/g, (_m, alt, src, width) => {
-      const style = width ? ` style="width:${width};max-width:100%"` : '';
-      const cls = width ? '' : 'w-full ';
-      return `<img src="${src}" alt="${alt}"${style} class="${cls}rounded-xl border border-slate-200 my-4 object-cover" />`;
-    })
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-sky-700 hover:underline">$1</a>')
-    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
-    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
-    .replace(/_([^_\n]+)_/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code class="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-800">$1</code>');
-}
-
-// Converts a plain markdown text block (no :::image blocks) into HTML line by line.
-function processLines(text: string): string {
-  const lines = text.split('\n');
-  const out: string[] = [];
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    const fence = line.match(/^```([a-zA-Z0-9_+#.-]*)\s*$/);
-    if (fence) {
-      const language = fence[1] || 'text';
-      const code: string[] = [];
-      i++;
-      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
-        code.push(lines[i]);
-        i++;
-      }
-      if (i < lines.length) i++;
-      out.push(`<div class="my-6 overflow-hidden rounded-xl border border-slate-700 bg-slate-950"><div class="border-b border-slate-700 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-400">${escapeHtml(language)}</div><pre class="overflow-x-auto p-5 text-sm leading-6 text-slate-100"><code class="language-${escapeHtml(language)}">${escapeHtml(code.join('\n'))}</code></pre></div>`);
-      continue;
-    }
-    const heading = line.match(/^(#{1,6})\s+(.*)/);
-    if (heading) {
-      const level = heading[1].length;
-      const headingClass = [
-        '',                                                                         // 0 unused
-        'text-3xl font-black text-slate-900 mt-10 mb-4 leading-tight',            // h1
-        'text-2xl font-black text-slate-900 mt-8 mb-3 leading-tight',            // h2
-        'text-xl font-black text-slate-900 mt-6 mb-2 leading-snug',              // h3
-        'text-lg font-bold text-slate-800 mt-5 mb-2',                             // h4
-        'text-base font-bold text-slate-700 mt-4 mb-1',                           // h5
-        'text-sm font-bold text-slate-600 mt-3 mb-1 uppercase tracking-wide',    // h6
-      ][level];
-      out.push(`<h${level} class="${headingClass}">${inlineMarkdown(heading[2])}</h${level}>`);
-      i++; continue;
-    }
-    if (/^[-*+]\s+/.test(line)) {
-      out.push('<ul style="list-style-type:disc;padding-left:1.5rem;margin-bottom:1rem;">');
-      while (i < lines.length && /^[-*+]\s+/.test(lines[i])) {
-        out.push(`<li style="margin-bottom:0.25rem;line-height:1.7;">${inlineMarkdown(lines[i].replace(/^[-*+]\s+/, ''))}</li>`);
-        i++;
-      }
-      out.push('</ul>'); continue;
-    }
-    if (/^\d+\.\s+/.test(line)) {
-      out.push('<ol style="list-style-type:decimal;padding-left:1.5rem;margin-bottom:1rem;">');
-      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
-        out.push(`<li style="margin-bottom:0.25rem;line-height:1.7;">${inlineMarkdown(lines[i].replace(/^\d+\.\s+/, ''))}</li>`);
-        i++;
-      }
-      out.push('</ol>'); continue;
-    }
-    if (line.startsWith('> ')) {
-      out.push(`<blockquote style="border-left:4px solid #7dd3fc;padding-left:1rem;font-style:italic;color:#64748b;margin:1rem 0;">${inlineMarkdown(line.slice(2))}</blockquote>`);
-      i++; continue;
-    }
-    if (line.trim() === '') { i++; continue; }
-    const paraLines: string[] = [];
-    while (
-      i < lines.length &&
-      lines[i].trim() !== '' &&
-      !lines[i].match(/^#{1,6}\s+/) &&
-      !lines[i].match(/^[-*+]\s+/) &&
-      !lines[i].match(/^\d+\.\s+/) &&
-      !lines[i].match(/^```/) &&
-      !lines[i].startsWith('> ') &&
-      !lines[i].startsWith(':::')
-    ) {
-      paraLines.push(inlineMarkdown(lines[i]));
-      i++;
-    }
-    if (paraLines.length > 0) out.push(`<p style="margin-bottom:1rem;line-height:1.8;color:#374151;">${paraLines.join(' ')}</p>`);
-  }
-  return out.join('\n');
-}
-
-// Supported special blocks (all line endings — LF and CRLF — are handled):
-//
-// 1. Side-by-side layout — image takes 40% width by default.
-//    Append :N to set a custom image width percentage (e.g. :::image-left:30).
-//
-//    :::image-left
-//    ![Alt text](https://your-cms/uploads/photo.webp)
-//    Text that appears on the RIGHT. Supports **bold**, lists, etc.
-//    :::
-//
-//    :::image-right:35
-//    ![Alt text](https://your-cms/uploads/photo.webp)
-//    Text that appears on the LEFT. Image takes 35% width.
-//    :::
-//
-// 2. Regular inline images with size control:
-//    ![alt](url){w=300px}   — fixed pixel width
-//    ![alt](url){w=50%}     — percentage width
-//
-// 3. Raw HTML passthrough:
-//    :::html
-//    <div class="p-6 bg-sky-50 rounded-2xl">any HTML + Tailwind</div>
-//    :::
-function markdownToHtml(markdown: string): string {
-  // Normalise Windows line endings so all regexes only need to handle \n
-  const md = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-  // Split on all supported block types, keeping delimiters
-  const segments = md.split(/(:::html[\s\S]*?:::|:::image-(?:left|right)(?::\d+)?[\s\S]*?:::)/);
-
-  return segments.map((segment) => {
-    // ── :::html block ── verbatim HTML passthrough
-    const htmlMatch = segment.match(/:::html\s*\n([\s\S]*?):::/);
-    if (htmlMatch) return htmlMatch[1];
-
-    // ── :::image-left / :::image-right block ──
-    // Optional :N suffix sets the image column width in percent (default 40)
-    const blockMatch = segment.match(/:::(image-left|image-right)(?::(\d+))?\s*\n([\s\S]*?):::/);
-    if (!blockMatch) return processLines(segment);
-
-    const [, direction, widthParam, blockContent] = blockMatch;
-    const imgWidthPct = widthParam ?? '40';
-    const blockLines = blockContent.trim().split('\n');
-
-    // First line that is an image becomes the <img>; everything else is the text column
-    let imageLine = '';
-    const textLines: string[] = [];
-    for (const line of blockLines) {
-      if (!imageLine && /^!\[/.test(line.trim())) {
-        imageLine = line.trim();
-      } else {
-        textLines.push(line);
-      }
-    }
-
-    const imgMatch = imageLine.match(/^!\[([^\]]*)\]\(([^)]+)\)(?:\{w=([^}]+)\})?/);
-    if (!imgMatch) return processLines(blockContent);
-
-    const [, alt, src, inlineWidth] = imgMatch;
-    const imgStyle = inlineWidth
-      ? `style="width:${inlineWidth};max-width:100%"`
-      : `style="width:${imgWidthPct}%;max-width:100%"`;
-
-    const flexDir = direction === 'image-right' ? 'md:flex-row-reverse' : 'md:flex-row';
-    const textHtml = textLines.join('\n').trim() ? processLines(textLines.join('\n')) : '';
-
-    return [
-      `<div class="not-prose my-8 flex flex-col ${flexDir} items-start gap-6 md:items-center">`,
-      `<img src="${src}" alt="${alt}" ${imgStyle} class="w-full shrink-0 rounded-2xl border border-slate-200 object-cover shadow-sm md:w-auto" />`,
-      `<div class="flex-1 min-w-0 space-y-3 text-base leading-relaxed text-slate-700">${textHtml}</div>`,
-      `</div>`,
-    ].join('\n');
-  }).join('');
-}
-
-// If the content is predominantly HTML (starts with a tag or has block-level tags)
-// it is passed straight to dangerouslySetInnerHTML without markdown processing.
-function looksLikeHtml(content: string): boolean {
-  const trimmed = content.trimStart();
-  if (trimmed.startsWith('<')) return true;
-  return /<(p|h[1-6]|ul|ol|div|table|section|article|blockquote)(\s[^>]*)?>/.test(trimmed);
-}
-
-function renderContent(content: string): string {
-  if (looksLikeHtml(content)) {
-    return sanitizeHtml(content);
-  }
-  return sanitizeHtml(markdownToHtml(content));
 }
 
 export default function InsightDetailPage() {
@@ -370,8 +180,8 @@ export default function InsightDetailPage() {
               {/* Article body */}
               <div className="mt-8 border-t border-slate-200 pt-8">
                 <div
-                  className="article-body max-w-none text-base leading-relaxed text-slate-700 [&_p]:mb-4 [&_p]:leading-[1.8] [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_li]:leading-[1.7] [&_strong]:font-bold [&_strong]:text-slate-900 [&_em]:italic [&_a]:text-sky-700 [&_a:hover]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-sky-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-500 [&_blockquote]:my-4 [&_img]:rounded-xl [&_img]:border [&_img]:border-slate-200 [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-slate-800 [&_hr]:my-8 [&_hr]:border-slate-200"
-                  dangerouslySetInnerHTML={{ __html: renderContent(insight.content) }}
+                  className="article-rich-content max-w-none"
+                  dangerouslySetInnerHTML={{ __html: renderArticleContent(insight.content, insight.contentFormat) }}
                 />
               </div>
 

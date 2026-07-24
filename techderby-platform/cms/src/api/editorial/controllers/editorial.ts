@@ -251,10 +251,28 @@ async function allArticleDocuments() {
     documents.findMany({ status: 'draft', populate: ['featuredImage'], sort: { updatedAt: 'desc' } }),
     documents.findMany({ status: 'published', populate: ['featuredImage'], sort: { updatedAt: 'desc' } }),
   ]);
-  const map = new Map<string, any>();
-  for (const article of published) map.set(article.documentId, article);
-  for (const article of drafts) map.set(article.documentId, article);
-  return [...map.values()];
+  const versions = new Map<string, { draft?: any; published?: any }>();
+  for (const article of published) {
+    versions.set(article.documentId, { ...versions.get(article.documentId), published: article });
+  }
+  for (const article of drafts) {
+    versions.set(article.documentId, { ...versions.get(article.documentId), draft: article });
+  }
+
+  return [...versions.values()].map(({ draft, published: publishedArticle }) => {
+    const article = draft ?? publishedArticle;
+    if (!draft || !publishedArticle) return article;
+
+    // Engagement is recorded against the published row, while the dashboard
+    // normally displays the editable draft row. Preserve the draft content but
+    // surface the newest engagement totals from either document version.
+    return {
+      ...article,
+      readCount: Math.max(Number(draft.readCount ?? 0), Number(publishedArticle.readCount ?? 0)),
+      likeCount: Math.max(Number(draft.likeCount ?? 0), Number(publishedArticle.likeCount ?? 0)),
+      commentCount: Math.max(Number(draft.commentCount ?? 0), Number(publishedArticle.commentCount ?? 0)),
+    };
+  });
 }
 
 function articleStats(articles: any[]) {
@@ -286,7 +304,13 @@ function publicImage(article: any) {
 }
 
 function serialiseArticle(article: any) {
-  return { ...article, featuredImageUrl: publicImage(article) };
+  return {
+    ...article,
+    featuredImageUrl: publicImage(article),
+    readCount: Number(article.readCount ?? 0),
+    likeCount: Number(article.likeCount ?? 0),
+    commentCount: Number(article.commentCount ?? 0),
+  };
 }
 
 async function listWritersWithStats() {

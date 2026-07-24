@@ -44,6 +44,7 @@ jobs:
           build-args: |
             VITE_API_URL=https://cms.techderby.org
             VITE_CALLMEBOT_API_KEY=${{ secrets.VITE_CALLMEBOT_API_KEY }}
+            VITE_GA_MEASUREMENT_ID=${{ secrets.VITE_GA_MEASUREMENT_ID }}
           tags: |
             ${{ env.DOCKER_IMAGE_FRONTEND }}:${{ steps.vars.outputs.image_tag }}
             ${{ env.DOCKER_IMAGE_FRONTEND }}:latest

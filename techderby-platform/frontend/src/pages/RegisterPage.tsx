@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageSeo } from '../components/PageSeo';
 import { useAuth } from '../contexts/AuthContext';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 function PasswordStrength({ password }: { password: string }) {
@@ -72,6 +73,7 @@ export default function RegisterPage() {
         username: form.username.trim().toLowerCase(),
         password: form.password,
       });
+      trackAnalyticsEvent('member_registration_complete');
       navigate('/dashboard');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Registration failed. Please try again.';

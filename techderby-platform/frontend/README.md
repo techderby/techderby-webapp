@@ -60,8 +60,23 @@ npm run lint     # ESLint
 |----------|-------------|
 | `VITE_API_URL` | Strapi base URL (e.g. `http://localhost:1337`) |
 | `VITE_CALLMEBOT_API_KEY` | WhatsApp notification key (optional) |
+| `VITE_GA_MEASUREMENT_ID` | GA4 web-stream measurement ID (`G-...`). Optional; no Google tag is loaded when omitted. |
 
-In production, `VITE_API_URL` and `VITE_CALLMEBOT_API_KEY` are baked in at Docker build time via `--build-arg`.
+In production, these public values are baked in at Docker build time via `--build-arg`.
+
+## Google Analytics and consent
+
+The public website uses a native consent manager and Google Consent Mode v2. Analytics storage is denied by default, and the Google tag is not requested until a visitor explicitly enables analytics. Only public routes are measured; dashboard and CMS administration routes are excluded. Public page URLs are sent without query strings or fragments.
+
+Before enabling production analytics:
+
+1. Create a GA4 web stream for `https://techderby.org`.
+2. Configure event-data retention, internal-traffic filters, unwanted referrals and organisation-owned access.
+3. Keep Google Signals, user-provided data and ads personalisation disabled unless separately approved.
+4. Add the `G-...` value as the repository secret `VITE_GA_MEASUREMENT_ID`.
+5. Deploy and verify consent, cookies, page views and events in GA4 DebugView.
+
+The implementation emits `page_view`, `newsletter_signup`, `member_registration_complete`, and `contact_form_submit`. Event parameters must never contain names, email addresses, form contents, account IDs, tokens or other personal data.
 
 ## Poster generator (`/create-poster`)
 

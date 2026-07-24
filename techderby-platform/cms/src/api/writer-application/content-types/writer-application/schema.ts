@@ -24,5 +24,6 @@ export default {
     reviewNotes: { type: 'text' },
     reviewedAt: { type: 'datetime' },
     reviewedByUserId: { type: 'integer' },
+    decisionHistory: { type: 'json' },
   },
 };

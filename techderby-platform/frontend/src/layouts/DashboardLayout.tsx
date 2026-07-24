@@ -65,6 +65,16 @@ const NAV_ARTICLES: NavItem = {
   ),
 };
 
+const NAV_WRITER_APPLICATION: NavItem = {
+  to: '/dashboard/writer-application',
+  label: 'Apply to Write',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  ),
+};
+
 const NAV_ARTICLE_REVIEW: NavItem = {
   to: '/dashboard/article-review',
   label: 'Article Review',
@@ -135,7 +145,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
     ? [...NAV_MAIN, NAV_ARTICLES, NAV_ARTICLE_REVIEW, NAV_WRITERS, NAV_ADMIN_EVENTS, NAV_MAILING_LIST]
     : isWriter
       ? [...NAV_MAIN, NAV_ARTICLES]
-      : NAV_MAIN;
+      : [...NAV_MAIN, NAV_WRITER_APPLICATION];
   const articleStatsQuery = useQuery<{ stats: ArticleStats }>({
     queryKey: ['sidebar-article-stats'],
     queryFn: () => apiClient.getMyArticles().then((response) => response.data),

@@ -86,6 +86,13 @@ export type ArticleStats = {
   pendingWriters?: number;
 };
 
+export type WriterApplicationDecision = {
+  status: 'approved' | 'rejected';
+  reviewNotes?: string | null;
+  reviewedAt: string;
+  reviewedByUserId?: number | null;
+};
+
 export type WriterApplication = {
   id: number;
   userId: number;
@@ -97,6 +104,9 @@ export type WriterApplication = {
   topics?: string[];
   status: 'pending' | 'approved' | 'rejected';
   reviewNotes?: string | null;
+  reviewedAt?: string | null;
+  reviewedByUserId?: number | null;
+  decisionHistory?: WriterApplicationDecision[];
   createdAt?: string;
 };
 

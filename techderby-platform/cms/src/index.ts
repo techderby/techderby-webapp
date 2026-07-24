@@ -11,6 +11,9 @@ const PUBLIC_ACTIONS = [
   'api::programme.programme.find',
   'api::programme.programme.findOne',
   'api::mailing-list-subscription.mailing-list-subscription.create',
+  'api::mailing-list-subscription.mailing-list-subscription.unsubscribeDetails',
+  'api::mailing-list-subscription.mailing-list-subscription.unsubscribe',
+  'api::mailing-list-subscription.mailing-list-subscription.oneClickUnsubscribe',
 ];
 
 const AUTHENTICATED_ACTIONS = [
@@ -254,6 +257,16 @@ async function normalizeMailingListCategories() {
     await knex.schema.alterTable('mailing_list_subscriptions', (table: any) => {
       table.string('category').notNullable().defaultTo('None');
     });
+  }
+  const hasSubscriptionStatus = await knex.schema.hasColumn('mailing_list_subscriptions', 'subscription_status');
+  if (!hasSubscriptionStatus) {
+    await knex.schema.alterTable('mailing_list_subscriptions', (table: any) => {
+      table.string('subscription_status').notNullable().defaultTo('subscribed');
+    });
+  } else {
+    await knex('mailing_list_subscriptions')
+      .whereNull('subscription_status')
+      .update({ subscription_status: 'subscribed' });
   }
 
   const validCategories = [...MAILING_LIST_CATEGORIES];

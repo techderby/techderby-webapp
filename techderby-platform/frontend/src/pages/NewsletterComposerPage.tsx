@@ -102,7 +102,11 @@ export default function NewsletterComposerPage() {
   useEffect(() => {
     apiClient
       .getMailingListSubscriptionsAdmin()
-      .then((response) => setSubscriberCount(Array.isArray(response.data) ? response.data.length : 0))
+      .then((response) => setSubscriberCount(
+        Array.isArray(response.data)
+          ? response.data.filter((row: { subscriptionStatus?: string }) => row.subscriptionStatus !== 'unsubscribed').length
+          : 0,
+      ))
       .catch(() => setError('Could not load the current subscriber count.'));
 
     apiClient

@@ -33,6 +33,7 @@ const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
+const UnsubscribePage = lazy(() => import('../pages/UnsubscribePage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 const NewsletterComposerPage = lazy(() => import('../pages/NewsletterComposerPage'));
 const EventAdminPage = lazy(() => import('../pages/dashboard/EventAdminPage'));
@@ -191,6 +192,7 @@ export const router = createBrowserRouter([
       { path: 'code-of-conduct', element: withLazy(<CodeOfConductPage />) },
       { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
+      { path: 'unsubscribe', element: withLazy(<UnsubscribePage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
       { path: 'admin', element: <Navigate to="/dashboard/mailing-list" replace /> },
       { path: '*', element: <NotFoundPage /> },

@@ -1,4 +1,10 @@
 import { ARTICLE_CATEGORIES as CMS_ARTICLE_CATEGORIES } from '../../../constants/article-categories';
+import sanitizeHtml from 'sanitize-html';
+import {
+  unsubscribeHeaders,
+  unsubscribeLinks,
+  type MailingListRecipient,
+} from '../../../utils/mailing-list-unsubscribe';
 
 const POST_UID = 'api::post.post';
 const APPLICATION_UID = 'api::writer-application.writer-application';
@@ -9,12 +15,69 @@ const WRITER_ROLES = new Set(['editor', 'admin', 'super-admin']);
 const ADMIN_ROLES = new Set(['admin', 'super-admin']);
 const WORKFLOW_STATUSES = new Set(['draft', 'pending-review', 'published', 'rejected', 'update-requested']);
 const MAX_ARTICLE_IMAGE_SIZE = 8 * 1024 * 1024;
+const EMAIL_SEND_CONCURRENCY = 5;
+const UNSUBSCRIBE_URL_PLACEHOLDER = '__TECH_DERBY_UNSUBSCRIBE_URL__';
 const ARTICLE_IMAGE_EXTENSIONS: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
 };
 const ARTICLE_CATEGORIES = new Set<string>(CMS_ARTICLE_CATEGORIES);
+const ARTICLE_CONTENT_FORMATS = new Set(['markdown', 'html']);
+
+const ARTICLE_HTML_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'del',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'hr',
+    'pre', 'code',
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+    'figure', 'figcaption', 'div', 'span',
+  ],
+  allowedAttributes: {
+    a: ['href', 'target', 'rel', 'title'],
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+    p: ['style'],
+    h1: ['style'],
+    h2: ['style'],
+    h3: ['style'],
+    h4: ['style'],
+    th: ['colspan', 'rowspan', 'scope', 'style'],
+    td: ['colspan', 'rowspan', 'style'],
+    pre: ['data-language'],
+    code: ['class'],
+    figure: ['class'],
+    div: ['class'],
+  },
+  allowedClasses: {
+    code: [/^language-[a-zA-Z0-9_+#.-]+$/],
+    figure: ['article-split', 'article-split-left', 'article-split-right'],
+    div: ['tableWrapper'],
+  },
+  allowedStyles: {
+    '*': {
+      'text-align': [/^(left|right|center|justify)$/],
+    },
+    img: {
+      width: [/^\d+(?:\.\d+)?(?:px|%)$/],
+      'max-width': [/^100%$/],
+    },
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesByTag: {
+    img: ['http', 'https'],
+  },
+  allowProtocolRelative: false,
+  transformTags: {
+    a: sanitizeHtml.simpleTransform('a', {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    }),
+    img: sanitizeHtml.simpleTransform('img', {
+      loading: 'lazy',
+    }),
+  },
+};
 
 class InputError extends Error {}
 
@@ -33,6 +96,17 @@ function arrayField(value: unknown) {
     // Fall through to comma-separated values.
   }
   return raw.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function sanitiseArticleHtml(value: string) {
+  return sanitizeHtml(value, ARTICLE_HTML_OPTIONS).trim();
+}
+
+function articleText(value: string) {
+  return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} })
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function escapeHtml(value: unknown) {
@@ -154,15 +228,21 @@ function removeOldImage(publicPath?: string | null) {
 function parseArticle(body: Record<string, unknown> = {}) {
   const title = field(body.title);
   const excerpt = field(body.excerpt);
-  const content = String(body.content ?? '').trim();
+  const requestedFormat = field(body.contentFormat) || 'markdown';
+  const contentFormat = ARTICLE_CONTENT_FORMATS.has(requestedFormat) ? requestedFormat : 'markdown';
+  const rawContent = String(body.content ?? '').trim();
+  const content = contentFormat === 'html' ? sanitiseArticleHtml(rawContent) : rawContent;
   const category = field(body.category) || 'Others';
   const tags = arrayField(body.tags).slice(0, 12);
-  if (!title || !excerpt || !content) throw new InputError('Title, excerpt and article content are required.');
+  const hasArticleContent = contentFormat === 'html'
+    ? Boolean(articleText(content) || /<img\b/i.test(content) || /<table\b/i.test(content))
+    : Boolean(content);
+  if (!title || !excerpt || !hasArticleContent) throw new InputError('Title, excerpt and article content are required.');
   if (title.length > 200) throw new InputError('The title must be 200 characters or fewer.');
   if (excerpt.length > 600) throw new InputError('The excerpt must be 600 characters or fewer.');
   if (content.length > 250_000) throw new InputError('The article content is too large.');
   if (!ARTICLE_CATEGORIES.has(category)) throw new InputError('Select a valid article category.');
-  return { title, excerpt, content, category, tags };
+  return { title, excerpt, content, contentFormat, category, tags };
 }
 
 async function allArticleDocuments() {
@@ -253,8 +333,18 @@ async function listWritersWithStats() {
 
 async function sendArticlePublishedEmail(article: any) {
   if (article.mailingListNotifiedAt) return;
-  const subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({ select: ['email'] });
-  const recipients = [...new Set(subscribers.map((row: any) => field(row.email).toLowerCase()).filter(Boolean))];
+  const subscribers = await strapi.db.query(SUBSCRIPTION_UID).findMany({
+    select: ['id', 'email'],
+    where: { subscriptionStatus: 'subscribed' },
+  });
+  const recipients = [
+    ...new Map(
+      subscribers
+        .map((row: any) => ({ id: Number(row.id), email: field(row.email).toLowerCase() }))
+        .filter((recipient: MailingListRecipient) => Number.isInteger(recipient.id) && recipient.id > 0 && Boolean(recipient.email))
+        .map((recipient: MailingListRecipient) => [recipient.email, recipient]),
+    ).values(),
+  ] as MailingListRecipient[];
   if (!recipients.length) return;
 
   const frontendUrl = (process.env.PUBLIC_FRONTEND_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -279,18 +369,30 @@ async function sendArticlePublishedEmail(article: any) {
       articleImage = 'cid:wire-featured-image';
     }
   }
-  const html = `<!doctype html><html><body style="margin:0;background:#eef2f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:28px 12px;background:#eef2f7;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden;"><tr><td style="height:5px;background:#0ea5e9"></td></tr><tr><td style="padding:28px 36px;background:#0f172a;color:#fff;font-size:24px;font-weight:800;">${logoMarkup}</td></tr>${articleImage ? `<tr><td><img src="${escapeHtml(articleImage)}" alt="" width="600" style="display:block;width:100%;height:auto;max-height:320px;object-fit:cover;"></td></tr>` : ''}<tr><td style="padding:36px;"><p style="margin:0 0 10px;color:#0284c7;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;">New on The Wire</p><h1 style="margin:0;color:#0f172a;font-size:32px;line-height:39px;">${escapeHtml(article.title)}</h1><p style="margin:18px 0 8px;color:#64748b;font-size:13px;">By ${escapeHtml(article.author)}</p><p style="margin:12px 0 24px;color:#475569;font-size:16px;line-height:25px;">${escapeHtml(article.excerpt)}</p><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 24px;border-radius:9px;background:#f97316;color:#fff;text-decoration:none;font-weight:800;">Read the article &rarr;</a></td></tr><tr><td style="padding:24px 36px;background:#0f172a;color:#94a3b8;font-size:12px;">You received this because you joined the Tech Derby mailing list.</td></tr></table></td></tr></table></body></html>`;
-  const text = `New on The Wire: ${article.title}\n\n${article.excerpt}\n\nRead: ${link}`;
+  const html = `<!doctype html><html><body style="margin:0;background:#eef2f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:28px 12px;background:#eef2f7;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden;"><tr><td style="height:5px;background:#0ea5e9"></td></tr><tr><td style="padding:28px 36px;background:#0f172a;color:#fff;font-size:24px;font-weight:800;">${logoMarkup}</td></tr>${articleImage ? `<tr><td><img src="${escapeHtml(articleImage)}" alt="" width="600" style="display:block;width:100%;height:auto;max-height:320px;object-fit:cover;"></td></tr>` : ''}<tr><td style="padding:36px;"><p style="margin:0 0 10px;color:#0284c7;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;">New on The Wire</p><h1 style="margin:0;color:#0f172a;font-size:32px;line-height:39px;">${escapeHtml(article.title)}</h1><p style="margin:18px 0 8px;color:#64748b;font-size:13px;">By ${escapeHtml(article.author)}</p><p style="margin:12px 0 24px;color:#475569;font-size:16px;line-height:25px;">${escapeHtml(article.excerpt)}</p><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 24px;border-radius:9px;background:#f97316;color:#fff;text-decoration:none;font-weight:800;">Read the article &rarr;</a></td></tr><tr><td style="padding:24px 36px;background:#0f172a;color:#94a3b8;font-size:12px;">You received this because you joined the Tech Derby mailing list. <a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#38bdf8;text-decoration:none;">Unsubscribe</a>.</td></tr></table></td></tr></table></body></html>`;
+  const text = `New on The Wire: ${article.title}\n\n${article.excerpt}\n\nRead: ${link}\n\nUnsubscribe: ${UNSUBSCRIBE_URL_PLACEHOLDER}`;
   const from = process.env.SMTP_FROM ?? 'Tech Derby <hello@techderby.org>';
-  await strapi.plugin('email').service('email').send({
-    from,
-    to: from,
-    bcc: recipients,
-    subject: `New on The Wire: ${article.title}`,
-    html,
-    text,
-    attachments,
-  });
+  let sent = 0;
+  for (let index = 0; index < recipients.length; index += EMAIL_SEND_CONCURRENCY) {
+    const batch = recipients.slice(index, index + EMAIL_SEND_CONCURRENCY);
+    const results = await Promise.allSettled(batch.map((recipient) => {
+      const links = unsubscribeLinks(recipient);
+      return strapi.plugin('email').service('email').send({
+        from,
+        to: recipient.email,
+        subject: `New on The Wire: ${article.title}`,
+        html: html.split(UNSUBSCRIBE_URL_PLACEHOLDER).join(links.confirmation),
+        text: text.split(UNSUBSCRIBE_URL_PLACEHOLDER).join(links.confirmation),
+        attachments,
+        headers: unsubscribeHeaders(recipient),
+      });
+    }));
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') sent += 1;
+      else strapi.log.error('[editorial] Failed to send an article notification email', result.reason);
+    });
+  }
+  if (!sent) throw new Error('Article notification delivery failed for every active subscriber.');
   await strapi.db.query(POST_UID).update({
     where: { id: article.id },
     data: { mailingListNotifiedAt: new Date().toISOString() },

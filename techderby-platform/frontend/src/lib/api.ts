@@ -54,6 +54,10 @@ export const apiClient = {
   getProgrammes: () => api.get('/api/programmes'),
   createMailingListSubscription: (email: string) =>
     api.post('/api/mailing-list-subscriptions', { data: { email, category: 'None' } }),
+  getMailingListUnsubscribeDetails: (token: string) =>
+    api.get(`/api/mailing-list-subscriptions/unsubscribe/${encodeURIComponent(token)}`),
+  unsubscribeFromMailingList: (token: string, reason: string, details: string) =>
+    api.post(`/api/mailing-list-subscriptions/unsubscribe/${encodeURIComponent(token)}`, { reason, details }),
   getMailingListSubscriptionsAdmin: () =>
     api.get('/api/mailing-list-subscriptions/admin/list'),
   deleteMailingListSubscriptionForAdmin: (id: number) =>

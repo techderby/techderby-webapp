@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ArticleStats, ArticleStatus, Insight } from '../../types/content';
 
@@ -37,6 +39,7 @@ export default function ArticlesDashboardPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | ArticleStatus>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const role = user?.memberRole ?? 'member';
   const isAdmin = role === 'admin' || role === 'super-admin';
   const query = useQuery<ArticlesPayload>({
@@ -67,6 +70,10 @@ export default function ArticlesDashboardPage() {
     const articles = query.data?.data ?? [];
     return filter === 'all' ? articles : articles.filter((article) => article.workflowStatus === filter);
   }, [query.data?.data, filter]);
+  const articlePagination = useMemo(
+    () => paginateItems(filtered, currentPage),
+    [currentPage, filtered],
+  );
 
   return (
     <div className="p-6 md:p-10">
@@ -86,7 +93,14 @@ export default function ArticlesDashboardPage() {
 
         <div className="mt-7 flex flex-wrap gap-2">
           {FILTERS.map((item) => (
-            <button key={item.value} onClick={() => setFilter(item.value)} className={`rounded-full px-4 py-2 text-xs font-bold transition ${filter === item.value ? 'bg-sky-500 text-white' : 'border border-white/10 bg-white/5 text-white/50 hover:text-white'}`}>
+            <button
+              key={item.value}
+              onClick={() => {
+                setFilter(item.value);
+                setCurrentPage(1);
+              }}
+              className={`rounded-full px-4 py-2 text-xs font-bold transition ${filter === item.value ? 'bg-sky-500 text-white' : 'border border-white/10 bg-white/5 text-white/50 hover:text-white'}`}
+            >
               {item.label}
             </button>
           ))}
@@ -95,7 +109,7 @@ export default function ArticlesDashboardPage() {
         <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
           {query.isLoading ? <p className="p-8 text-center text-sm text-white/40">Loading articles…</p> : null}
           {!query.isLoading && filtered.length === 0 ? <p className="p-8 text-center text-sm text-white/35">No articles match this filter.</p> : null}
-          {filtered.map((article) => {
+          {articlePagination.items.map((article) => {
             const status = article.workflowStatus ?? 'draft';
             return (
               <article key={article.documentId ?? article.id} className="grid gap-4 border-t border-white/8 p-4 first:border-0 sm:grid-cols-[110px_1fr_auto] sm:items-center">
@@ -141,6 +155,13 @@ export default function ArticlesDashboardPage() {
             );
           })}
         </div>
+        <Pagination
+          currentPage={articlePagination.page}
+          totalItems={filtered.length}
+          onPageChange={setCurrentPage}
+          itemLabel="articles"
+          className="mt-4"
+        />
       </div>
     </div>
   );

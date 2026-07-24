@@ -11,6 +11,12 @@ export default {
     featuredImage: { type: 'media', multiple: false, required: false, allowedTypes: ['images'] },
     featuredImageUrl: { type: 'string' },
     content: { type: 'richtext' },
+    contentFormat: {
+      type: 'enumeration',
+      enum: ['markdown', 'html'],
+      default: 'markdown',
+      required: true,
+    },
     author: { type: 'string' },
     authorUserId: { type: 'integer' },
     excerpt: { type: 'text' },

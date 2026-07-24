@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api';
 import type { Connection } from '../../types/auth';
 import { cn } from '../../lib/utils';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 
 type Tab = 'all' | 'pending' | 'sent';
 
@@ -116,6 +118,7 @@ function ConnectionCard({
 export default function ConnectionsPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: connections = [], isLoading } = useQuery<Connection[]>({
     queryKey: ['connections'],
@@ -145,6 +148,7 @@ export default function ConnectionsPage() {
     tab === 'all' ? accepted :
     tab === 'pending' ? pendingIn :
     pendingSent;
+  const connectionPagination = paginateItems(displayed, currentPage);
 
   return (
     <div className="p-6 md:p-10">
@@ -174,7 +178,10 @@ export default function ConnectionsPage() {
           <button
             key={t.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              setCurrentPage(1);
+            }}
             className={cn(
               'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition',
               tab === t.id ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60',
@@ -216,7 +223,7 @@ export default function ConnectionsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {displayed.map((c) => (
+          {connectionPagination.items.map((c) => (
             <ConnectionCard
               key={c.id}
               connection={c}
@@ -225,6 +232,13 @@ export default function ConnectionsPage() {
               onRemove={(id) => removeMut.mutate(id)}
             />
           ))}
+          <Pagination
+            currentPage={connectionPagination.page}
+            totalItems={displayed.length}
+            onPageChange={setCurrentPage}
+            itemLabel="connections"
+            className="mt-4"
+          />
         </div>
       )}
     </div>

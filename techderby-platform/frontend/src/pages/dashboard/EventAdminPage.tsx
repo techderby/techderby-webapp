@@ -4,7 +4,9 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { assetUrl } from '../../lib/asset-url';
+import { Pagination } from '../../components/Pagination';
 import { sanitizeMediaUrl } from '../../lib/html-sanitizer';
+import { paginateItems } from '../../lib/pagination';
 import type { Event } from '../../types/content';
 
 type EventForm = {
@@ -108,6 +110,7 @@ export default function EventAdminPage() {
   const [image, setImage] = useState<File | null>(null);
   const [editing, setEditing] = useState<Event | null>(null);
   const [timeline, setTimeline] = useState<'upcoming' | 'past'>('upcoming');
+  const [currentPage, setCurrentPage] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ title: string; slug: string; action: 'created' | 'updated' } | null>(null);
@@ -139,7 +142,14 @@ export default function EventAdminPage() {
   }, [eventsQuery.data]);
 
   const visibleEvents = groupedEvents[timeline];
-  const displayedImage = useMemo(() => sanitizeMediaUrl(previewUrl || assetUrl(editing?.featuredImage)), [previewUrl, editing?.featuredImage]);
+  const eventPagination = useMemo(
+    () => paginateItems(visibleEvents, currentPage),
+    [currentPage, visibleEvents],
+  );
+  const displayedImage = useMemo(
+    () => sanitizeMediaUrl(previewUrl || assetUrl(editing?.featuredImage)),
+    [previewUrl, editing?.featuredImage],
+  );
 
   useEffect(() => {
     if (!documentId) {
@@ -251,7 +261,10 @@ export default function EventAdminPage() {
                   <button
                     key={option}
                     type="button"
-                    onClick={() => setTimeline(option)}
+                    onClick={() => {
+                      setTimeline(option);
+                      setCurrentPage(1);
+                    }}
                     className={`rounded-lg px-4 py-2 text-sm font-semibold capitalize transition ${
                       timeline === option ? 'bg-sky-500 text-white' : 'text-white/45 hover:text-white/75'
                     }`}
@@ -268,7 +281,14 @@ export default function EventAdminPage() {
             {!eventsQuery.isLoading && !eventsQuery.isError && visibleEvents.length === 0 ? (
               <p className="p-8 text-center text-sm text-white/35">No {timeline} events found.</p>
             ) : null}
-            {visibleEvents.map((event) => <EventRow key={event.documentId ?? event.id} event={event} />)}
+            {eventPagination.items.map((event) => <EventRow key={event.documentId ?? event.id} event={event} />)}
+            <Pagination
+              currentPage={eventPagination.page}
+              totalItems={visibleEvents.length}
+              onPageChange={setCurrentPage}
+              itemLabel="events"
+              className="m-4"
+            />
           </section>
         </div>
       </div>

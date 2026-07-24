@@ -4,6 +4,8 @@ import { PageSeo } from '../components/PageSeo';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { apiClient } from '../lib/api';
+import { Pagination } from '../components/Pagination';
+import { paginateItems } from '../lib/pagination';
 import type { DirectoryMember } from '../types/auth';
 
 function getInitials(firstName?: string, lastName?: string, username?: string) {
@@ -30,6 +32,7 @@ function displayName(member: DirectoryMember) {
 
 export default function MemberDirectoryPage() {
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [bioMember, setBioMember] = useState<DirectoryMember | null>(null);
   const { data: members = [], isLoading } = useQuery<DirectoryMember[]>({
     queryKey: ['public-members-directory'],
@@ -47,6 +50,10 @@ export default function MemberDirectoryPage() {
       return name.includes(query) || occupation.includes(query) || location.includes(query);
     });
   }, [members, search]);
+  const memberPagination = useMemo(
+    () => paginateItems(filtered, currentPage),
+    [currentPage, filtered],
+  );
 
   return (
     <>
@@ -94,14 +101,17 @@ export default function MemberDirectoryPage() {
                   type="search"
                   placeholder="Search by name, role, or location..."
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
             </div>
 
             <div className="mt-5 text-center text-xs text-slate-500">
-              {isLoading ? 'Loading members...' : `${filtered.length} member${filtered.length === 1 ? '' : 's'} shown`}
+              {isLoading ? 'Loading members...' : `${filtered.length} member${filtered.length === 1 ? '' : 's'} found`}
             </div>
 
             {isLoading ? (
@@ -117,7 +127,7 @@ export default function MemberDirectoryPage() {
               </div>
             ) : (
               <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((member) => (
+                {memberPagination.items.map((member) => (
                   <article key={member.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                     <div className="flex items-start gap-3">
                       <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-black text-white ${avatarGradient(member.id)}`}>
@@ -168,6 +178,16 @@ export default function MemberDirectoryPage() {
                 ))}
               </div>
             )}
+            {!isLoading ? (
+              <Pagination
+                currentPage={memberPagination.page}
+                totalItems={filtered.length}
+                onPageChange={setCurrentPage}
+                itemLabel="members"
+                theme="light"
+                className="mt-8"
+              />
+            ) : null}
           </div>
         </Container>
       </Section>

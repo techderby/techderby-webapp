@@ -34,7 +34,7 @@ const ARTICLE_CONTENT_FORMATS = new Set(['markdown', 'html']);
 
 const ARTICLE_HTML_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
-    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'del',
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'del', 'sub', 'sup',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'hr',
     'pre', 'code',
@@ -49,6 +49,11 @@ const ARTICLE_HTML_OPTIONS: sanitizeHtml.IOptions = {
     h2: ['style'],
     h3: ['style'],
     h4: ['style'],
+    h5: ['style'],
+    h6: ['style'],
+    span: ['style'],
+    ol: ['start'],
+    li: ['value'],
     th: ['colspan', 'rowspan', 'scope', 'style'],
     td: ['colspan', 'rowspan', 'style'],
     pre: ['data-language'],
@@ -64,6 +69,20 @@ const ARTICLE_HTML_OPTIONS: sanitizeHtml.IOptions = {
   allowedStyles: {
     '*': {
       'text-align': [/^(left|right|center|justify)$/],
+      color: [
+        /^#[0-9a-f]{3,8}$/i,
+        /^[a-z]{3,20}$/i,
+        /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/i,
+      ],
+      'background-color': [
+        /^#[0-9a-f]{3,8}$/i,
+        /^[a-z]{3,20}$/i,
+        /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/i,
+      ],
+      'font-family': [/^(Aptos|Arial|Calibri|Cambria|Courier New|Garamond|Georgia|Tahoma|Times New Roman|Trebuchet MS|Verdana)$/],
+      'font-size': [/^\d{1,3}(?:\.\d+)?(?:px|pt|em|rem|%)$/],
+      'font-weight': [/^(?:normal|bold|[1-9]00)$/],
+      'line-height': [/^(?:normal|[0-3](?:\.\d+)?)$/],
     },
     img: {
       width: [/^\d+(?:\.\d+)?(?:px|%)$/],

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Container } from './ui/Container';
@@ -37,8 +37,32 @@ export function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
+  const personaMenuRef = useRef<HTMLDivElement | null>(null);
+  const personaMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const { isAuthenticated, user, logout } = useAuth();
   const userDisplayName = user?.firstName?.trim() || user?.username || 'Member';
+
+  useEffect(() => {
+    if (!personaMenuOpen) return;
+
+    const closeWhenClickingOutside = (event: PointerEvent) => {
+      if (!personaMenuRef.current?.contains(event.target as Node)) {
+        setPersonaMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setPersonaMenuOpen(false);
+      personaMenuButtonRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', closeWhenClickingOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeWhenClickingOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [personaMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
@@ -127,10 +151,14 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
-            <div className="relative" onMouseLeave={() => setPersonaMenuOpen(false)}>
+            <div ref={personaMenuRef} className="relative">
               <button
+                ref={personaMenuButtonRef}
                 type="button"
                 onClick={() => setPersonaMenuOpen((value) => !value)}
+                aria-expanded={personaMenuOpen}
+                aria-haspopup="menu"
+                aria-controls="member-account-menu"
                 className="flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2.5 pr-3 text-sm text-white/85 transition hover:border-white/30 hover:bg-white/10"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white">
@@ -143,12 +171,13 @@ export function Navbar() {
               </button>
 
               {personaMenuOpen ? (
-                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
+                <div id="member-account-menu" role="menu" className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
                   <p className="px-3 py-2 text-xs text-white/45">Signed in as {userDisplayName}</p>
-                  <Link to="/dashboard" className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/10" onClick={() => setPersonaMenuOpen(false)}>
+                  <Link role="menuitem" to="/dashboard" className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/10" onClick={() => setPersonaMenuOpen(false)}>
                     Dashboard
                   </Link>
                   <button
+                    role="menuitem"
                     type="button"
                     onClick={() => {
                       setPersonaMenuOpen(false);

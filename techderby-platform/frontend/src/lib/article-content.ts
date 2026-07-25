@@ -13,7 +13,7 @@ export function looksLikeArticleHtml(content: string) {
 export function sanitizeArticleHtml(content: string) {
   return DOMPurify.sanitize(content, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['target', 'rel', 'colspan', 'rowspan', 'scope', 'data-language'],
+    ADD_ATTR: ['target', 'rel', 'colspan', 'rowspan', 'scope', 'data-language', 'style', 'start', 'value'],
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
     FORBID_ATTR: ['srcset'],
   });

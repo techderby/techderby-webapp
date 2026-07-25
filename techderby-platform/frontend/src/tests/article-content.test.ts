@@ -52,6 +52,22 @@ describe('article content rendering', () => {
     expect(html).not.toContain('javascript:');
   });
 
+  it('preserves supported article text styling', () => {
+    const html = sanitizeArticleHtml(
+      '<p style="text-align:center"><span style="color:#123456;background-color:#ffee00;font-family:Georgia;font-size:18pt">Formatted text</span></p>',
+    );
+    const rendered = document.createElement('div');
+    rendered.innerHTML = html;
+    const paragraph = rendered.querySelector('p');
+    const span = rendered.querySelector('span');
+
+    expect(paragraph?.style.textAlign).toBe('center');
+    expect(span?.style.color).toBe('rgb(18, 52, 86)');
+    expect(span?.style.backgroundColor).toBe('rgb(255, 238, 0)');
+    expect(span?.style.fontFamily).toBe('Georgia');
+    expect(span?.style.fontSize).toBe('18pt');
+  });
+
   it('converts an existing Markdown article into editor-ready HTML', () => {
     expect(articleContentForEditor('# Existing article', 'markdown')).toContain('<h1>Existing article</h1>');
   });

@@ -205,6 +205,13 @@ export default function HomePage() {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
   const nextEvent = upcomingEvents[0] ?? null;
+  const nextEventDateLabel = nextEvent
+    ? new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'Europe/London',
+      }).format(new Date(nextEvent.date))
+    : '';
 
   return (
     <>
@@ -237,14 +244,14 @@ export default function HomePage() {
                   href={nextEvent.registrationLink ?? '/events'}
                   target={nextEvent.registrationLink ? '_blank' : undefined}
                   rel="noreferrer noopener"
-                  aria-label={`Next event — June 15${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
+                  aria-label={`Next event — ${nextEventDateLabel}${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
                   className="group mb-5 inline-flex items-center gap-2.5 rounded-full border border-orange-400/40 bg-orange-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm transition hover:border-orange-400/60 hover:bg-orange-400/15"
                 >
                   <span className="relative flex h-2 w-2" aria-hidden="true">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-400" />
                   </span>
-                  <span aria-hidden="true">Next event — June 15</span>
+                  <span aria-hidden="true">Next event — {nextEventDateLabel}</span>
                   <svg className="h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>

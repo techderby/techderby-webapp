@@ -15,6 +15,7 @@ type EventRecord = {
   venue?: string;
   shortLine?: string | null;
   description?: string;
+  detailsPageLink?: string | null;
   eventRegistrationLink?: string | null;
   registrationLink?: string | null;
   featuredImage?: string | null;
@@ -72,8 +73,7 @@ function absoluteSiteUrl(value: string, baseUrl: string) {
 
 function getEventLink(event: EventRecord) {
   const publicFrontendUrl = process.env.PUBLIC_FRONTEND_URL ?? 'http://localhost:3000';
-  const registrationLink = event.eventRegistrationLink ?? event.registrationLink;
-  if (registrationLink) return absoluteSiteUrl(registrationLink, publicFrontendUrl);
+  if (event.detailsPageLink) return absoluteSiteUrl(event.detailsPageLink, publicFrontendUrl);
 
   const eventPath = event.slug ? `/events/${event.slug}` : '/events';
   return absoluteSiteUrl(eventPath, publicFrontendUrl);
@@ -171,7 +171,7 @@ async function sendPublishNotification(
     `Time: ${eventTime}`,
     `Venue: ${eventVenue}`,
     `Summary: ${eventSummary}`,
-    `Tickets: ${eventLink}`,
+    `Event details: ${eventLink}`,
     '',
     'See you there!',
     'Tech Derby',
@@ -256,7 +256,7 @@ async function sendPublishNotification(
               <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td bgcolor="#f97316" style="border-radius:10px;">
-                    <a href="${safeEventLink}" style="display:inline-block;padding:14px 25px;color:#ffffff;text-decoration:none;font-size:15px;line-height:20px;font-weight:800;">View event &amp; register&nbsp;&nbsp;&rarr;</a>
+                    <a href="${safeEventLink}" style="display:inline-block;padding:14px 25px;color:#ffffff;text-decoration:none;font-size:15px;line-height:20px;font-weight:800;">View event details&nbsp;&nbsp;&rarr;</a>
                   </td>
                 </tr>
               </table>

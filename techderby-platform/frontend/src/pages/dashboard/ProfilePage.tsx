@@ -15,12 +15,12 @@ function getInitials(firstName?: string, lastName?: string, username?: string) {
   return (username ?? 'U').slice(0, 2).toUpperCase();
 }
 
-function Field({ label, optional, children, hint }: {
-  label: string; optional?: boolean; children: React.ReactNode; hint?: string;
+function Field({ label, optional, children, hint, htmlFor }: {
+  label: string; optional?: boolean; children: React.ReactNode; hint?: string; htmlFor?: string;
 }) {
   return (
     <div>
-      <label className="mb-1.5 flex items-center gap-2">
+      <label htmlFor={htmlFor} className="mb-1.5 flex items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-widest text-white/50">{label}</span>
         {optional && (
           <span className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/25">
@@ -34,11 +34,12 @@ function Field({ label, optional, children, hint }: {
   );
 }
 
-function Input({ value, onChange, placeholder, type = 'text', readOnly }: {
-  value: string; onChange?: (v: string) => void; placeholder?: string; type?: string; readOnly?: boolean;
+function Input({ id, value, onChange, placeholder, type = 'text', readOnly }: {
+  id?: string; value: string; onChange?: (v: string) => void; placeholder?: string; type?: string; readOnly?: boolean;
 }) {
   return (
     <input
+      id={id}
       type={type}
       value={value}
       readOnly={readOnly}
@@ -54,11 +55,12 @@ function Input({ value, onChange, placeholder, type = 'text', readOnly }: {
   );
 }
 
-function Textarea({ value, onChange, placeholder, rows = 4 }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+function Textarea({ id, value, onChange, placeholder, rows = 4 }: {
+  id?: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
 }) {
   return (
     <textarea
+      id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -68,8 +70,8 @@ function Textarea({ value, onChange, placeholder, rows = 4 }: {
   );
 }
 
-function TagInput({ values, onChange, placeholder, max = 15 }: {
-  values: string[]; onChange: (v: string[]) => void; placeholder?: string; max?: number;
+function TagInput({ id, values, onChange, placeholder, max = 15 }: {
+  id?: string; values: string[]; onChange: (v: string[]) => void; placeholder?: string; max?: number;
 }) {
   const [inputVal, setInputVal] = useState('');
   function add() {
@@ -87,6 +89,7 @@ function TagInput({ values, onChange, placeholder, max = 15 }: {
           </span>
         ))}
         <input
+          id={id}
           type="text"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
@@ -113,12 +116,13 @@ function CardSection({ title, icon, children }: {
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
       className={cn(
         'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
@@ -289,16 +293,16 @@ export default function ProfilePage() {
           </svg>
         }>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="First name"><Input value={form.firstName} onChange={(v) => set('firstName', v)} placeholder="Jane" /></Field>
-            <Field label="Last name"><Input value={form.lastName} onChange={(v) => set('lastName', v)} placeholder="Doe" /></Field>
+            <Field label="First name" htmlFor="profile-first-name"><Input id="profile-first-name" value={form.firstName} onChange={(v) => set('firstName', v)} placeholder="Jane" /></Field>
+            <Field label="Last name" htmlFor="profile-last-name"><Input id="profile-last-name" value={form.lastName} onChange={(v) => set('lastName', v)} placeholder="Doe" /></Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Username" hint="Cannot be changed after registration."><Input value={user?.username ?? ''} readOnly /></Field>
-            <Field label="Email"><Input value={user?.email ?? ''} readOnly /></Field>
+            <Field label="Username" htmlFor="profile-username" hint="Cannot be changed after registration."><Input id="profile-username" value={user?.username ?? ''} readOnly /></Field>
+            <Field label="Email" htmlFor="profile-email"><Input id="profile-email" value={user?.email ?? ''} readOnly /></Field>
           </div>
-          <Field label="Location" optional><Input value={form.location} onChange={(v) => set('location', v)} placeholder="Derby, UK" /></Field>
-          <Field label="Bio" optional hint="Shown on your public profile in the member directory.">
-            <Textarea value={form.bio} onChange={(v) => set('bio', v)} placeholder="Tell the community a little about yourself..." rows={4} />
+          <Field label="Location" htmlFor="profile-location" optional><Input id="profile-location" value={form.location} onChange={(v) => set('location', v)} placeholder="Derby, UK" /></Field>
+          <Field label="Bio" htmlFor="profile-bio" optional hint="Shown on your public profile in the member directory.">
+            <Textarea id="profile-bio" value={form.bio} onChange={(v) => set('bio', v)} placeholder="Tell the community a little about yourself..." rows={4} />
           </Field>
           {/* Avatar upload */}
           <Field label="Profile photo" optional hint="JPG, PNG or WebP · Max 5 MB">
@@ -349,14 +353,14 @@ export default function ProfilePage() {
             <rect x="2" y="7" width="20" height="14" rx="2" /><path strokeLinecap="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
           </svg>
         }>
-          <Field label="Occupation / role" optional>
-            <Input value={form.occupation} onChange={(v) => set('occupation', v)} placeholder="Software Engineer, UX Designer, Founder..." />
+          <Field label="Occupation / role" htmlFor="profile-occupation" optional>
+            <Input id="profile-occupation" value={form.occupation} onChange={(v) => set('occupation', v)} placeholder="Software Engineer, UX Designer, Founder..." />
           </Field>
-          <Field label="Skills" optional hint="Press Enter after each skill. Up to 15.">
-            <TagInput values={form.skills} onChange={(v) => set('skills', v)} placeholder="e.g. React, Python, Figma - press Enter" />
+          <Field label="Skills" htmlFor="profile-skills" optional hint="Press Enter after each skill. Up to 15.">
+            <TagInput id="profile-skills" values={form.skills} onChange={(v) => set('skills', v)} placeholder="e.g. React, Python, Figma - press Enter" />
           </Field>
-          <Field label="Certifications" optional hint="Press Enter after each certification.">
-            <TagInput values={form.certifications as string[]} onChange={(v) => set('certifications', v)} placeholder="e.g. AWS Certified - press Enter" />
+          <Field label="Certifications" htmlFor="profile-certifications" optional hint="Press Enter after each certification.">
+            <TagInput id="profile-certifications" values={form.certifications as string[]} onChange={(v) => set('certifications', v)} placeholder="e.g. AWS Certified - press Enter" />
           </Field>
         </CardSection>
 
@@ -367,25 +371,25 @@ export default function ProfilePage() {
           </svg>
         }>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="LinkedIn" optional>
+            <Field label="LinkedIn" htmlFor="profile-linkedin" optional>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" /><circle cx="4" cy="4" r="2" /></svg>
                 </span>
-                <input value={form.socialLinks.linkedin ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, linkedin: e.target.value })} placeholder="linkedin.com/in/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+                <input id="profile-linkedin" value={form.socialLinks.linkedin ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, linkedin: e.target.value })} placeholder="linkedin.com/in/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
               </div>
             </Field>
-            <Field label="GitHub" optional>
+            <Field label="GitHub" htmlFor="profile-github" optional>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
                 </span>
-                <input value={form.socialLinks.github ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, github: e.target.value })} placeholder="github.com/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+                <input id="profile-github" value={form.socialLinks.github ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, github: e.target.value })} placeholder="github.com/you" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
               </div>
             </Field>
           </div>
-          <Field label="Website / portfolio" optional>
-            <input value={form.socialLinks.website ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, website: e.target.value })} placeholder="https://yourwebsite.com" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
+          <Field label="Website / portfolio" htmlFor="profile-website" optional>
+            <input id="profile-website" value={form.socialLinks.website ?? ''} onChange={(e) => set('socialLinks', { ...form.socialLinks, website: e.target.value })} placeholder="https://yourwebsite.com" className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 outline-none transition focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20" />
           </Field>
         </CardSection>
 
@@ -399,7 +403,7 @@ export default function ProfilePage() {
               <p className="text-sm font-semibold text-white">Visible in member directory</p>
               <p className="mt-0.5 text-xs leading-relaxed text-white/40">Allow other members to see your profile. Admins can always see all members.</p>
             </div>
-            <Toggle checked={form.isVisible} onChange={(v) => set('isVisible', v)} />
+            <Toggle label="Visible in member directory" checked={form.isVisible} onChange={(v) => set('isVisible', v)} />
           </div>
           <div className="flex items-center gap-4 rounded-xl border border-orange-500/15 bg-orange-500/5 px-4 py-3.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/15">

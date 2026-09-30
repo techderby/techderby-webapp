@@ -19,6 +19,7 @@ export type Event = {
   eventSource?: string | null;
   theme?: string | null;
   shortLine?: string | null;
+  detailsPageLink?: string | null;
   eventRegistrationLink?: string | null;
   agenda?: string | null;
   agendaItems?: string[];

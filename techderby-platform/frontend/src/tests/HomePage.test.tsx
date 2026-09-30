@@ -17,7 +17,7 @@ describe('HomePage', () => {
           title: 'August Tech Meet-Up',
           slug: 'august-tech-meet-up',
           description: 'Tech Derby August meetup',
-          date: '2026-08-21T00:00:00.000Z',
+          date: '2099-08-21T00:00:00.000Z',
           venue: 'Game Changer Lab',
           eventSource: 'tech-derby',
           registrationLink: 'https://example.com/register',

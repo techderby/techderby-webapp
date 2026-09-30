@@ -52,7 +52,7 @@ const cookieRows = [
 
 function CookieCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-7">
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-7">
       <h2 className="text-xl font-bold text-slate-900 md:text-2xl">{title}</h2>
       <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-700 md:text-base">{children}</div>
     </article>
@@ -89,7 +89,7 @@ export default function CookiePolicyPage() {
 
       <Section className="bg-slate-50 py-12 md:py-14">
         <Container>
-          <div className="mx-auto grid max-w-5xl gap-6">
+          <div className="mx-auto grid min-w-0 max-w-5xl gap-6">
             <CookieCard title="1. Introduction">
               <p>This Cookie Policy explains how TechDerby uses cookies and similar technologies on the public website at techderby.org.</p>
               <p>

@@ -33,4 +33,10 @@ describe('fetchEvents', () => {
 
     expect(events.find((event) => event.id === 1)?.featuredImage).toBe('');
   });
+
+  it('returns only events supplied by Strapi without injecting frontend fallback events', async () => {
+    getEvents.mockResolvedValue({ data: { data: [] } });
+
+    await expect(fetchEvents()).resolves.toEqual([]);
+  });
 });

@@ -129,6 +129,9 @@ export default {
     const user = await rawFindUser({ id: userId });
     if (!user) return ctx.notFound();
 
+    // Authentication state and editorial access can change while a user is
+    // signed in, so this response must never be served from an intermediary cache.
+    ctx.set('Cache-Control', 'private, no-store');
     return ctx.send(sanitize(user));
   },
 

@@ -246,6 +246,32 @@ async function requireAdmin(ctx: any) {
   return user;
 }
 
+/**
+ * Reconcile an approved writer application with the member's actual access.
+ *
+ * Writer applications and users live in separate tables. Keeping this operation
+ * idempotent means an approved application can safely repair a previous partial
+ * approval (for example, if the application update succeeded but the role update
+ * did not). Existing admin and super-admin roles are never downgraded.
+ */
+async function ensureWriterAccess(userId: number) {
+  const knex = strapi.db.connection;
+  const member = await knex('up_users').where({ id: userId }).first('member_role');
+  if (!member) return false;
+  if (WRITER_ROLES.has(member.member_role)) return true;
+
+  await knex('up_users')
+    .where({ id: userId })
+    .whereNotIn('member_role', [...WRITER_ROLES])
+    .update({
+      member_role: 'editor',
+      updated_at: new Date().toISOString(),
+    });
+
+  const updatedMember = await knex('up_users').where({ id: userId }).first('member_role');
+  return Boolean(updatedMember && WRITER_ROLES.has(updatedMember.member_role));
+}
+
 function displayName(user: any) {
   const first = user.firstName ?? user.first_name ?? '';
   const last = user.lastName ?? user.last_name ?? '';
@@ -608,6 +634,23 @@ export default {
     const user = await requireUser(ctx);
     if (!user) return;
     const application = await strapi.db.query(APPLICATION_UID).findOne({ where: { userId: user.id } });
+
+    // Self-heal applications that were approved without the corresponding user
+    // role being persisted. This also repairs users affected before this fix.
+    if (application?.status === 'approved' && !WRITER_ROLES.has(user.member_role)) {
+      try {
+        const accessGranted = await ensureWriterAccess(user.id);
+        if (!accessGranted) {
+          strapi.log.error(`[editorial] Approved writer ${user.id} could not be granted writer access.`);
+          return ctx.internalServerError('Your application is approved, but writer access could not be granted. Please contact an administrator.');
+        }
+      } catch (error) {
+        strapi.log.error(`[editorial] Failed to reconcile writer access for user ${user.id}`, error);
+        return ctx.internalServerError('Your application is approved, but writer access could not be granted. Please contact an administrator.');
+      }
+    }
+
+    ctx.set('Cache-Control', 'private, no-store');
     ctx.body = { data: application };
   },
 
@@ -850,6 +893,19 @@ export default {
       if (error instanceof InputError) return ctx.badRequest(error.message);
       strapi.log.error(`[editorial] Failed to review writer application ${id}`, error);
       return ctx.internalServerError('The writer application could not be reviewed.');
+    }
+
+    if (status === 'approved') {
+      try {
+        const accessGranted = await ensureWriterAccess(application.userId);
+        if (!accessGranted) {
+          strapi.log.error(`[editorial] Application ${id} was approved but writer access was not persisted for user ${application.userId}.`);
+          return ctx.internalServerError('The application was approved, but writer access could not be granted. Ask the member to retry from their writer application page.');
+        }
+      } catch (error) {
+        strapi.log.error(`[editorial] Application ${id} was approved but writer access reconciliation failed`, error);
+        return ctx.internalServerError('The application was approved, but writer access could not be granted. Ask the member to retry from their writer application page.');
+      }
     }
 
     try {

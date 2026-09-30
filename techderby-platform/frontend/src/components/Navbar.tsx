@@ -156,6 +156,7 @@ export function Navbar() {
                 ref={personaMenuButtonRef}
                 type="button"
                 onClick={() => setPersonaMenuOpen((value) => !value)}
+                aria-label={`${userDisplayName} account menu`}
                 aria-expanded={personaMenuOpen}
                 aria-haspopup="menu"
                 aria-controls="member-account-menu"
@@ -192,13 +193,11 @@ export function Navbar() {
             </div>
           ) : (
             <>
-              <Link to="/login">
-                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
-                  Login
-                </Button>
+              <Link to="/login" className="inline-flex h-9 items-center justify-center rounded-md bg-transparent px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                Login
               </Link>
-              <Link to="/register">
-                <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
+              <Link to="/register" className="inline-flex h-9 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                Sign Up
               </Link>
             </>
           )}
@@ -209,6 +208,8 @@ export function Navbar() {
           className="rounded-md border border-white/20 px-3 py-1 text-sm text-white md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileOpen ? 'Close' : 'Menu'}
         </button>
@@ -216,7 +217,7 @@ export function Navbar() {
 
       {/* ── Mobile nav ── */}
       {mobileOpen && (
-        <div className="border-t border-white/10 bg-slate-900 md:hidden">
+        <div id="mobile-navigation" className="border-t border-white/10 bg-slate-900 md:hidden">
           <Container className="py-4">
             <nav className="flex flex-col gap-1">
               {links.map((link) =>
@@ -224,6 +225,7 @@ export function Navbar() {
                   <div key={link.to}>
                     <button
                       type="button"
+                      aria-expanded={mobileExpanded === link.to}
                       className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-white"
                       onClick={() =>
                         setMobileExpanded((prev) => (prev === link.to ? null : link.to))

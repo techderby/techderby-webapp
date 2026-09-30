@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageSeo } from '../components/PageSeo';
-import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useInsightBySlug } from '../hooks/use-content-query';
@@ -205,10 +204,10 @@ export default function InsightDetailPage() {
                   {!commentsQuery.isLoading && !(commentsQuery.data?.length) ? <p className="text-sm text-slate-500">Be the first to comment.</p> : null}
                 </div>
                 <form onSubmit={submitComment} className="mt-7 grid gap-4 rounded-2xl bg-slate-50 p-5 sm:grid-cols-2">
-                  <input required value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
-                  <input type="email" value={commentEmail} onChange={(e) => setCommentEmail(e.target.value)} placeholder="Email (not published)" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
-                  <textarea required value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Join the discussion…" className="min-h-28 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500 sm:col-span-2" />
-                  {commentError ? <p className="text-sm text-red-600 sm:col-span-2">{commentError}</p> : null}
+                  <input aria-label="Your name" required value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
+                  <input aria-label="Email address (not published)" type="email" value={commentEmail} onChange={(e) => setCommentEmail(e.target.value)} placeholder="Email (not published)" className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500" />
+                  <textarea aria-label="Comment" required value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Join the discussion…" className="min-h-28 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-sky-500 sm:col-span-2" />
+                  {commentError ? <p role="alert" className="text-sm text-red-600 sm:col-span-2">{commentError}</p> : null}
                   <button className="w-fit rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">Post comment</button>
                 </form>
               </section>
@@ -224,10 +223,8 @@ export default function InsightDetailPage() {
                     <p className="text-xs text-slate-500">{formatInsightDate(insight.publishedAt ?? insight.createdAt)}</p>
                   </div>
                 </div>
-                <Link to="/wire">
-                  <Button className="h-10 rounded-full px-6 text-sm shadow-lg shadow-orange-900/30">
-                    More from The Wire
-                  </Button>
+                <Link to="/wire" className="inline-flex h-10 items-center justify-center rounded-full bg-orange-500 px-6 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                  More from The Wire
                 </Link>
               </div>
             </div>

@@ -1,28 +1,8 @@
 import { z } from 'zod';
 import axios from 'axios';
 import { apiClient } from '../lib/api';
+import { eventDateTimestamp } from '../lib/event-date';
 import type { Event, Insight, Partner, Programme } from '../types/content';
-
-const preSeedAcceleratorEvent: Event = {
-  id: 999001,
-  title: 'TECH DERBY PRE-SEED ACCELERATOR',
-  slug: 'tech-derby-pre-seed-accelerator',
-  featuredImage: '',
-  description:
-    'An 8-week, clarity-led accelerator that takes early-stage founders from busy activity to validated learning, traction, and funding readiness.',
-  date: '2026-04-10T09:00:00.000Z',
-  venue: 'Game Changers Lab, Cavendish Building, University of Derby',
-  eventSource: 'tech-derby',
-  theme: 'Innovation',
-  shortLine: 'Build with evidence. Pitch with confidence.',
-  eventRegistrationLink: '/tech-derby-accelerator',
-  agendaItems: [
-    'Programme window: April 10 to May 29',
-    'Cohort size: small by design (quality over volume)',
-    'Mode of delivery: in-person',
-    'Focus: validated learning, traction, and funding readiness',
-  ],
-};
 
 const eventSpeakerCardSchema = z.object({
   name: z.string(),
@@ -45,6 +25,7 @@ const eventSchema: z.ZodType<Event, z.ZodTypeDef, unknown> = z.object({
   eventSource: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
   shortLine: z.string().nullable().optional(),
+  detailsPageLink: z.string().nullable().optional(),
   eventRegistrationLink: z.string().nullable().optional(),
   agenda: z.string().nullable().optional(),
   agendaItems: z.preprocess((value) => {
@@ -167,9 +148,7 @@ function normalizeResponse<T>(payload: unknown, schema: z.ZodType<T, z.ZodTypeDe
 export async function fetchEvents(): Promise<Event[]> {
   const response = await apiClient.getEvents();
   const events = normalizeResponse(response.data, eventSchema);
-  const hasPreSeed = events.some((event) => event.slug === preSeedAcceleratorEvent.slug);
-  const allEvents = hasPreSeed ? events : [preSeedAcceleratorEvent, ...events];
-  return allEvents.sort((first, second) => new Date(first.date).getTime() - new Date(second.date).getTime());
+  return events.sort((first, second) => eventDateTimestamp(first.date) - eventDateTimestamp(second.date));
 }
 
 export async function fetchPartners(): Promise<Partner[]> {

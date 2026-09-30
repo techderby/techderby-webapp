@@ -7,6 +7,13 @@ import { assetUrl } from '../../lib/asset-url';
 import { Pagination } from '../../components/Pagination';
 import { sanitizeMediaUrl } from '../../lib/html-sanitizer';
 import { paginateItems } from '../../lib/pagination';
+import {
+  eventDateTimestamp,
+  eventDateToInputValue,
+  eventInputValueToIso,
+  formatEventDate,
+  formatEventTime,
+} from '../../lib/event-date';
 import type { Event } from '../../types/content';
 
 type EventForm = {
@@ -17,6 +24,7 @@ type EventForm = {
   eventSource: 'tech-derby' | 'other';
   theme: string;
   shortLine: string;
+  detailsPageLink: string;
   registrationLink: string;
   agenda: string;
 };
@@ -29,6 +37,7 @@ const EMPTY_FORM: EventForm = {
   eventSource: 'tech-derby',
   theme: '',
   shortLine: '',
+  detailsPageLink: '',
   registrationLink: '',
   agenda: '',
 };
@@ -37,35 +46,31 @@ const inputClass =
   'mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-sky-500/60 focus:bg-white/[0.07]';
 
 function apiErrorMessage(error: unknown, action = 'saved') {
-  if (!axios.isAxiosError(error)) return `The event could not be ${action}. Please try again.`;
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error && error.message
+      ? error.message
+      : `The event could not be ${action}. Please try again.`;
+  }
   const response = error.response?.data as { error?: { message?: string }; message?: string } | undefined;
   return response?.error?.message ?? response?.message ?? `The event could not be ${action}. Please try again.`;
-}
-
-function toDateTimeLocal(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
 }
 
 function formFromEvent(event: Event): EventForm {
   return {
     title: event.title,
     description: event.description,
-    date: toDateTimeLocal(event.date),
+    date: eventDateToInputValue(event.date),
     venue: event.venue,
     eventSource: event.eventSource === 'other' ? 'other' : 'tech-derby',
     theme: event.theme ?? '',
     shortLine: event.shortLine ?? '',
+    detailsPageLink: event.detailsPageLink ?? '',
     registrationLink: event.eventRegistrationLink ?? event.registrationLink ?? '',
     agenda: event.agenda ?? '',
   };
 }
 
 function EventRow({ event }: { event: Event }) {
-  const eventDate = new Date(event.date);
-
   return (
     <article className="grid gap-4 border-t border-white/8 px-4 py-4 first:border-t-0 sm:grid-cols-[112px_1fr_auto] sm:items-center">
       <div className="aspect-[16/10] overflow-hidden rounded-xl bg-white/5">
@@ -81,9 +86,9 @@ function EventRow({ event }: { event: Event }) {
           {event.theme ? <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-300">{event.theme}</span> : null}
         </div>
         <p className="mt-1 text-sm text-white/45">
-          {eventDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+          {formatEventDate(event.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
           {' · '}
-          {eventDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          {formatEventTime(event.date)}
         </p>
         <p className="mt-0.5 truncate text-xs text-white/30">{event.venue}</p>
       </div>
@@ -133,11 +138,11 @@ export default function EventAdminPage() {
     const events = eventsQuery.data ?? [];
     return {
       upcoming: events
-        .filter((event) => new Date(event.date).getTime() >= now)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        .filter((event) => eventDateTimestamp(event.date) >= now)
+        .sort((a, b) => eventDateTimestamp(a.date) - eventDateTimestamp(b.date)),
       past: events
-        .filter((event) => new Date(event.date).getTime() < now)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+        .filter((event) => eventDateTimestamp(event.date) < now)
+        .sort((a, b) => eventDateTimestamp(b.date) - eventDateTimestamp(a.date)),
     };
   }, [eventsQuery.data]);
 
@@ -197,7 +202,7 @@ export default function EventAdminPage() {
       Object.entries(form).forEach(([key, value]) => {
         if (key !== 'date') payload.append(key, value);
       });
-      payload.append('date', new Date(form.date).toISOString());
+      payload.append('date', eventInputValueToIso(form.date));
       if (image) payload.append('featuredImage', image);
 
       const response = editing
@@ -388,6 +393,13 @@ export default function EventAdminPage() {
               <label className="text-sm font-medium text-white/70 md:col-span-2">
                 Full description <span className="text-orange-400">*</span>
                 <textarea className={`${inputClass} min-h-36 resize-y`} required maxLength={10000} value={form.description} onChange={(e) => setField('description', e.target.value)} placeholder="Explain what the event is about and who should attend." />
+              </label>
+              <label className="text-sm font-medium text-white/70 md:col-span-2">
+                Custom event details page
+                <input className={inputClass} type="text" inputMode="url" value={form.detailsPageLink} onChange={(e) => setField('detailsPageLink', e.target.value)} placeholder="e.g. /tech-derby-accelerator" />
+                <span className="mt-1.5 block text-xs font-normal text-white/35">
+                  Optional. Use this when an event has a dedicated page; otherwise the standard event details view is used.
+                </span>
               </label>
               <label className="text-sm font-medium text-white/70 md:col-span-2">
                 Registration link

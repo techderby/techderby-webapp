@@ -31,7 +31,7 @@ export default function GetInvolvedPage() {
               Community Participation
             </span>
             <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
-              Get involved with
+              Get involved with{' '}
               <br />
               <span className="bg-gradient-to-r from-sky-400 to-orange-400 bg-clip-text text-transparent">
                 Tech Derby.

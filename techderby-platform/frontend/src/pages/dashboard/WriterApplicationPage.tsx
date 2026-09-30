@@ -94,13 +94,13 @@ export default function WriterApplicationPage() {
             {current.status === 'pending'
               ? 'An administrator will review your experience, interests, and sample work. You will receive access after approval.'
               : activating
-                ? 'Your application is approved. We are activating the Articles workspace now.'
-                : 'Your application is approved. Activate your writer access to open the Articles workspace.'}
+                ? 'Your application is approved. We are refreshing the Articles workspace now.'
+                : 'Your application is approved, but your latest access could not be loaded automatically. Retry the refresh below.'}
           </p>
           {activationError ? <p role="alert" className="mt-4 text-sm text-red-300">{activationError}</p> : null}
           {current.status === 'approved' && !activating ? (
             <button type="button" onClick={() => void activateWriterAccess()} className="mt-5 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-sky-400">
-              Activate writer access
+              Retry access refresh
             </button>
           ) : null}
         </div>

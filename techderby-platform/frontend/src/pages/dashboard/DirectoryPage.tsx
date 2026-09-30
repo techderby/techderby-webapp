@@ -220,6 +220,7 @@ export default function DirectoryPage() {
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          aria-label="Search members"
           type="search"
           placeholder="Search by name, role, or location…"
           value={search}

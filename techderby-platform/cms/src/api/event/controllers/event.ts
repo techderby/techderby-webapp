@@ -75,6 +75,7 @@ function parseEventData(body: Record<string, unknown> = {}) {
   const eventSource = field(body.eventSource) || 'tech-derby';
   const theme = field(body.theme);
   const shortLine = field(body.shortLine);
+  const detailsPageLink = field(body.detailsPageLink);
   const registrationLink = field(body.registrationLink);
   const agenda = field(body.agenda);
 
@@ -89,6 +90,9 @@ function parseEventData(body: Record<string, unknown> = {}) {
   if (!isSupportedLink(registrationLink)) {
     throw new EventInputError('The registration link must be an HTTP(S) URL or a site-relative path.');
   }
+  if (!isSupportedLink(detailsPageLink)) {
+    throw new EventInputError('The custom details page must be an HTTP(S) URL or a site-relative path.');
+  }
 
   const eventDate = new Date(date);
   if (Number.isNaN(eventDate.getTime())) throw new EventInputError('Enter a valid event date and time.');
@@ -101,6 +105,7 @@ function parseEventData(body: Record<string, unknown> = {}) {
     eventSource,
     theme: theme || null,
     shortLine: shortLine || null,
+    detailsPageLink: detailsPageLink || null,
     eventRegistrationLink: registrationLink || null,
     registrationLink: registrationLink || null,
     agenda: agenda || null,

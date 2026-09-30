@@ -140,7 +140,7 @@ export default function RegisterPage() {
             </p>
 
             {serverError ? (
-              <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              <div role="alert" className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {serverError}
               </div>
             ) : null}
@@ -148,8 +148,9 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-4">
               {/* Name row */}
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="First name" error={errors.firstName}>
+                <FormField inputId="register-first-name" label="First name" error={errors.firstName}>
                   <StyledInput
+                    id="register-first-name"
                     placeholder="Jane"
                     autoComplete="given-name"
                     value={form.firstName}
@@ -157,8 +158,9 @@ export default function RegisterPage() {
                     hasError={!!errors.firstName}
                   />
                 </FormField>
-                <FormField label="Last name" error={errors.lastName}>
+                <FormField inputId="register-last-name" label="Last name" error={errors.lastName}>
                   <StyledInput
+                    id="register-last-name"
                     placeholder="Doe"
                     autoComplete="family-name"
                     value={form.lastName}
@@ -168,8 +170,9 @@ export default function RegisterPage() {
                 </FormField>
               </div>
 
-              <FormField label="Email address" error={errors.email}>
+              <FormField inputId="register-email" label="Email address" error={errors.email}>
                 <StyledInput
+                  id="register-email"
                   type="email"
                   placeholder="jane@example.com"
                   autoComplete="email"
@@ -179,8 +182,9 @@ export default function RegisterPage() {
                 />
               </FormField>
 
-              <FormField label="Username" hint="Letters, numbers, underscores only (saved in lowercase)" error={errors.username}>
+              <FormField inputId="register-username" label="Username" hint="Letters, numbers, underscores only (saved in lowercase)" error={errors.username}>
                 <StyledInput
+                  id="register-username"
                   placeholder="jane_doe"
                   autoComplete="username"
                   value={form.username}
@@ -189,8 +193,9 @@ export default function RegisterPage() {
                 />
               </FormField>
 
-              <FormField label="Password" error={errors.password}>
+              <FormField inputId="register-password" label="Password" error={errors.password}>
                 <StyledInput
+                  id="register-password"
                   type="password"
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
@@ -201,8 +206,9 @@ export default function RegisterPage() {
                 <PasswordStrength password={form.password} />
               </FormField>
 
-              <FormField label="Confirm password" error={errors.confirmPassword}>
+              <FormField inputId="register-confirm-password" label="Confirm password" error={errors.confirmPassword}>
                 <StyledInput
+                  id="register-confirm-password"
                   type="password"
                   placeholder="Repeat your password"
                   autoComplete="new-password"
@@ -259,11 +265,13 @@ export default function RegisterPage() {
 }
 
 function FormField({
+  inputId,
   label,
   hint,
   error,
   children,
 }: {
+  inputId: string;
   label: string;
   hint?: string;
   error?: string;
@@ -271,7 +279,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
+      <label htmlFor={inputId} className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
         {label}
       </label>
       {children}
@@ -282,6 +290,7 @@ function FormField({
 }
 
 function StyledInput({
+  id,
   type = 'text',
   placeholder,
   autoComplete,
@@ -289,6 +298,7 @@ function StyledInput({
   onChange,
   hasError,
 }: {
+  id: string;
   type?: string;
   placeholder?: string;
   autoComplete?: string;
@@ -298,6 +308,7 @@ function StyledInput({
 }) {
   return (
     <input
+      id={id}
       type={type}
       placeholder={placeholder}
       autoComplete={autoComplete}

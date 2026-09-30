@@ -33,12 +33,15 @@ const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
+const UnsubscribePage = lazy(() => import('../pages/UnsubscribePage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
-const AwardsNominationPage = lazy(() => import('../pages/AwardsNominationPage'));
-const AwardsNominationsAdminPage = lazy(() => import('../pages/AwardsNominationsAdminPage'));
-const JudgeApplicationPage = lazy(() => import('../pages/JudgeApplicationPage'));
-const JudgeApplicationsAdminPage = lazy(() => import('../pages/JudgeApplicationsAdminPage'));
-const AwardsPage = lazy(() => import('../pages/AwardsPage'));
+const NewsletterComposerPage = lazy(() => import('../pages/NewsletterComposerPage'));
+const EventAdminPage = lazy(() => import('../pages/dashboard/EventAdminPage'));
+const WriterApplicationPage = lazy(() => import('../pages/dashboard/WriterApplicationPage'));
+const ArticlesDashboardPage = lazy(() => import('../pages/dashboard/ArticlesDashboardPage'));
+const ArticleEditorPage = lazy(() => import('../pages/dashboard/ArticleEditorPage'));
+const EditorialAdminPage = lazy(() => import('../pages/dashboard/EditorialAdminPage'));
+const WriterManagementPage = lazy(() => import('../pages/dashboard/WriterManagementPage'));
 
 // Dashboard pages
 const DashboardHomePage = lazy(() => import('../pages/dashboard/DashboardHomePage'));
@@ -72,8 +75,87 @@ export const router = createBrowserRouter([
       { path: 'connections', element: withLazy(<ConnectionsPage />) },
       { path: 'messages', element: withLazy(<ChatPage />) },
       { path: 'messages/:userId', element: withLazy(<ChatPage />) },
-      { path: 'nominations', element: withLazy(<AwardsNominationsAdminPage />) },
-      { path: 'judge-applications', element: withLazy(<JudgeApplicationsAdminPage />) },
+      { path: 'writer-application', element: withLazy(<WriterApplicationPage />) },
+      {
+        path: 'articles',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticlesDashboardPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'articles/new',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticleEditorPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'articles/:documentId/edit',
+        element: withLazy(
+          <ProtectedRoute requiredRole="editor">
+            <ArticleEditorPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'article-review',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EditorialAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'writers',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <WriterManagementPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events/new',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'events/:documentId/edit',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <EventAdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'mailing-list',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <AdminPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: 'mailing-list/compose',
+        element: withLazy(
+          <ProtectedRoute requiredRole="admin">
+            <NewsletterComposerPage />
+          </ProtectedRoute>,
+        ),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -99,10 +181,10 @@ export const router = createBrowserRouter([
       { path: 'get-involved', element: withLazy(<GetInvolvedPage />) },
       { path: 'community', element: withLazy(<CommunityPage />) },
       { path: 'partners', element: withLazy(<PartnersPage />) },
+      { path: 'insights', element: withLazy(<InsightsPage />) },
+      { path: 'insights/:slug', element: withLazy(<InsightDetailPage />) },
       { path: 'wire', element: withLazy(<InsightsPage />) },
       { path: 'wire/:slug', element: withLazy(<InsightDetailPage />) },
-      { path: 'insights', element: <Navigate to="/wire" replace /> },
-      { path: 'insights/:slug', element: <Navigate to="/wire" replace /> },
       { path: 'contact', element: withLazy(<ContactPage />) },
       { path: 'privacy-policy', element: withLazy(<PrivacyPolicyPage />) },
       { path: 'cookie-policy', element: withLazy(<CookiePolicyPage />) },
@@ -110,12 +192,9 @@ export const router = createBrowserRouter([
       { path: 'code-of-conduct', element: withLazy(<CodeOfConductPage />) },
       { path: 'accessibility', element: withLazy(<AccessibilityPage />) },
       { path: 'safeguarding', element: withLazy(<SafeguardingPage />) },
+      { path: 'unsubscribe', element: withLazy(<UnsubscribePage />) },
       { path: 'directory', element: withLazy(<MemberDirectoryPage />) },
-      { path: 'admin', element: withLazy(<AdminPage />) },
-      { path: 'admin/nominations', element: <Navigate to="/dashboard/nominations" replace /> },
-      { path: 'awards', element: withLazy(<AwardsPage />) },
-      { path: 'awards/nominate', element: withLazy(<AwardsNominationPage />) },
-      { path: 'awards/judge', element: withLazy(<JudgeApplicationPage />) },
+      { path: 'admin', element: <Navigate to="/dashboard/mailing-list" replace /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

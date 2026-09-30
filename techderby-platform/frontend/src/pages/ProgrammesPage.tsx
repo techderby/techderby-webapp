@@ -61,7 +61,7 @@ const programmes = [
       'Clearer opportunities for partnership',
       "A role in shaping the region's innovation future",
     ],
-    cta: { label: 'Work with Us', to: '/partners' },
+    cta: { label: 'Contact Us', to: '/contact' },
     accentFrom: 'from-slate-500',
     accentTo: 'to-sky-600',
   },
@@ -129,12 +129,12 @@ export default function ProgrammesPage() {
                   Explore Our Programmes
                 </Button>
               </a>
-              <Link to="/partners">
+              <Link to="/contact">
                 <Button
                   variant="ghost"
                   className="h-12 rounded-full border border-white/40 bg-transparent px-8 text-sm text-white hover:bg-white/10"
                 >
-                  Partner with Tech Derby
+                  Contact Tech Derby
                 </Button>
               </Link>
             </div>
@@ -303,9 +303,9 @@ export default function ProgrammesPage() {
                 more connected tech future in Derby.
               </p>
               <div className="mt-8">
-                <Link to="/partners">
+                <Link to="/contact">
                   <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                    Partner with Tech Derby
+                    Contact Tech Derby
                   </Button>
                 </Link>
               </div>

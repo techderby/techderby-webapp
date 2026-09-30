@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppNotification } from '../lib/whatsapp';
 import { apiClient } from '../lib/api';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import { PageSeo } from '../components/PageSeo';
 import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
@@ -32,6 +33,7 @@ export default function ContactPage() {
     sendWhatsAppNotification(text);
     try {
       await apiClient.notify(`[Website Contact] ${subject}`, text, 'Contact Form');
+      trackAnalyticsEvent('contact_form_submit');
       setStatus('success');
     } catch {
       setStatus('error');
@@ -55,7 +57,7 @@ export default function ContactPage() {
               Community Support
             </span>
             <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
-              Contact
+              Contact{' '}
               <br />
               <span className="bg-gradient-to-r from-sky-400 to-orange-400 bg-clip-text text-transparent">
                 Tech Derby.

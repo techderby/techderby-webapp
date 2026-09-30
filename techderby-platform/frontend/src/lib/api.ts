@@ -17,7 +17,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+    const requestUrl = String(err.config?.url ?? '');
+    const shouldClearAuth = status === 401 && /\/api\/(users\/me|profile|auth\/local|auth\/register|auth\/reset-password|auth\/forgot-password)(\b|\/|\?)/.test(requestUrl);
+
+    // Only clear saved auth when session-validation/auth endpoints reject the token.
+    // Public-content endpoints may return 401/403 from permission settings and should not sign users out.
+    if (shouldClearAuth) {
       localStorage.removeItem('td_jwt');
       localStorage.removeItem('td_user');
       sessionStorage.removeItem('td_jwt');
@@ -30,20 +36,67 @@ api.interceptors.response.use(
 
 export const apiClient = {
   // ── Content ──────────────────────────────────────────────────────────────
-  getEvents: () => api.get('/api/events'),
+  getEvents: () => api.get('/api/events?sort=date:asc'),
+  createEventForAdmin: (form: FormData) =>
+    api.post('/api/events/admin', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60_000,
+    }),
+  getEventsForAdmin: () => api.get('/api/events/admin'),
+  updateEventForAdmin: (documentId: string, form: FormData) =>
+    api.put(`/api/events/admin/${encodeURIComponent(documentId)}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60_000,
+    }),
   getPartners: () => api.get('/api/partners?populate=logo'),
-  getInsights: () => api.get('/api/posts?populate=featuredImage'),
-  getInsightBySlug: (slug: string) =>
-    api.get(`/api/posts?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=featuredImage`),
+  getInsights: () => api.get('/api/wire/articles'),
+  getInsightBySlug: (slug: string) => api.get(`/api/wire/articles/${encodeURIComponent(slug)}`),
   getProgrammes: () => api.get('/api/programmes'),
   createMailingListSubscription: (email: string) =>
-    api.post('/api/mailing-list-subscriptions', { data: { email } }),
+    api.post('/api/mailing-list-subscriptions', { data: { email, category: 'None' } }),
+  getMailingListUnsubscribeDetails: (token: string) =>
+    api.get(`/api/mailing-list-subscriptions/unsubscribe/${encodeURIComponent(token)}`),
+  unsubscribeFromMailingList: (token: string, reason: string, details: string) =>
+    api.post(`/api/mailing-list-subscriptions/unsubscribe/${encodeURIComponent(token)}`, { reason, details }),
+  getMailingListSubscriptionsAdmin: () =>
+    api.get('/api/mailing-list-subscriptions/admin/list'),
+  deleteMailingListSubscriptionForAdmin: (id: number) =>
+    api.delete(`/api/mailing-list-subscriptions/admin/subscribers/${id}`),
+  updateMailingListSubscriptionCategoryForAdmin: (id: number, category: string) =>
+    api.put(`/api/mailing-list-subscriptions/admin/subscribers/${id}/category`, { category }),
+  exportMailingListCsvForAdmin: () =>
+    api.get('/api/mailing-list-subscriptions/admin/export.csv', {
+      responseType: 'blob',
+    }),
+  importMailingListForAdmin: (emails: string[]) =>
+    api.post('/api/mailing-list-subscriptions/admin/import', { emails }),
+  getMailingListSegmentsForAdmin: () =>
+    api.get('/api/mailing-list-subscriptions/admin/segments'),
+  createMailingListSegmentForAdmin: (data: { name: string; description?: string; categories: string[] }) =>
+    api.post('/api/mailing-list-subscriptions/admin/segments', data),
+  updateMailingListSegmentForAdmin: (id: number, data: { name: string; description?: string; categories: string[] }) =>
+    api.put(`/api/mailing-list-subscriptions/admin/segments/${id}`, data),
+  deleteMailingListSegmentForAdmin: (id: number) =>
+    api.delete(`/api/mailing-list-subscriptions/admin/segments/${id}`),
+  updateMailingListSegmentMembersForAdmin: (id: number, subscriptionIds: number[], action: 'add' | 'remove') =>
+    api.post(`/api/mailing-list-subscriptions/admin/segments/${id}/members`, { subscriptionIds, action }),
+  sendNewsletterForAdmin: (subject: string, html: string, segmentIds: number[] = []) =>
+    api.post(
+      '/api/mailing-list-subscriptions/admin/send-newsletter',
+      { subject, html, segmentIds },
+      { timeout: 5 * 60 * 1000 },
+    ),
+  exportMailingListCsv: (exportToken: string) =>
+    api.get('/api/mailing-list-subscriptions/export', {
+      responseType: 'blob',
+      headers: { 'x-export-token': exportToken },
+    }),
 
   // ── Auth ─────────────────────────────────────────────────────────────────
-  register: (data: { username: string; email: string; password: string; first_name: string; last_name: string }) =>
+  register: (data: { username: string; email: string; password: string; firstName: string; lastName: string }) =>
     api.post('/api/auth/register', data),
   login: (identifier: string, password: string) =>
-    api.post('/api/auth/login', { identifier, password }),
+    api.post('/api/auth/local', { identifier, password }),
   forgotPassword: (email: string) =>
     api.post('/api/auth/forgot-password', { email }),
   resetPassword: (code: string, password: string, passwordConfirmation: string) =>
@@ -80,59 +133,40 @@ export const apiClient = {
   notify: (subject: string, text: string, formType: string) =>
     api.post('/api/notify', { subject, text, formType }),
 
-  // ── Award Nominations ─────────────────────────────────────────────────────
-  submitNomination: (formData: FormData) =>
-    api.post('/api/nominations', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  getNominations: (page = 1, pageSize = 200) =>
-    api.get(`/api/nominations?page=${page}&pageSize=${pageSize}`),
-  // ── Judge Applications ───────────────────────────────────────────────────── 
-  submitJudgeApplication: (data: object) =>
-    api.post('/api/judge-applications', { data }),
-  getJudgeApplications: (page = 1, pageSize = 200) =>
-    api.get(`/api/judge-applications?page=${page}&pageSize=${pageSize}`),
-
-  // ── Articles ──────────────────────────────────────────────────────────────
-  getPublishedArticles: () => api.get('/api/articles'),
-  getArticleBySlug: (slug: string) => api.get(`/api/articles/slug/${encodeURIComponent(slug)}`),
-  getArticleById: (id: number) => api.get(`/api/articles/${id}`),
-  getMyArticles: () => api.get('/api/articles/mine'),
-  createArticle: (data: object) => api.post('/api/articles', data),
-  updateArticle: (id: number, data: object) => api.put(`/api/articles/${id}`, data),
-  deleteArticle: (id: number) => api.delete(`/api/articles/${id}`),
-  submitArticle: (id: number) => api.post(`/api/articles/${id}/submit`, {}),
-  publishArticle: (id: number) => api.post(`/api/articles/${id}/publish`, {}),
-  rejectArticle: (id: number, reviewNotes: string) => api.post(`/api/articles/${id}/reject`, { reviewNotes }),
-  likeArticle: (id: number) => api.post(`/api/articles/${id}/like`, {}),
-  getArticleComments: (articleId: number) => api.get(`/api/articles/${articleId}/comments`),
-  createArticleComment: (articleId: number, body: string) => api.post(`/api/articles/${articleId}/comments`, { body }),
-  deleteArticleComment: (id: number) => api.delete(`/api/article-comments/${id}`),
-
-  // ── Admin ─────────────────────────────────────────────────────────────────
-  getAdminStats: () => api.get('/api/admin/stats'),
-  getAdminArticles: (status?: string) =>
-    api.get(`/api/admin/articles${status ? `?status=${status}` : ''}`),
-  getAdminUsers: (params: { search?: string; role?: string; page?: number; pageSize?: number } = {}) => {
-    const q = new URLSearchParams();
-    if (params.search) q.set('search', params.search);
-    if (params.role) q.set('role', params.role);
-    if (params.page) q.set('page', String(params.page));
-    if (params.pageSize) q.set('pageSize', String(params.pageSize));
-    return api.get(`/api/admin/users?${q.toString()}`);
+  // ── Editorial / The Wire ──────────────────────────────────────────────────
+  getWriterApplication: () => api.get('/api/editorial/application'),
+  applyAsWriter: (data: { motivation: string; experience: string; portfolioUrl: string; topics: string[] }) =>
+    api.post('/api/editorial/application', data),
+  getMyArticles: () => api.get('/api/editorial/me/articles'),
+  createArticle: (form: FormData) =>
+    api.post('/api/editorial/articles', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60_000 }),
+  uploadArticleAssets: (files: File[]) => {
+    const form = new FormData();
+    files.forEach((file) => form.append('files', file));
+    return api.post('/api/editorial/article-assets', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60_000 });
   },
-  createAdminUser: (data: { username: string; email: string; password: string; first_name: string; last_name: string; member_role: string }) =>
-    api.post('/api/admin/users', data),
-  updateUserRole: (id: number, member_role: string) =>
-    api.patch(`/api/admin/users/${id}/role`, { member_role }),
-
-  // ── Author Applications ───────────────────────────────────────────────────
-  submitAuthorApplication: (data: object) => api.post('/api/author-applications', data),
-  getMyAuthorApplication: () => api.get('/api/author-applications/mine'),
-  getAuthorApplications: (status?: string) =>
-    api.get(`/api/author-applications${status ? `?status=${status}` : ''}`),
-  approveAuthorApplication: (id: number) => api.post(`/api/author-applications/${id}/approve`, {}),
-  rejectAuthorApplication: (id: number, notes: string) =>
-    api.post(`/api/author-applications/${id}/reject`, { notes }),};
+  updateArticle: (documentId: string, form: FormData) =>
+    api.put(`/api/editorial/articles/${encodeURIComponent(documentId)}`, form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60_000 }),
+  submitArticle: (documentId: string) =>
+    api.post(`/api/editorial/articles/${encodeURIComponent(documentId)}/submit`),
+  getEditorialAdminOverview: () => api.get('/api/editorial/admin/overview'),
+  getEditorialAdminWriters: () => api.get('/api/editorial/admin/writers'),
+  reviewWriterApplication: (id: number, status: 'approved' | 'rejected', reviewNotes: string) =>
+    api.put(`/api/editorial/admin/applications/${id}`, { status, reviewNotes }),
+  reviewArticle: (documentId: string, status: 'published' | 'rejected' | 'update-requested', reviewNotes: string) =>
+    api.put(`/api/editorial/admin/articles/${encodeURIComponent(documentId)}`, { status, reviewNotes }, { timeout: 5 * 60 * 1000 }),
+  unpublishArticleForAdmin: (documentId: string) =>
+    api.post(`/api/editorial/admin/articles/${encodeURIComponent(documentId)}/unpublish`),
+  deleteArticleForAdmin: (documentId: string) =>
+    api.delete(`/api/editorial/admin/articles/${encodeURIComponent(documentId)}`),
+  recordArticleRead: (documentId: string) =>
+    api.post(`/api/wire/articles/${encodeURIComponent(documentId)}/read`),
+  getArticleComments: (documentId: string) =>
+    api.get(`/api/wire/articles/${encodeURIComponent(documentId)}/comments`),
+  addArticleComment: (documentId: string, data: { name: string; email: string; content: string }) =>
+    api.post(`/api/wire/articles/${encodeURIComponent(documentId)}/comments`, data),
+  toggleArticleLike: (documentId: string, voterToken: string) =>
+    api.post(`/api/wire/articles/${encodeURIComponent(documentId)}/like`, { voterToken }),
+};
 
 export default api;

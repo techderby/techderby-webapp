@@ -84,7 +84,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   const login = useCallback(async ({ identifier, password }: LoginInput, rememberMe = false) => {
-    const res = await apiClient.login(identifier, password);
+    const trimmedIdentifier = identifier.trim();
+    let res;
+
+    try {
+      res = await apiClient.login(trimmedIdentifier, password);
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })
+        ?.response?.data?.error?.message;
+      const lowerIdentifier = trimmedIdentifier.toLowerCase();
+
+      // Username login is case-sensitive in Strapi. Retry with lowercase so users
+      // can sign in even if they typed uppercase characters.
+      if (message === 'Invalid identifier or password' && lowerIdentifier !== trimmedIdentifier) {
+        res = await apiClient.login(lowerIdentifier, password);
+      } else {
+        throw error;
+      }
+    }
+
     // Temporarily persist with base user so JWT is set for the next request
     persistAuth(res.data.jwt, res.data.user as AuthUser, rememberMe);
     // Then fetch the full profile (includes custom fields) and update

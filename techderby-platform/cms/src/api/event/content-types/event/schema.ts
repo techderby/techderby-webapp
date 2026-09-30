@@ -6,6 +6,7 @@ export default {
   attributes: {
     title: { type: 'string', required: true },
     slug: { type: 'uid', targetField: 'title', required: true },
+    featuredImage: { type: 'string', required: true },
     description: { type: 'text', required: true },
     date: { type: 'datetime', required: true },
     venue: { type: 'string', required: true },
@@ -17,6 +18,7 @@ export default {
     },
     theme: { type: 'string' },
     shortLine: { type: 'text' },
+    detailsPageLink: { type: 'string' },
     eventRegistrationLink: { type: 'string' },
     agenda: { type: 'richtext' },
     agendaItems: { type: 'json' },

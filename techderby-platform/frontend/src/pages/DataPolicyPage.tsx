@@ -9,7 +9,8 @@ const retentionRows = [
   { dataType: 'Volunteer data', period: '6 years after leaving' },
   { dataType: 'Partner data', period: '6 years after last engagement' },
   { dataType: 'Sponsorship contracts', period: '6 years' },
-  { dataType: 'Newsletter subscribers', period: 'Until users unsubscribe or 24 months inactivity' },
+  { dataType: 'Active mailing-list subscribers', period: 'While subscribed or until 24 months inactivity' },
+  { dataType: 'Unsubscribe suppression records and feedback', period: 'Only as long as needed to respect the opt-out, demonstrate compliance, and analyse communications; reviewed periodically' },
   { dataType: 'Financial transaction records', period: '6 years' },
 ];
 

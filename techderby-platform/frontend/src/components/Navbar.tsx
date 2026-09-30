@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Container } from './ui/Container';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ type NavChild = { to: string; label: string; desc: string };
 type NavItem = { to: string; label: string; children?: NavChild[] };
 
 const links: NavItem[] = [
+  { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
   { to: '/community', label: 'Community' },
   {
@@ -29,21 +30,39 @@ const links: NavItem[] = [
   },
   { to: '/events', label: 'Events' },
   { to: '/wire', label: 'The Wire' },
-  { to: '/awards', label: '🏆 Awards' },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+  const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
+  const personaMenuRef = useRef<HTMLDivElement | null>(null);
+  const personaMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const { isAuthenticated, user, logout } = useAuth();
+  const userDisplayName = user?.firstName?.trim() || user?.username || 'Member';
 
-  function handleSignOut() {
-    logout();
-    navigate('/');
-    setMobileOpen(false);
-  }
+  useEffect(() => {
+    if (!personaMenuOpen) return;
+
+    const closeWhenClickingOutside = (event: PointerEvent) => {
+      if (!personaMenuRef.current?.contains(event.target as Node)) {
+        setPersonaMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setPersonaMenuOpen(false);
+      personaMenuButtonRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', closeWhenClickingOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeWhenClickingOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [personaMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
@@ -120,25 +139,65 @@ export function Navbar() {
               </div>
             ),
           )}
+          <a
+            href="https://lms.techderby.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[15px] font-medium text-white/90 transition-colors hover:text-white"
+          >
+            Learning Hub
+          </a>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
-            <>
-              <Link to="/dashboard">
-                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">Dashboard</Button>
-              </Link>
-              <Button onClick={handleSignOut} className="h-9 rounded-full px-5 text-sm">Sign Out</Button>
-            </>
+            <div ref={personaMenuRef} className="relative">
+              <button
+                ref={personaMenuButtonRef}
+                type="button"
+                onClick={() => setPersonaMenuOpen((value) => !value)}
+                aria-label={`${userDisplayName} account menu`}
+                aria-expanded={personaMenuOpen}
+                aria-haspopup="menu"
+                aria-controls="member-account-menu"
+                className="flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2.5 pr-3 text-sm text-white/85 transition hover:border-white/30 hover:bg-white/10"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white">
+                  {userDisplayName.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="max-w-[120px] truncate">{userDisplayName}</span>
+                <svg className={`h-3.5 w-3.5 transition-transform ${personaMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {personaMenuOpen ? (
+                <div id="member-account-menu" role="menu" className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-white/10 bg-slate-800 p-2 shadow-xl shadow-black/40">
+                  <p className="px-3 py-2 text-xs text-white/45">Signed in as {userDisplayName}</p>
+                  <Link role="menuitem" to="/dashboard" className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/10" onClick={() => setPersonaMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    onClick={() => {
+                      setPersonaMenuOpen(false);
+                      logout();
+                    }}
+                    className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <>
-              <Link to="/login">
-                <Button variant="ghost" className="h-9 px-4 text-sm text-white hover:bg-white/10">
-                  Login
-                </Button>
+              <Link to="/login" className="inline-flex h-9 items-center justify-center rounded-md bg-transparent px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                Login
               </Link>
-              <Link to="/register">
-                <Button className="h-9 rounded-full px-5 text-sm">Sign Up</Button>
+              <Link to="/register" className="inline-flex h-9 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                Sign Up
               </Link>
             </>
           )}
@@ -149,6 +208,8 @@ export function Navbar() {
           className="rounded-md border border-white/20 px-3 py-1 text-sm text-white md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileOpen ? 'Close' : 'Menu'}
         </button>
@@ -156,7 +217,7 @@ export function Navbar() {
 
       {/* ── Mobile nav ── */}
       {mobileOpen && (
-        <div className="border-t border-white/10 bg-slate-900 md:hidden">
+        <div id="mobile-navigation" className="border-t border-white/10 bg-slate-900 md:hidden">
           <Container className="py-4">
             <nav className="flex flex-col gap-1">
               {links.map((link) =>
@@ -164,6 +225,7 @@ export function Navbar() {
                   <div key={link.to}>
                     <button
                       type="button"
+                      aria-expanded={mobileExpanded === link.to}
                       className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-white"
                       onClick={() =>
                         setMobileExpanded((prev) => (prev === link.to ? null : link.to))
@@ -222,13 +284,32 @@ export function Navbar() {
               >
                 Contact
               </Link>
+              <a
+                href="https://lms.techderby.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md px-2 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-white"
+              >
+                Learning Hub
+              </a>
               <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-2">
                 {isAuthenticated ? (
                   <>
                     <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">Dashboard</Button>
+                      <Button variant="ghost" className="w-full h-9 text-sm text-white hover:bg-white/10">
+                        Dashboard
+                      </Button>
                     </Link>
-                    <Button onClick={handleSignOut} className="w-full h-9 text-sm">Sign Out</Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-9 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        logout();
+                        setMobileOpen(false);
+                      }}
+                    >
+                      Sign Out
+                    </Button>
                   </>
                 ) : (
                   <>

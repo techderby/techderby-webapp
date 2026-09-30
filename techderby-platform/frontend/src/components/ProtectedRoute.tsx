@@ -31,7 +31,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (requiredRole) {
     const roleOrder: MemberRole[] = ['member', 'editor', 'admin', 'super-admin'];
-    const userLevel = roleOrder.indexOf(user?.member_role ?? 'member');
+    const userLevel = roleOrder.indexOf(user?.memberRole ?? 'member');
     const requiredLevel = roleOrder.indexOf(requiredRole);
     if (userLevel < requiredLevel) {
       return <Navigate to="/dashboard" replace />;

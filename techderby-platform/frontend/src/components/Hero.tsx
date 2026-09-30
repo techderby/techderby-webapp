@@ -26,12 +26,12 @@ export function Hero() {
             <Link to="/get-involved">
               <Button className="w-full sm:w-auto">Join the community</Button>
             </Link>
-            <Link to="/partners">
+            <Link to="/contact">
               <Button
                 variant="ghost"
                 className="w-full border border-white/70 bg-transparent text-white hover:bg-white hover:text-slate-900 sm:w-auto"
               >
-                Partner with us
+                Contact us
               </Button>
             </Link>
           </div>

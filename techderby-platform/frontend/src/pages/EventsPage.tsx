@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { EventCard } from '../components/EventCard';
 import { PageSeo } from '../components/PageSeo';
-import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
+import { assetUrl } from '../lib/asset-url';
+import { eventDateTimestamp, formatEventDate } from '../lib/event-date';
 
 const eventCategories = [
   {
@@ -72,8 +73,8 @@ export default function EventsPage() {
   const upcomingTechDerby = useMemo(
     () =>
       allEvents
-        .filter((e) => isTechDerbyEvent(e.eventSource) && !Number.isNaN(new Date(e.date).getTime()) && new Date(e.date) >= now)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        .filter((e) => isTechDerbyEvent(e.eventSource) && !Number.isNaN(eventDateTimestamp(e.date)) && eventDateTimestamp(e.date) >= now.getTime())
+        .sort((a, b) => eventDateTimestamp(a.date) - eventDateTimestamp(b.date)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [allEvents],
   );
@@ -81,8 +82,8 @@ export default function EventsPage() {
   const pastTechDerby = useMemo(
     () =>
       allEvents
-        .filter((e) => isTechDerbyEvent(e.eventSource) && !Number.isNaN(new Date(e.date).getTime()) && new Date(e.date) < now)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+        .filter((e) => isTechDerbyEvent(e.eventSource) && !Number.isNaN(eventDateTimestamp(e.date)) && eventDateTimestamp(e.date) < now.getTime())
+        .sort((a, b) => eventDateTimestamp(b.date) - eventDateTimestamp(a.date)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [allEvents],
   );
@@ -108,7 +109,7 @@ export default function EventsPage() {
               Tech Derby Events
             </span>
             <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
-              Where Derby's tech
+              Where Derby's tech{' '}
               <br />
               <span className="bg-gradient-to-r from-sky-400 to-orange-400 bg-clip-text text-transparent">
                 community comes together.
@@ -119,18 +120,11 @@ export default function EventsPage() {
               create space for learning, connection and fresh opportunities across Derby and the East Midlands.
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link to="/events/browse">
-                <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  See Upcoming Events
-                </Button>
+              <Link to="/events/browse" className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-8 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                See Upcoming Events
               </Link>
-              <Link to="/partners">
-                <Button
-                  variant="ghost"
-                  className="h-12 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
-                >
-                  Partner on an Event
-                </Button>
+              <Link to="/contact" className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15">
+                Contact Us
               </Link>
             </div>
           </div>
@@ -166,11 +160,17 @@ export default function EventsPage() {
 
               <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
                 <div className="grid md:grid-cols-[1fr_1.6fr]">
-                  <div className="flex items-center justify-center bg-slate-900 p-10 md:p-14">
-                    <div className="text-center">
+                  <div className="relative flex min-h-72 items-center justify-center overflow-hidden bg-slate-900 p-10 md:p-14">
+                    {featuredEvent.featuredImage ? (
+                      <>
+                        <img src={assetUrl(featuredEvent.featuredImage)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-slate-950/65" />
+                      </>
+                    ) : null}
+                    <div className="relative text-center">
                       <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">Next Event</p>
                       <p className="mt-3 text-2xl font-black text-white md:text-3xl">
-                        {new Date(featuredEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {formatEventDate(featuredEvent.date)}
                       </p>
                       <p className="mt-2 text-base text-white/70">{featuredEvent.venue}</p>
                     </div>
@@ -191,7 +191,7 @@ export default function EventsPage() {
                         <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
                         </svg>
-                        {new Date(featuredEvent.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {formatEventDate(featuredEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -200,24 +200,31 @@ export default function EventsPage() {
                         {featuredEvent.venue}
                       </span>
                     </div>
-                    <div className="mt-6">
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      {featuredEvent.detailsPageLink ? (
+                        <a
+                          href={featuredEvent.detailsPageLink}
+                          target={/^https?:\/\//i.test(featuredEvent.detailsPageLink) ? '_blank' : undefined}
+                          rel="noreferrer noopener"
+                          className="inline-flex items-center justify-center rounded-full bg-orange-500 px-7 py-2 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600"
+                        >
+                          View Event Details
+                        </a>
+                      ) : (
+                        <Link to={`/events/${featuredEvent.slug}`} className="inline-flex items-center justify-center rounded-full bg-orange-500 px-7 py-2 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                          View Event Details
+                        </Link>
+                      )}
                       {featuredEvent.registrationLink || featuredEvent.eventRegistrationLink ? (
                         <a
                           href={featuredEvent.registrationLink ?? featuredEvent.eventRegistrationLink ?? '#'}
                           target="_blank"
                           rel="noreferrer noopener"
+                          className="inline-flex items-center justify-center rounded-full bg-secondary px-7 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
                         >
-                          <Button className="rounded-full px-7 text-sm shadow-lg shadow-orange-900/30">
-                            Register Now
-                          </Button>
+                          Register Now
                         </a>
-                      ) : (
-                        <Link to={`/events/${featuredEvent.slug}`}>
-                          <Button className="rounded-full px-7 text-sm shadow-lg shadow-orange-900/30">
-                            View Event Details
-                          </Button>
-                        </Link>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -352,10 +359,8 @@ export default function EventsPage() {
               builders who want to support talent, innovation, and local connection.
             </p>
             <div className="mt-8">
-              <Link to="/partners">
-                <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  Partner on an Event
-                </Button>
+              <Link to="/contact" className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-8 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                Contact Us
               </Link>
             </div>
           </div>
@@ -375,18 +380,11 @@ export default function EventsPage() {
               tech. Join us and step into a stronger community story.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <Link to="/events/browse">
-                <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">
-                  View Upcoming Events
-                </Button>
+              <Link to="/events/browse" className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-8 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                View Upcoming Events
               </Link>
-              <Link to="/get-involved">
-                <Button
-                  variant="ghost"
-                  className="h-12 rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
-                >
-                  Join the Community
-                </Button>
+              <Link to="/get-involved" className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 bg-white/5 px-8 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15">
+                Join the Community
               </Link>
             </div>
           </div>

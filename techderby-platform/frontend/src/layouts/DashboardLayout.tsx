@@ -3,6 +3,9 @@ import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 import { cn } from '../lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../lib/api';
+import type { ArticleStats } from '../types/content';
 
 // ── Types & data ──────────────────────────────────────────────────────────────
 type NavItem = { to: string; end?: boolean; label: string; icon: React.ReactNode };
@@ -30,24 +33,75 @@ const NAV_MAIN: NavItem[] = [
   },
 ];
 
-const NAV_ADMIN: NavItem[] = [
-  {
-    to: '/dashboard/nominations', label: 'Award Nominations',
-    icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>,
-  },
-  {
-    to: '/dashboard/judge-applications', label: 'Judge Applications',
-    icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
-  },
-];
+const NAV_MAILING_LIST: NavItem = {
+  to: '/dashboard/mailing-list',
+  label: 'Mailing List',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  ),
+};
+
+const NAV_ADMIN_EVENTS: NavItem = {
+  to: '/dashboard/events',
+  label: 'Manage Events',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" />
+    </svg>
+  ),
+};
+
+const NAV_ARTICLES: NavItem = {
+  to: '/dashboard/articles',
+  label: 'Articles',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /><path d="M8 7h8M8 11h8" />
+    </svg>
+  ),
+};
+
+const NAV_WRITER_APPLICATION: NavItem = {
+  to: '/dashboard/writer-application',
+  label: 'Apply to Write',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  ),
+};
+
+const NAV_ARTICLE_REVIEW: NavItem = {
+  to: '/dashboard/article-review',
+  label: 'Article Review',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  ),
+};
+
+const NAV_WRITERS: NavItem = {
+  to: '/dashboard/writers',
+  label: 'Manage Writers',
+  icon: (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+};
 
 const NAV_COMMUNITY = [
   {
-    to: '/events', label: 'Events',
+    href: '/events', label: 'Events',
     icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>,
   },
   {
-    to: '/wire', label: 'The Wire',
+    href: '/wire', label: 'The Wire',
     icon: <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16l-2 2z" /></svg>,
   },
 ];
@@ -84,10 +138,24 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const role = user?.member_role ?? 'member';
+  const role = user?.memberRole ?? 'member';
+  const isAdmin = role === 'admin' || role === 'super-admin';
+  const isWriter = role === 'editor' || isAdmin;
+  const navItems = isAdmin
+    ? [...NAV_MAIN, NAV_ARTICLES, NAV_ARTICLE_REVIEW, NAV_WRITERS, NAV_ADMIN_EVENTS, NAV_MAILING_LIST]
+    : isWriter
+      ? [...NAV_MAIN, NAV_ARTICLES]
+      : [...NAV_MAIN, NAV_WRITER_APPLICATION];
+  const articleStatsQuery = useQuery<{ stats: ArticleStats }>({
+    queryKey: ['sidebar-article-stats'],
+    queryFn: () => apiClient.getMyArticles().then((response) => response.data),
+    enabled: isWriter,
+    staleTime: 60_000,
+  });
+  const writerBadges = articleStatsQuery.data?.stats?.badges ?? [];
   const roleMeta = ROLE_META[role] ?? ROLE_META.member;
-  const displayName = user?.first_name && user?.last_name
-    ? `${user.first_name} ${user.last_name}`
+  const displayName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
     : user?.username ?? '';
 
   function handleLogout() {
@@ -144,7 +212,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
               )}>
                 {user?.avatar
                   ? <img src={user.avatar} alt="" className="h-10 w-10 rounded-xl object-cover" />
-                  : getInitials(user?.first_name, user?.last_name, user?.username)}
+                  : getInitials(user?.firstName, user?.lastName, user?.username)}
               </div>
               <span className={cn('absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-[1.5px] border-[#07090f]', roleMeta.dot)} />
             </Link>
@@ -169,7 +237,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
               )}>
                 {user?.avatar
                   ? <img src={user.avatar} alt="" className="h-12 w-12 rounded-xl object-cover" />
-                  : getInitials(user?.first_name, user?.last_name, user?.username)}
+                  : getInitials(user?.firstName, user?.lastName, user?.username)}
               </div>
               <span className={cn('absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#07090f]', roleMeta.dot)} />
             </div>
@@ -178,6 +246,15 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
             <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest', roleMeta.badge)}>
               {roleMeta.label}
             </span>
+            {writerBadges.length > 0 ? (
+              <div className="mt-2 flex flex-wrap justify-center gap-1">
+                {writerBadges.slice(0, 3).map((badge) => (
+                  <span key={badge} className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[9px] font-bold text-amber-300">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
@@ -190,7 +267,7 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
           <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.18]">Dashboard</p>
         )}
 
-        {NAV_MAIN.map((item) =>
+        {navItems.map((item) =>
           collapsed ? (
             <Tip key={item.to} label={item.label}>
               <NavLink
@@ -247,79 +324,28 @@ function Sidebar({ collapsed, onToggle, onClose }: { collapsed: boolean; onToggl
 
         {NAV_COMMUNITY.map((item) =>
           collapsed ? (
-            <Tip key={item.to} label={item.label}>
-              <Link
-                to={item.to}
-                onClick={onClose}
+            <Tip key={item.href} label={item.label}>
+              <a
+                href={item.href}
                 className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-xl text-white/25 transition hover:bg-white/6 hover:text-white/70"
               >
                 {item.icon}
-              </Link>
+              </a>
             </Tip>
           ) : (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={onClose}
+            <a
+              key={item.href}
+              href={item.href}
               className="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/35 transition-all duration-150 hover:bg-white/[0.04] hover:text-white/80"
             >
               <span className="shrink-0 text-white/20 transition-colors group-hover:text-white/50">{item.icon}</span>
               {item.label}
-            </Link>
+              {/* External arrow */}
+              <svg viewBox="0 0 24 24" className="ml-auto h-3 w-3 shrink-0 text-white/15 transition group-hover:text-white/35" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" />
+              </svg>
+            </a>
           )
-        )}
-
-        {/* Admin-only section */}
-        {(role === 'super-admin' || role === 'admin') && (
-          <>
-            <div className={cn('my-3 border-t border-white/[0.06]', collapsed ? 'mx-0' : 'mx-2')} />
-            {!collapsed && (
-              <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.18]">Admin</p>
-            )}
-            {NAV_ADMIN.map((item) =>
-              collapsed ? (
-                <Tip key={item.to} label={item.label}>
-                  <NavLink
-                    to={item.to}
-                    onClick={onClose}
-                    className={({ isActive }) => cn(
-                      'mb-0.5 flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150',
-                      isActive
-                        ? 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/25 shadow-[0_0_16px_rgba(249,115,22,0.12)]'
-                        : 'text-white/30 hover:bg-white/6 hover:text-white/75',
-                    )}
-                  >
-                    {item.icon}
-                  </NavLink>
-                </Tip>
-              ) : (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onClose}
-                  className={({ isActive }) => cn(
-                    'group relative mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 select-none',
-                    isActive
-                      ? 'bg-gradient-to-r from-orange-500/[0.14] to-transparent text-orange-300'
-                      : 'text-white/40 hover:bg-white/[0.04] hover:text-white/85',
-                  )}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span className={cn(
-                        'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-gradient-to-b from-orange-400 to-amber-400 transition-all duration-200',
-                        isActive ? 'h-5 opacity-100' : 'h-0 opacity-0',
-                      )} />
-                      <span className={cn('shrink-0 transition-colors duration-150', isActive ? 'text-orange-400' : 'text-white/25 group-hover:text-white/55')}>
-                        {item.icon}
-                      </span>
-                      <span className="truncate">{item.label}</span>
-                    </>
-                  )}
-                </NavLink>
-              )
-            )}
-          </>
         )}
       </nav>
 
@@ -414,8 +440,8 @@ export function DashboardLayout() {
           </Link>
 
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-orange-500 text-xs font-black text-white shadow-lg">
-            {user?.first_name && user?.last_name
-              ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+            {user?.firstName && user?.lastName
+              ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
               : (user?.username ?? 'U').slice(0, 2).toUpperCase()}
           </div>
         </header>

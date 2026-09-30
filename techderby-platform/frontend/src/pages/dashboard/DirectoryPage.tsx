@@ -5,6 +5,8 @@ import { apiClient } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { DirectoryMember, Connection } from '../../types/auth';
 import { cn } from '../../lib/utils';
+import { Pagination } from '../../components/Pagination';
+import { paginateItems } from '../../lib/pagination';
 
 function getInitials(firstName?: string, lastName?: string, username?: string) {
   if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -27,17 +29,19 @@ function MemberCard({
   connection,
   onConnect,
   onMessage,
+  onViewBio,
   isMe,
 }: {
   member: DirectoryMember;
   connection?: Connection;
   onConnect: (id: number) => void;
   onMessage: (id: number) => void;
+  onViewBio: (member: DirectoryMember) => void;
   isMe: boolean;
 }) {
   const skills = member.skills?.slice(0, 3) ?? [];
-  const displayName = member.first_name && member.last_name
-    ? `${member.first_name} ${member.last_name}`
+  const displayName = member.firstName && member.lastName
+    ? `${member.firstName} ${member.lastName}`
     : member.username;
 
   return (
@@ -47,7 +51,7 @@ function MemberCard({
           {member.avatar ? (
             <img src={member.avatar} alt="" className="h-12 w-12 rounded-xl object-cover" />
           ) : (
-            getInitials(member.first_name, member.last_name, member.username)
+            getInitials(member.firstName, member.lastName, member.username)
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -71,9 +75,17 @@ function MemberCard({
         <p className="mt-3 text-xs leading-relaxed text-white/50 line-clamp-2">{member.bio}</p>
       ) : null}
 
-      {member.linkedin_url ? (
+      <button
+        type="button"
+        onClick={() => onViewBio(member)}
+        className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300 transition hover:bg-sky-500/20"
+      >
+        View bio
+      </button>
+
+      {member.linkedinUrl ? (
         <a
-          href={member.linkedin_url}
+          href={member.linkedinUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${displayName}'s LinkedIn profile (opens in a new tab)`}
@@ -150,6 +162,8 @@ export default function DirectoryPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [bioMember, setBioMember] = useState<DirectoryMember | null>(null);
 
   const { data: members = [], isLoading } = useQuery<DirectoryMember[]>({
     queryKey: ['membersDirectory'],
@@ -170,14 +184,18 @@ export default function DirectoryPage() {
     const q = search.toLowerCase();
     return members.filter((m) => {
       if (!q) return true;
-      const name = `${m.first_name ?? ''} ${m.last_name ?? ''} ${m.username}`.toLowerCase();
+      const name = `${m.firstName ?? ''} ${m.lastName ?? ''} ${m.username}`.toLowerCase();
       return name.includes(q) || (m.occupation ?? '').toLowerCase().includes(q) || (m.location ?? '').toLowerCase().includes(q);
     });
   }, [members, search]);
+  const memberPagination = useMemo(
+    () => paginateItems(filtered, currentPage),
+    [currentPage, filtered],
+  );
 
   function getConnection(memberId: number) {
     return connections.find(
-      (c) => c.requester_id === memberId || c.recipient_id === memberId,
+      (c) => c.requesterId === memberId || c.recipientId === memberId,
     );
   }
 
@@ -190,7 +208,7 @@ export default function DirectoryPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-black text-white">Member Directory</h1>
         <p className="mt-1 text-sm text-white/40">
-          {user?.member_role === 'admin' || user?.member_role === 'super-admin'
+          {user?.memberRole === 'admin' || user?.memberRole === 'super-admin'
             ? 'Showing all community members (admin view).'
             : 'Showing members who have enabled visibility.'}
         </p>
@@ -202,10 +220,14 @@ export default function DirectoryPage() {
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          aria-label="Search members"
           type="search"
           placeholder="Search by name, role, or location…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-sky-500/60 focus:ring-2 focus:ring-sky-500/20"
         />
       </div>
@@ -226,19 +248,48 @@ export default function DirectoryPage() {
         <>
           <p className="mb-4 text-xs text-white/30">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((member) => (
+            {memberPagination.items.map((member) => (
               <MemberCard
                 key={member.id}
                 member={member}
                 connection={getConnection(member.id)}
                 onConnect={(id) => connectMutation.mutate(id)}
                 onMessage={handleMessage}
+                onViewBio={setBioMember}
                 isMe={member.id === user?.id}
               />
             ))}
           </div>
+          <Pagination
+            currentPage={memberPagination.page}
+            totalItems={filtered.length}
+            onPageChange={setCurrentPage}
+            itemLabel="members"
+            className="mt-5"
+          />
         </>
       )}
+
+      {bioMember ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setBioMember(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-white">
+                  {bioMember.firstName && bioMember.lastName ? `${bioMember.firstName} ${bioMember.lastName}` : bioMember.username}
+                </h2>
+                {bioMember.occupation ? <p className="text-sm text-sky-300">{bioMember.occupation}</p> : null}
+              </div>
+              <button type="button" onClick={() => setBioMember(null)} className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white" aria-label="Close bio">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+              </button>
+            </div>
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+              {bioMember.bio?.trim() || 'This member has not added a bio yet.'}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

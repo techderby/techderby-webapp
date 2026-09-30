@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageSeo } from '../components/PageSeo';
 import { useAuth } from '../contexts/AuthContext';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 function PasswordStrength({ password }: { password: string }) {
@@ -28,8 +29,8 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     username: '',
     password: '',
@@ -47,8 +48,8 @@ export default function RegisterPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!form.first_name.trim()) e.first_name = 'First name is required';
-    if (!form.last_name.trim()) e.last_name = 'Last name is required';
+    if (!form.firstName.trim()) e.firstName = 'First name is required';
+    if (!form.lastName.trim()) e.lastName = 'Last name is required';
     if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Enter a valid email';
     if (form.username.length < 3) e.username = 'Username must be at least 3 characters';
     if (!/^[a-zA-Z0-9_]+$/.test(form.username)) e.username = 'Username can only contain letters, numbers, and underscores';
@@ -66,12 +67,13 @@ export default function RegisterPage() {
     setServerError('');
     try {
       await register({
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         email: form.email.trim().toLowerCase(),
         username: form.username.trim().toLowerCase(),
         password: form.password,
       });
+      trackAnalyticsEvent('member_registration_complete');
       navigate('/dashboard');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Registration failed. Please try again.';
@@ -138,7 +140,7 @@ export default function RegisterPage() {
             </p>
 
             {serverError ? (
-              <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              <div role="alert" className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {serverError}
               </div>
             ) : null}
@@ -146,28 +148,31 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-4">
               {/* Name row */}
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="First name" error={errors.first_name}>
+                <FormField inputId="register-first-name" label="First name" error={errors.firstName}>
                   <StyledInput
+                    id="register-first-name"
                     placeholder="Jane"
                     autoComplete="given-name"
-                    value={form.first_name}
-                    onChange={(v) => set('first_name', v)}
-                    hasError={!!errors.first_name}
+                    value={form.firstName}
+                    onChange={(v) => set('firstName', v)}
+                    hasError={!!errors.firstName}
                   />
                 </FormField>
-                <FormField label="Last name" error={errors.last_name}>
+                <FormField inputId="register-last-name" label="Last name" error={errors.lastName}>
                   <StyledInput
+                    id="register-last-name"
                     placeholder="Doe"
                     autoComplete="family-name"
-                    value={form.last_name}
-                    onChange={(v) => set('last_name', v)}
-                    hasError={!!errors.last_name}
+                    value={form.lastName}
+                    onChange={(v) => set('lastName', v)}
+                    hasError={!!errors.lastName}
                   />
                 </FormField>
               </div>
 
-              <FormField label="Email address" error={errors.email}>
+              <FormField inputId="register-email" label="Email address" error={errors.email}>
                 <StyledInput
+                  id="register-email"
                   type="email"
                   placeholder="jane@example.com"
                   autoComplete="email"
@@ -177,18 +182,20 @@ export default function RegisterPage() {
                 />
               </FormField>
 
-              <FormField label="Username" hint="Letters, numbers, underscores only" error={errors.username}>
+              <FormField inputId="register-username" label="Username" hint="Letters, numbers, underscores only (saved in lowercase)" error={errors.username}>
                 <StyledInput
+                  id="register-username"
                   placeholder="jane_doe"
                   autoComplete="username"
                   value={form.username}
-                  onChange={(v) => set('username', v)}
+                  onChange={(v) => set('username', v.toLowerCase())}
                   hasError={!!errors.username}
                 />
               </FormField>
 
-              <FormField label="Password" error={errors.password}>
+              <FormField inputId="register-password" label="Password" error={errors.password}>
                 <StyledInput
+                  id="register-password"
                   type="password"
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
@@ -199,8 +206,9 @@ export default function RegisterPage() {
                 <PasswordStrength password={form.password} />
               </FormField>
 
-              <FormField label="Confirm password" error={errors.confirmPassword}>
+              <FormField inputId="register-confirm-password" label="Confirm password" error={errors.confirmPassword}>
                 <StyledInput
+                  id="register-confirm-password"
                   type="password"
                   placeholder="Repeat your password"
                   autoComplete="new-password"
@@ -257,11 +265,13 @@ export default function RegisterPage() {
 }
 
 function FormField({
+  inputId,
   label,
   hint,
   error,
   children,
 }: {
+  inputId: string;
   label: string;
   hint?: string;
   error?: string;
@@ -269,7 +279,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
+      <label htmlFor={inputId} className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
         {label}
       </label>
       {children}
@@ -280,6 +290,7 @@ function FormField({
 }
 
 function StyledInput({
+  id,
   type = 'text',
   placeholder,
   autoComplete,
@@ -287,6 +298,7 @@ function StyledInput({
   onChange,
   hasError,
 }: {
+  id: string;
   type?: string;
   placeholder?: string;
   autoComplete?: string;
@@ -296,6 +308,7 @@ function StyledInput({
 }) {
   return (
     <input
+      id={id}
       type={type}
       placeholder={placeholder}
       autoComplete={autoComplete}

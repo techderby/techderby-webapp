@@ -1,5 +1,11 @@
+import { useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Container } from './ui/Container';
+import { useAuth } from '../contexts/AuthContext';
+import { useConsent } from '../contexts/ConsentContext';
+import { trackAnalyticsEvent } from '../lib/analytics';
+import { createMailingListSubscription } from '../services/content-service';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 const footerLinks = {
@@ -18,6 +24,9 @@ const footerLinks = {
     { label: 'Careers & Skills Pathways', to: '/get-involved' },
     { label: 'Tech Star Women', to: '/programmes/tech-star-women' },
   ],
+  tools: [
+    { label: 'Poster Generation', to: '/create-poster' },
+  ],
   legal: [
     { label: 'Privacy Policy', to: '/privacy-policy' },
     { label: 'Cookie Policy', to: '/cookie-policy' },
@@ -31,6 +40,51 @@ const footerLinks = {
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { isAuthenticated, logout } = useAuth();
+  const { openPreferences } = useConsent();
+  const [mailingEmail, setMailingEmail] = useState('');
+  const [mailingError, setMailingError] = useState<string | null>(null);
+  const [mailingMessage, setMailingMessage] = useState<string | null>(null);
+  const [isSubmittingMailingList, setIsSubmittingMailingList] = useState(false);
+
+  async function handleMailingListSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const normalizedEmail = mailingEmail.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setMailingError('Please enter your email address.');
+      setMailingMessage(null);
+      return;
+    }
+
+    setIsSubmittingMailingList(true);
+    setMailingError(null);
+    setMailingMessage(null);
+
+    try {
+      await createMailingListSubscription(normalizedEmail);
+      trackAnalyticsEvent('newsletter_signup', { signup_location: 'footer' });
+      setMailingMessage('You are on the list. We will share updates soon.');
+      setMailingEmail('');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const apiMessage = String((err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? '').toLowerCase();
+
+        if (status === 403) {
+          setMailingError('Mailing list sign-up is currently unavailable. Please try again shortly.');
+        } else if (status === 400 && (apiMessage.includes('unique') || apiMessage.includes('already') || apiMessage.includes('email'))) {
+          setMailingError('This email is already on the mailing list.');
+        } else {
+          setMailingError('Could not join the mailing list right now. Please try again.');
+        }
+      } else {
+        setMailingError('Could not join the mailing list right now. Please try again.');
+      }
+    } finally {
+      setIsSubmittingMailingList(false);
+    }
+  }
 
   return (
     <footer className="relative bg-slate-900 text-white">
@@ -45,7 +99,7 @@ export function Footer() {
 
       <Container className="relative z-10 py-14 md:py-16">
         {/* Main grid */}
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:gap-8">
 
           {/* Brand column */}
           <div>
@@ -80,6 +134,50 @@ export function Footer() {
                 </svg>
                 LinkedIn
               </a>
+              <a
+                href="https://lms.techderby.org"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+                </svg>
+                Learning Hub
+              </a>
+            </div>
+
+            <div className="mt-7 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Mailing List</p>
+              <p className="mt-2 text-sm leading-relaxed text-white/60">
+                Get event announcements and community updates by email.
+              </p>
+
+              <form onSubmit={handleMailingListSubmit} className="mt-3 flex flex-col gap-2">
+                <input
+                  aria-label="Email address for mailing list"
+                  type="email"
+                  value={mailingEmail}
+                  onChange={(e) => {
+                    setMailingEmail(e.target.value);
+                    setMailingError(null);
+                    setMailingMessage(null);
+                  }}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className="h-10 w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-sky-500/60 focus:ring-2 focus:ring-sky-500/20"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmittingMailingList}
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-orange-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-60"
+                >
+                  {isSubmittingMailingList ? 'Joining...' : 'Join mailing list'}
+                </button>
+              </form>
+
+              {mailingMessage ? <p role="status" className="mt-2 text-xs text-emerald-300">{mailingMessage}</p> : null}
+              {mailingError ? <p role="alert" className="mt-2 text-xs text-red-300">{mailingError}</p> : null}
             </div>
           </div>
 
@@ -105,6 +203,23 @@ export function Footer() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Programmes</p>
             <ul className="mt-4 space-y-2.5">
               {footerLinks.programmes.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-white/60 transition-colors hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tools */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Tools</p>
+            <ul className="mt-4 space-y-2.5">
+              {footerLinks.tools.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
@@ -146,15 +261,35 @@ export function Footer() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-medium text-white/60 transition-colors hover:text-white">
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="inline-flex h-9 items-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
-            >
-              Sign Up
-            </Link>
+            <button type="button" onClick={openPreferences} className="text-sm font-medium text-white/60 transition-colors hover:text-white">
+              Cookie settings
+            </button>
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="text-sm font-medium text-white/60 transition-colors hover:text-white">
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="inline-flex h-9 items-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm font-medium text-white/60 transition-colors hover:text-white">
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex h-9 items-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </Container>

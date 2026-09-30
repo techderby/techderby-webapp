@@ -47,7 +47,7 @@ For standalone, create `cms/.env` (see root `.env.example` for all required keys
 
 ## Public permissions
 
-`cms/src/index.ts` bootstraps Strapi on startup to grant the Public role `find` and `findOne` on `api::post.post`, so the Wire page works without authentication.
+`cms/src/index.ts` bootstraps Strapi on startup to grant the Public role `find` and `findOne` on `api::post.post`, so the Insights page works without authentication.
 ```
 
 ## Permissions and Tokens
@@ -58,16 +58,16 @@ Enable in `Settings > Users & Permissions > Roles > Public`:
 - `find` and `findOne` for Events, Partners, Insights, Programmes
 - `create` for Mailing List Subscriptions
 
-### API token for CSV export
+### CSV export token setup
 
-Create in `Settings > API Tokens` with scope:
-- `api::mailing-list-subscription.mailing-list-subscription.exportCsv`
+Set a strong secret in `cms/.env`:
+- `MAILING_LIST_EXPORT_TOKEN=<long-random-secret>`
 
 Example export command:
 
 ```bash
 curl -L "http://localhost:1337/api/mailing-list-subscriptions/export" \
-  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "x-export-token: <MAILING_LIST_EXPORT_TOKEN>" \
   -o mailing-list-subscriptions.csv
 ```
 

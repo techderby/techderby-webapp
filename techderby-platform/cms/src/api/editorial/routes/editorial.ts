@@ -1,0 +1,23 @@
+export default {
+  routes: [
+    { method: 'GET', path: '/wire/articles', handler: 'api::editorial.editorial.publicArticles', config: { auth: false } },
+    { method: 'GET', path: '/wire/articles/:slug', handler: 'api::editorial.editorial.publicArticle', config: { auth: false } },
+    { method: 'POST', path: '/wire/articles/:documentId/read', handler: 'api::editorial.editorial.recordRead', config: { auth: false } },
+    { method: 'GET', path: '/wire/articles/:documentId/comments', handler: 'api::editorial.editorial.comments', config: { auth: false } },
+    { method: 'POST', path: '/wire/articles/:documentId/comments', handler: 'api::editorial.editorial.addComment', config: { auth: false } },
+    { method: 'POST', path: '/wire/articles/:documentId/like', handler: 'api::editorial.editorial.toggleLike', config: { auth: false } },
+    { method: 'GET', path: '/editorial/application', handler: 'api::editorial.editorial.applicationStatus' },
+    { method: 'POST', path: '/editorial/application', handler: 'api::editorial.editorial.applyWriter' },
+    { method: 'GET', path: '/editorial/me/articles', handler: 'api::editorial.editorial.myArticles' },
+    { method: 'POST', path: '/editorial/articles', handler: 'api::editorial.editorial.createArticle' },
+    { method: 'POST', path: '/editorial/article-assets', handler: 'api::editorial.editorial.uploadArticleAssets' },
+    { method: 'PUT', path: '/editorial/articles/:documentId', handler: 'api::editorial.editorial.updateArticle' },
+    { method: 'POST', path: '/editorial/articles/:documentId/submit', handler: 'api::editorial.editorial.submitArticle' },
+    { method: 'GET', path: '/editorial/admin/overview', handler: 'api::editorial.editorial.adminOverview' },
+    { method: 'GET', path: '/editorial/admin/writers', handler: 'api::editorial.editorial.adminWriters' },
+    { method: 'PUT', path: '/editorial/admin/applications/:id', handler: 'api::editorial.editorial.reviewApplication' },
+    { method: 'PUT', path: '/editorial/admin/articles/:documentId', handler: 'api::editorial.editorial.reviewArticle' },
+    { method: 'POST', path: '/editorial/admin/articles/:documentId/unpublish', handler: 'api::editorial.editorial.unpublishArticle' },
+    { method: 'DELETE', path: '/editorial/admin/articles/:documentId', handler: 'api::editorial.editorial.deleteArticle' },
+  ],
+};

@@ -9,7 +9,7 @@ import partnerLogo2 from '../assets/images/partners/partner2.svg';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const agendaItems = [
-  { time: '09:00', title: 'Arrival, registration and networking',             desc: 'Coffee, welcome desk and partner conversations' },
+  { time: '09:00', title: 'Arrival and networking',                            desc: 'Coffee, welcome desk and partner conversations' },
   { time: '09:30', title: 'Opening remarks',                                  desc: 'Welcome to Tech Derby Summit 2026' },
   { time: '09:45', title: 'Keynote: AI, Startups and the Next Digital Economy', desc: 'A practical view of the opportunity ahead' },
   { time: '10:30', title: 'Panel: AI for business growth and productivity',   desc: 'How organisations are using AI responsibly' },
@@ -122,17 +122,22 @@ export default function TechDerbySummitPage() {
               employers and ecosystem leaders shaping Derby's digital future.
             </p>
 
+            <p style={{
+              margin: '10px 0 0', maxWidth: '420px', fontSize: '12px',
+              lineHeight: 1.6, color: '#67e8f9', fontWeight: 700,
+            }}>
+              Registration for the 2026 summit is now closed. Registration for next year's summit opens soon.
+            </p>
+
             {/* Buttons */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
-              <a href="https://www.eventbrite.co.uk/e/east-mids-tech-week-2026-tech-derby-summit-2026-tickets-1986190909477?aff=oddtdtcreator" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  height: '36px', padding: '0 18px', borderRadius: '999px',
-                  background: '#06b6d4', border: 'none', cursor: 'pointer',
-                  fontSize: '12px', fontWeight: 700, color: '#0c1829',
-                }}>
-                  Register for the Summit
-                </button>
-              </a>
+              <button style={{
+                height: '36px', padding: '0 18px', borderRadius: '999px',
+                background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.24)',
+                cursor: 'not-allowed', fontSize: '12px', fontWeight: 700, color: '#dbeafe',
+              }}>
+                Registration Closed (2026)
+              </button>
               <Link to="/contact" style={{ textDecoration: 'none' }}>
                 <button style={{
                   height: '36px', padding: '0 18px', borderRadius: '999px',
@@ -619,21 +624,19 @@ export default function TechDerbySummitPage() {
                   Join the conversation shaping Derby's next digital chapter
                 </h2>
                 <p style={{ margin: '10px 0 0', fontSize: '12.5px', lineHeight: 1.58, color: 'rgba(8,39,58,0.84)' }}>
-                  Come to learn, connect and contribute. Be part of a summit that gathers the
-                  people, ideas and partnerships shaping the next digital economy.
+                  The 2026 programme has now concluded and registration is closed.
+                  Thank you to everyone who joined. Registration for next year's summit opens soon.
                 </p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '170px' }}>
-                <a href="https://www.eventbrite.co.uk/e/east-mids-tech-week-2026-tech-derby-summit-2026-tickets-1986190909477?aff=oddtdtcreator" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <button style={{
-                    width: '100%', height: '38px', padding: '0 22px', borderRadius: '999px',
-                    background: '#06b6d4', border: 'none', cursor: 'pointer',
-                    fontSize: '12px', fontWeight: 700, color: '#0c1829',
-                  }}>
-                    Register Now
-                  </button>
-                </a>
+                <button style={{
+                  width: '100%', height: '38px', padding: '0 22px', borderRadius: '999px',
+                  background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.32)', cursor: 'not-allowed',
+                  fontSize: '12px', fontWeight: 700, color: '#e2e8f0',
+                }}>
+                  Registration Closed
+                </button>
                 <Link to="/contact" style={{ textDecoration: 'none' }}>
                   <button style={{
                     width: '100%', height: '38px', padding: '0 22px', borderRadius: '999px',

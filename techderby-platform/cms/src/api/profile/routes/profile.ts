@@ -2,12 +2,6 @@ export default {
   routes: [
     {
       method: 'POST',
-      path: '/auth/login',
-      handler: 'api::profile.profile.login',
-      config: { auth: false, policies: [], middlewares: [] },
-    },
-    {
-      method: 'POST',
       path: '/auth/register',
       handler: 'api::profile.profile.register',
       config: { auth: false, policies: [], middlewares: [] },

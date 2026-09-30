@@ -268,12 +268,12 @@ export default function TechStarWomenPage() {
                     Join the Programme
                   </Button>
                 </Link>
-                <Link to="/partners">
+                <Link to="/contact">
                   <Button
                     variant="ghost"
                     className="h-12 rounded-full border border-white/30 bg-transparent px-8 text-sm text-white hover:bg-white/10"
                   >
-                    View Partners
+                    Contact Us
                   </Button>
                 </Link>
                 <Link to="/contact">

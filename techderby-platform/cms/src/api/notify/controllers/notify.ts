@@ -1,15 +1,48 @@
 const NOTIFY_TO = 'technical@techderby.org';
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX = 5;
+const requestLog = new Map<string, number[]>();
+
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isRateLimited(ip: string) {
+  const now = Date.now();
+  const recent = (requestLog.get(ip) ?? []).filter((timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT_MAX) {
+    requestLog.set(ip, recent);
+    return true;
+  }
+  requestLog.set(ip, [...recent, now]);
+  return false;
+}
 
 export default {
   async send(ctx: any) {
     const { subject, text, formType } = ctx.request.body ?? {};
 
-    if (!subject || !text) {
+    if (typeof subject !== 'string' || typeof text !== 'string' || !subject.trim() || !text.trim()) {
       return ctx.badRequest('subject and text are required.');
     }
+    if (subject.length > 160 || text.length > 20_000 || String(formType ?? '').length > 100) {
+      return ctx.badRequest('Form submission is too large.');
+    }
+    if (isRateLimited(ctx.ip ?? 'unknown')) {
+      ctx.set('Retry-After', String(RATE_LIMIT_WINDOW_MS / 1000));
+      return ctx.tooManyRequests('Too many submissions. Please try again later.');
+    }
+
+    const safeSubject = subject.replace(/[\r\n]+/g, ' ').trim();
+    const safeFormType = escapeHtml(formType ?? 'Form submission');
 
     // Format plain text into a simple HTML email
-    const rows = String(text)
+    const rows = text
       .split('\n')
       .map((line: string) => {
         const trimmed = line.trim();
@@ -17,14 +50,14 @@ export default {
         // Bold the label part (before the first colon)
         const colonIdx = trimmed.indexOf(':');
         if (colonIdx > 0 && colonIdx < 40) {
-          const label = trimmed.slice(0, colonIdx);
-          const value = trimmed.slice(colonIdx + 1).trim();
+          const label = escapeHtml(trimmed.slice(0, colonIdx));
+          const value = escapeHtml(trimmed.slice(colonIdx + 1).trim());
           return `<tr>
             <td style="padding:6px 12px 6px 0;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);white-space:nowrap;vertical-align:top;">${label}</td>
             <td style="padding:6px 0;font-size:13px;color:rgba(255,255,255,0.85);">${value || '—'}</td>
           </tr>`;
         }
-        return `<tr><td colspan="2" style="padding:8px 0 4px;font-size:13px;color:rgba(255,255,255,0.7);">${trimmed}</td></tr>`;
+        return `<tr><td colspan="2" style="padding:8px 0 4px;font-size:13px;color:rgba(255,255,255,0.7);">${escapeHtml(trimmed)}</td></tr>`;
       })
       .join('');
 
@@ -50,8 +83,8 @@ export default {
         <tr><td style="height:4px;background:linear-gradient(90deg,#0ea5e9,#f97316);"></td></tr>
         <tr><td style="padding:32px 36px 20px;">
           ${logoDataUri ? `<img src="${logoDataUri}" alt="Tech Derby" width="130" style="display:block;height:auto;margin-bottom:14px;" />` : `<p style="margin:0 0 14px;font-size:20px;font-weight:900;color:#ffffff;">Tech Derby</p>`}
-          <p style="margin:0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.35);">${formType ?? 'Form submission'}</p>
-          <p style="margin:6px 0 0;font-size:18px;font-weight:900;color:#ffffff;">${subject}</p>
+          <p style="margin:0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.35);">${safeFormType}</p>
+          <p style="margin:6px 0 0;font-size:18px;font-weight:900;color:#ffffff;">${escapeHtml(safeSubject)}</p>
         </td></tr>
         <tr><td style="padding:0 36px 28px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;">
@@ -70,7 +103,7 @@ export default {
     try {
       await strapi.plugin('email').service('email').send({
         to: NOTIFY_TO,
-        subject,
+        subject: safeSubject,
         html,
         text: String(text),
       });

@@ -44,6 +44,7 @@ jobs:
           build-args: |
             VITE_API_URL=https://cms.techderby.org
             VITE_CALLMEBOT_API_KEY=${{ secrets.VITE_CALLMEBOT_API_KEY }}
+            VITE_GA_MEASUREMENT_ID=${{ secrets.VITE_GA_MEASUREMENT_ID }}
           tags: |
             ${{ env.DOCKER_IMAGE_FRONTEND }}:${{ steps.vars.outputs.image_tag }}
             ${{ env.DOCKER_IMAGE_FRONTEND }}:latest
@@ -96,8 +97,9 @@ jobs:
             echo "DOCKER_IMAGE_FRONTEND=${{ secrets.DOCKERHUB_USERNAME }}/techderby-frontend" >> .env.prod
             echo "DOCKER_IMAGE_CMS=${{ secrets.DOCKERHUB_USERNAME }}/techderby-cms" >> .env.prod
 
-            docker compose -f docker-compose.images.yml --env-file .env.prod pull
-            docker compose -f docker-compose.images.yml --env-file .env.prod up -d
+            docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod pull
+            docker compose -p techderby-platform -f docker-compose.images.yml --env-file .env.prod up -d --remove-orphans
+            docker compose -p techderby-caddy -f docker-compose.caddy.yml up -d
             docker image prune -f
 
       - name: Notify success

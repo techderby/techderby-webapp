@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AwardsAnnouncementModal } from '../components/AwardsAnnouncementModal';
 import { CTASection } from '../components/CTASection';
 import { PageSeo } from '../components/PageSeo';
-import { Button } from '../components/ui/Button';
 import { Container } from '../components/ui/Container';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
 import heroBackgroundImage from '../assets/images/background.webp';
+import { eventDateTimestamp, eventDayStartTimestamp, formatEventDate } from '../lib/event-date';
 import partnerMcAnderson from '../assets/images/partners/partner1.png';
 import partnerBBB from '../assets/images/partners/partner2.svg';
 import partnerPitchHub from '../assets/images/partners/partner3.avif';
@@ -18,9 +17,9 @@ import './tech-derby-accelerator.css';
 /* ─────────────────────── static data ─────────────────────── */
 
 const stats = [
-  { value: '1,400+', label: 'Community members' },
+  { value: '1,400+', label: 'People Reached' },
   { value: '40+', label: 'Industry speakers' },
-  { value: '15+', label: 'Partner organisations' },
+  { value: '15+', label: 'Growing Collaborator Network' },
   { value: '4 yrs', label: 'Building Derby tech' },
 ];
 
@@ -196,17 +195,25 @@ export default function HomePage() {
   const { data: events = [] } = useEvents();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const nextEvent = events[0];
-  const now = new Date();
+  const today = eventDayStartTimestamp();
   const upcomingEvents = [...events]
-    .filter((event) => new Date(event.date).getTime() >= now.getTime())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .filter((event) => {
+      const eventTimestamp = eventDateTimestamp(event.date);
+      return !Number.isNaN(eventTimestamp) && eventTimestamp >= today;
+    })
+    .sort((a, b) => eventDateTimestamp(a.date) - eventDateTimestamp(b.date))
     .slice(0, 3);
+  const nextEvent = upcomingEvents[0] ?? null;
+  const nextEventDateLabel = nextEvent
+    ? new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'Europe/London',
+      }).format(new Date(nextEvent.date))
+    : '';
 
   return (
     <>
-      <AwardsAnnouncementModal />
-
       <PageSeo
         title="Tech Derby - Tech Meetup and Community in Derby"
         description="Monthly tech meetups in Derby connecting students, founders, and employers. Join 1,400+ community members building Derby's digital future."
@@ -233,17 +240,17 @@ export default function HomePage() {
               {/* Live event badge */}
               {nextEvent ? (
                 <a
-                  href={nextEvent.registrationLink ?? '/events'}
-                  target={nextEvent.registrationLink ? '_blank' : undefined}
+                  href={nextEvent.detailsPageLink ?? `/events/${nextEvent.slug}`}
+                  target={/^https?:\/\//i.test(nextEvent.detailsPageLink ?? '') ? '_blank' : undefined}
                   rel="noreferrer noopener"
-                  aria-label={`Next event — ${new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}${nextEvent.registrationLink ? ' (opens in a new tab)' : ''}`}
+                  aria-label={`Next event — ${nextEventDateLabel}${/^https?:\/\//i.test(nextEvent.detailsPageLink ?? '') ? ' (opens in a new tab)' : ''}`}
                   className="group mb-5 inline-flex items-center gap-2.5 rounded-full border border-orange-400/40 bg-orange-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm transition hover:border-orange-400/60 hover:bg-orange-400/15"
                 >
                   <span className="relative flex h-2 w-2" aria-hidden="true">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-400" />
                   </span>
-                  <span aria-hidden="true">Next event — {new Date(nextEvent.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}</span>
+                  <span aria-hidden="true">Next event — {nextEventDateLabel}</span>
                   <svg className="h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
@@ -255,7 +262,7 @@ export default function HomePage() {
               )}
 
               <h1 className="text-4xl font-black leading-[1.06] tracking-tight text-white sm:text-5xl md:text-[5.25rem]">
-                Where Derby's tech
+                Where Derby's tech{' '}
                 <br />
                 <span className="bg-gradient-to-r from-sky-400 via-sky-300 to-orange-400 bg-clip-text text-transparent">
                   community meets.
@@ -363,7 +370,7 @@ export default function HomePage() {
                           {event.theme ?? 'Meetup'}
                         </span>
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
-                          {new Date(event.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                          {formatEventDate(event.date, { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
                       <h3 className="mt-4 text-xl font-black leading-tight text-slate-900">{event.title}</h3>
@@ -376,10 +383,15 @@ export default function HomePage() {
                       <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-2">
                         {event.shortLine ?? event.description}
                       </p>
-                      <div className="mt-6">
-                        <a href={event.eventRegistrationLink ?? event.registrationLink ?? '#'} target="_blank" rel="noreferrer noopener">
-                          <Button variant="secondary" className="w-full rounded-xl">Reserve Your Seat</Button>
+                      <div className="mt-6 space-y-2">
+                        <a href={event.detailsPageLink ?? `/events/${event.slug}`} className="inline-flex w-full items-center justify-center rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                          View Event Details
                         </a>
+                        {event.eventRegistrationLink || event.registrationLink ? (
+                          <a href={event.eventRegistrationLink ?? event.registrationLink ?? '#'} target="_blank" rel="noreferrer noopener" className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-transparent px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100">
+                            Reserve Your Seat
+                          </a>
+                        ) : null}
                       </div>
                     </div>
                   </article>
@@ -431,8 +443,8 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="mt-10 flex flex-wrap gap-4">
-                <Link to="/get-involved">
-                  <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">Join The Community</Button>
+                <Link to="/get-involved" className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-8 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                  Join The Community
                 </Link>
                 <Link to="/about" className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 px-8 text-sm font-semibold text-white/75 transition hover:border-white/40 hover:text-white">
                   About Tech Derby
@@ -648,8 +660,8 @@ export default function HomePage() {
                   <span className="font-bold">Typical window:</span>
                   <p className="mt-1 text-white/65">17:00–19:00 or 12:00–14:00, with flexible pacing based on session theme.</p>
                 </div>
-                <Link to="/events" className="mt-6 block">
-                  <Button className="w-full rounded-xl text-sm">Browse Upcoming Events</Button>
+                <Link to="/events" className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                  Browse Upcoming Events
                 </Link>
               </aside>
             </div>
@@ -692,8 +704,8 @@ export default function HomePage() {
                   Sponsor a meetup, offer a speaker, or open opportunities for the community. Every partnership builds Derby's tech future.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-                  <Link to="/contact">
-                    <Button className="h-12 rounded-full px-8 text-sm shadow-lg shadow-orange-900/30">Contact Us</Button>
+                  <Link to="/contact" className="inline-flex h-12 items-center justify-center rounded-full bg-orange-500 px-8 text-sm font-semibold text-white shadow-lg shadow-orange-900/30 transition-colors hover:bg-orange-600">
+                    Contact Us
                   </Link>
                   <a
                     href="mailto:hello@techderby.org"

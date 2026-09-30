@@ -8,6 +8,8 @@ import { Input } from '../components/ui/Input';
 import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
 import { createMailingListSubscription } from '../services/content-service';
+import { trackAnalyticsEvent } from '../lib/analytics';
+import { eventDateTimestamp } from '../lib/event-date';
 
 const THEME_OPTIONS = ['All', 'AI', 'Data', 'Software', 'Product', 'Careers', 'Networking', 'Community'] as const;
 const AUDIENCE_OPTIONS = ['All', 'Students', 'Founders', 'Hiring', 'Professionals'] as const;
@@ -75,16 +77,23 @@ export default function EventRegistrationPage() {
 
   const allEvents = useMemo(() => data ?? [], [data]);
   const sourceAndTimeEvents = useMemo(() => {
-    const now = new Date();
+    const now = Date.now();
 
     const sourceFiltered = allEvents.filter((event) => {
       return source === 'tech-derby' ? isTechDerbyEvent(event.eventSource) : !isTechDerbyEvent(event.eventSource);
     });
 
-    return sourceFiltered.filter((event) => {
-      const eventDate = new Date(event.date);
-      if (Number.isNaN(eventDate.getTime())) return false;
-      return timeScope === 'upcoming' ? eventDate >= now : eventDate < now;
+    const scoped = sourceFiltered.filter((event) => {
+      const eventTimestamp = eventDateTimestamp(event.date);
+      if (Number.isNaN(eventTimestamp)) return false;
+      return timeScope === 'upcoming' ? eventTimestamp >= now : eventTimestamp < now;
+    });
+
+    // Keep browse results in a deterministic date order.
+    return scoped.sort((a, b) => {
+      const aTime = eventDateTimestamp(a.date);
+      const bTime = eventDateTimestamp(b.date);
+      return timeScope === 'upcoming' ? aTime - bTime : bTime - aTime;
     });
   }, [allEvents, source, timeScope]);
 
@@ -155,6 +164,7 @@ export default function EventRegistrationPage() {
 
     try {
       await createMailingListSubscription(normalizedEmail);
+      trackAnalyticsEvent('newsletter_signup', { signup_location: 'events_browse' });
       setMailingListMessage('You are on the list. We will send updates and early ticket alerts.');
       setMailingEmail('');
     } catch (err) {
@@ -163,7 +173,7 @@ export default function EventRegistrationPage() {
         const apiMessage = String((err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? '').toLowerCase();
 
         if (status === 403) {
-          setMailingListError('Mailing list sign-up is temporarily unavailable. Please contact the team while we finish setup.');
+          setMailingListError('Mailing list sign-up is currently unavailable. Please try again shortly.');
         } else if (status === 400 && (apiMessage.includes('unique') || apiMessage.includes('already') || apiMessage.includes('email'))) {
           setMailingListError('This email is already on the mailing list.');
         } else {

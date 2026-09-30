@@ -52,8 +52,12 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-Tech Derby <hello@techderby.org>}
       PUBLIC_FRONTEND_URL: ${PUBLIC_FRONTEND_URL:-https://test.techderby.org}
+      PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-https://cms-test.techderby.org}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://test.techderby.org}
     ports:
       - "1339:1337"
+    volumes:
+      - strapi_uat_uploads:/app/public/uploads
     networks:
       - techderby-uat
 
@@ -70,6 +74,9 @@ services:
 
 volumes:
   postgres_uat_data:
+    name: techderby-platform_postgres_uat_data
+  strapi_uat_uploads:
+    name: techderby-platform_strapi_uat_uploads
 
 networks:
   techderby-uat:

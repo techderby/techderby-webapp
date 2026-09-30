@@ -95,7 +95,7 @@ export default function LoginPage() {
             </p>
 
             {error ? (
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+              <div role="alert" className="mt-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
                 <svg className="h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" />
                 </svg>
@@ -105,10 +105,11 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                <label htmlFor="login-identifier" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/60">
                   Username or email
                 </label>
                 <input
+                  id="login-identifier"
                   type="text"
                   autoComplete="username"
                   placeholder="your_username"
@@ -120,7 +121,7 @@ export default function LoginPage() {
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                  <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wide text-white/60">
                     Password
                   </label>
                   <Link
@@ -132,6 +133,7 @@ export default function LoginPage() {
                 </div>
                 <div className="relative">
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     placeholder="Your password"
@@ -163,6 +165,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   role="checkbox"
+                  aria-label="Remember me"
                   aria-checked={rememberMe}
                   onClick={() => setRememberMe((v) => !v)}
                   className={`relative h-5 w-5 shrink-0 rounded-md border transition-all ${

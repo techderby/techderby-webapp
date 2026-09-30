@@ -1,11 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { EventCard } from '../components/EventCard';
 
 describe('EventCard', () => {
-  it('renders event details and opens the details modal', async () => {
-    const user = userEvent.setup();
-
+  it('renders event details and links to the dynamically generated details page', () => {
     render(
       <EventCard
         event={{
@@ -38,15 +35,26 @@ describe('EventCard', () => {
     expect(screen.getByText(/short summary:/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /get tickets for demo day/i })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /view details for demo day/i }));
+    expect(screen.getByRole('link', { name: /view details for demo day/i })).toHaveAttribute('href', '/events/demo-day');
+  });
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/agenda/i)).toBeInTheDocument();
-    expect(screen.getByText(/17:00 - Doors open/i)).toBeInTheDocument();
-    expect(screen.getByText(/speakers/i)).toBeInTheDocument();
-    expect(screen.getByText(/alex smith/i)).toBeInTheDocument();
-    expect(screen.getByText(/accessibility and inclusion/i)).toBeInTheDocument();
-    expect(screen.getByText(/we want everyone to feel welcome and safe/i)).toBeInTheDocument();
-    expect(screen.queryByText(/after-event recap template/i)).not.toBeInTheDocument();
+  it('links a bespoke event to its custom details page instead of using the standard modal button', () => {
+    render(
+      <EventCard
+        event={{
+          id: 2,
+          title: 'Pre-Seed Accelerator',
+          slug: 'pre-seed-accelerator',
+          description: 'An accelerator for early-stage founders.',
+          date: '2026-06-20T09:00:00.000Z',
+          venue: 'University of Derby',
+          detailsPageLink: '/tech-derby-accelerator',
+        }}
+      />,
+    );
+
+    const detailsLink = screen.getByRole('link', { name: /view details for pre-seed accelerator/i });
+    expect(detailsLink).toHaveAttribute('href', '/tech-derby-accelerator');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

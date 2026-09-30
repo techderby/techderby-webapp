@@ -242,7 +242,7 @@ export default function TechDerbyAcceleratorPage() {
             </div>
 
             <h1 className="accelerator-fade-up accelerator-delay-1 mt-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-7xl">
-              Build with evidence.
+              Build with evidence.{' '}
               <br />
               <span className="bg-gradient-to-r from-sky-400 to-orange-400 bg-clip-text text-transparent">
                 Pitch with confidence.

@@ -9,6 +9,7 @@ import { Section } from '../components/ui/Section';
 import { useEvents } from '../hooks/use-content-query';
 import { createMailingListSubscription } from '../services/content-service';
 import { trackAnalyticsEvent } from '../lib/analytics';
+import { eventDateTimestamp } from '../lib/event-date';
 
 const THEME_OPTIONS = ['All', 'AI', 'Data', 'Software', 'Product', 'Careers', 'Networking', 'Community'] as const;
 const AUDIENCE_OPTIONS = ['All', 'Students', 'Founders', 'Hiring', 'Professionals'] as const;
@@ -76,22 +77,22 @@ export default function EventRegistrationPage() {
 
   const allEvents = useMemo(() => data ?? [], [data]);
   const sourceAndTimeEvents = useMemo(() => {
-    const now = new Date();
+    const now = Date.now();
 
     const sourceFiltered = allEvents.filter((event) => {
       return source === 'tech-derby' ? isTechDerbyEvent(event.eventSource) : !isTechDerbyEvent(event.eventSource);
     });
 
     const scoped = sourceFiltered.filter((event) => {
-      const eventDate = new Date(event.date);
-      if (Number.isNaN(eventDate.getTime())) return false;
-      return timeScope === 'upcoming' ? eventDate >= now : eventDate < now;
+      const eventTimestamp = eventDateTimestamp(event.date);
+      if (Number.isNaN(eventTimestamp)) return false;
+      return timeScope === 'upcoming' ? eventTimestamp >= now : eventTimestamp < now;
     });
 
     // Keep browse results in a deterministic date order.
     return scoped.sort((a, b) => {
-      const aTime = new Date(a.date).getTime();
-      const bTime = new Date(b.date).getTime();
+      const aTime = eventDateTimestamp(a.date);
+      const bTime = eventDateTimestamp(b.date);
       return timeScope === 'upcoming' ? aTime - bTime : bTime - aTime;
     });
   }, [allEvents, source, timeScope]);

@@ -18,6 +18,7 @@ export default {
     },
     theme: { type: 'string' },
     shortLine: { type: 'text' },
+    detailsPageLink: { type: 'string' },
     eventRegistrationLink: { type: 'string' },
     agenda: { type: 'richtext' },
     agendaItems: { type: 'json' },

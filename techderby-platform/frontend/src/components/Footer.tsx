@@ -155,6 +155,7 @@ export function Footer() {
 
               <form onSubmit={handleMailingListSubmit} className="mt-3 flex flex-col gap-2">
                 <input
+                  aria-label="Email address for mailing list"
                   type="email"
                   value={mailingEmail}
                   onChange={(e) => {
@@ -175,8 +176,8 @@ export function Footer() {
                 </button>
               </form>
 
-              {mailingMessage ? <p className="mt-2 text-xs text-emerald-300">{mailingMessage}</p> : null}
-              {mailingError ? <p className="mt-2 text-xs text-red-300">{mailingError}</p> : null}
+              {mailingMessage ? <p role="status" className="mt-2 text-xs text-emerald-300">{mailingMessage}</p> : null}
+              {mailingError ? <p role="alert" className="mt-2 text-xs text-red-300">{mailingError}</p> : null}
             </div>
           </div>
 

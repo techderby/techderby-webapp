@@ -499,6 +499,7 @@ export default function AdminPage() {
                   <option value="all" className="bg-white text-slate-900">All statuses</option>
                 </select>
                 <select
+              aria-label="Filter by segment"
                   value={selectedSegmentId}
                   onChange={(event) => {
                     const raw = event.target.value;
@@ -513,6 +514,7 @@ export default function AdminPage() {
                   ))}
                 </select>
                 <select
+              aria-label="Filter by category"
                   value={selectedCategory}
                   onChange={(event) => {
                     setSelectedCategory(event.target.value);

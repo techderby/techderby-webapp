@@ -37,10 +37,14 @@ const NEWSLETTER_IMAGE_EXTENSIONS: Record<string, string> = {
 	'image/gif': '.gif',
 };
 
-function normalizeCategory(value: unknown) {
+function parseCategory(value: unknown): (typeof MAILING_LIST_CATEGORIES)[number] | null {
 	const raw = String(value ?? '').trim();
 	if (!raw || raw === 'General') return 'None';
-	return MAILING_LIST_CATEGORIES.includes(raw as (typeof MAILING_LIST_CATEGORIES)[number]) ? raw : 'None';
+	return MAILING_LIST_CATEGORIES.find((category) => category.toLowerCase() === raw.toLowerCase()) ?? null;
+}
+
+function normalizeCategory(value: unknown) {
+	return parseCategory(value) ?? 'None';
 }
 
 function parseSegmentIds(value: unknown): number[] {
@@ -291,12 +295,13 @@ async function subscriptionFromToken(token: unknown) {
 export default factories.createCoreController('api::mailing-list-subscription.mailing-list-subscription', ({ strapi }) => ({
 	async create(ctx) {
 		const email = String(ctx.request.body?.data?.email ?? '').trim().toLowerCase();
+		const categoryWasSupplied = Object.prototype.hasOwnProperty.call(ctx.request.body?.data ?? {}, 'category');
 		const category = normalizeCategory(ctx.request.body?.data?.category);
 		if (!EMAIL_PATTERN.test(email)) return ctx.badRequest('Enter a valid email address.');
 
 		const existing = await strapi.db.query(SUBSCRIPTION_UID).findOne({
 			where: { email },
-			select: ['id', 'email', 'subscriptionStatus'],
+			select: ['id', 'email', 'category', 'subscriptionStatus'],
 		});
 
 		if (existing) {
@@ -309,8 +314,13 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 						resubscribedAt: new Date().toISOString(),
 					},
 				});
+			} else if (categoryWasSupplied && existing.category !== category) {
+				await strapi.db.query(SUBSCRIPTION_UID).update({
+					where: { id: existing.id },
+					data: { category },
+				});
 			}
-			ctx.body = { data: { subscribed: true } };
+			ctx.body = { data: { subscribed: true, category } };
 			return;
 		}
 
@@ -318,7 +328,7 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 			data: { email, category, subscriptionStatus: 'subscribed' },
 		});
 		ctx.status = 201;
-		ctx.body = { data: { subscribed: true } };
+		ctx.body = { data: { subscribed: true, category } };
 	},
 
 	async unsubscribeDetails(ctx) {
@@ -594,38 +604,79 @@ export default factories.createCoreController('api::mailing-list-subscription.ma
 	async importForAdmin(ctx) {
 		if (!(await requireAdmin(ctx))) return;
 
-		const supplied = ctx.request.body?.emails;
+		const supplied = ctx.request.body?.entries ?? ctx.request.body?.emails;
 		if (!Array.isArray(supplied)) {
-			return ctx.badRequest('emails must be an array.');
+			return ctx.badRequest('entries must be an array.');
 		}
 		if (supplied.length > MAX_IMPORT_SIZE) {
-			return ctx.badRequest(`A maximum of ${MAX_IMPORT_SIZE} emails can be imported at once.`);
+			return ctx.badRequest(`A maximum of ${MAX_IMPORT_SIZE} subscribers can be imported at once.`);
 		}
 
-		const normalised = supplied.map((value: unknown) => String(value).trim().toLowerCase());
-		const valid = [...new Set(normalised.filter((email: string) => EMAIL_PATTERN.test(email)))];
-		const invalid = supplied.length - normalised.filter((email: string) => EMAIL_PATTERN.test(email)).length;
+		const entriesByEmail = new Map<string, { email: string; category?: string }>();
+		let invalid = 0;
+		for (const value of supplied) {
+			const isEntry = typeof value === 'object' && value !== null && !Array.isArray(value);
+			const email = String(isEntry ? value.email : value).trim().toLowerCase();
+			if (!EMAIL_PATTERN.test(email)) {
+				invalid += 1;
+				continue;
+			}
 
-		const existingRows = valid.length
+			const hasCategory = isEntry && Object.prototype.hasOwnProperty.call(value, 'category');
+			const category = hasCategory ? parseCategory(value.category) : undefined;
+			if (hasCategory && !category) {
+				return ctx.badRequest(`Select a valid mailing list category for ${email}.`);
+			}
+
+			const previous = entriesByEmail.get(email);
+			entriesByEmail.set(email, {
+				email,
+				...(category !== undefined ? { category } : previous?.category !== undefined ? { category: previous.category } : {}),
+			});
+		}
+
+		const entries = [...entriesByEmail.values()];
+		const validEmails = entries.map((entry) => entry.email);
+
+		const existingRows = validEmails.length
 			? await strapi.db.query(SUBSCRIPTION_UID).findMany({
-					select: ['id', 'email', 'subscriptionStatus'],
-					where: { email: { $in: valid } },
+					select: ['id', 'email', 'category', 'subscriptionStatus'],
+					where: { email: { $in: validEmails } },
 				})
 			: [];
-		const existing = new Set(existingRows.map((row: { email: string }) => row.email.toLowerCase()));
-		const toImport = valid.filter((email) => !existing.has(email));
+		const existingByEmail = new Map(existingRows.map((row: any) => [String(row.email).toLowerCase(), row]));
+		let imported = 0;
+		let updated = 0;
+		let unchangedExisting = 0;
 
-		for (const email of toImport) {
-			await strapi.db.query(SUBSCRIPTION_UID).create({
-				data: { email, category: 'None', subscriptionStatus: 'subscribed' },
-			});
+		for (const entry of entries) {
+			const existing = existingByEmail.get(entry.email);
+			if (!existing) {
+				await strapi.db.query(SUBSCRIPTION_UID).create({
+					data: { email: entry.email, category: entry.category ?? 'None', subscriptionStatus: 'subscribed' },
+				});
+				imported += 1;
+				continue;
+			}
+
+			if (entry.category !== undefined && existing.category !== entry.category) {
+				await strapi.db.query(SUBSCRIPTION_UID).update({
+					where: { id: existing.id },
+					data: { category: entry.category },
+				});
+				updated += 1;
+			} else {
+				unchangedExisting += 1;
+			}
 		}
 
 		ctx.body = {
 			received: supplied.length,
-			valid: valid.length,
-			imported: toImport.length,
-			skippedExisting: existingRows.length,
+			valid: entries.length,
+			imported,
+			updated,
+			unchangedExisting,
+			skippedExisting: unchangedExisting,
 			invalid,
 		};
 	},

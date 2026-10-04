@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/Pagination';
 import { paginateItems } from '../lib/pagination';
 import { apiClient } from '../lib/api';
+import { parseMailingListFile, type MailingListImportEntry } from '../lib/mailing-list-import';
 import { MAILING_LIST_CATEGORIES, type MailingListCategory, type MailingListSegment } from '../constants/mailing-list';
 
 type MailingListRow = {
@@ -25,13 +26,14 @@ type ImportResult = {
   received: number;
   valid: number;
   imported: number;
+  updated: number;
+  unchangedExisting: number;
   skippedExisting: number;
   invalid: number;
 };
 
 type AdminTab = 'mailing-list' | 'unsubscribe-insights' | 'segments';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
 const UNSUBSCRIBE_REASON_LABELS: Record<string, string> = {
   'too-many-emails': 'Too many emails',
@@ -253,18 +255,8 @@ export default function AdminPage() {
     }
   }
 
-  async function parseEmailsFromFile(file: File): Promise<string[]> {
-    const rowsData = parseCsv(await file.text());
-    const emails = new Set<string>();
-
-    for (const row of rowsData) {
-      for (const cell of row) {
-        const value = String(cell ?? '').trim().toLowerCase();
-        if (EMAIL_PATTERN.test(value)) emails.add(value);
-      }
-    }
-
-    return Array.from(emails);
+  async function parseEntriesFromFile(file: File): Promise<MailingListImportEntry[]> {
+    return parseMailingListFile(file);
   }
 
   async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -282,16 +274,16 @@ export default function AdminPage() {
     setIsImporting(true);
 
     try {
-      const emails = await parseEmailsFromFile(file);
-      if (emails.length === 0) {
+      const entries = await parseEntriesFromFile(file);
+      if (entries.length === 0) {
         setError('No valid emails were found in the selected file.');
         return;
       }
 
-      const response = await apiClient.importMailingListForAdmin(emails);
+      const response = await apiClient.importMailingListForAdmin(entries);
       const result = response.data as ImportResult;
       setImportResult(result);
-      setMessage(`Import complete. Added ${result.imported} new subscriber${result.imported === 1 ? '' : 's'}.`);
+      setMessage(`Import complete. Added ${result.imported} and updated ${result.updated} subscriber${result.imported + result.updated === 1 ? '' : 's'}.`);
 
       setIsRefreshing(true);
       await loadMailingList(false);
@@ -299,6 +291,8 @@ export default function AdminPage() {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
         setError('You do not have permission to import mailing list entries.');
+      } else if (err instanceof Error && err.message.startsWith('Row ')) {
+        setError(err.message);
       } else {
         setError('Could not import mailing list file right now. Please try again.');
       }
@@ -531,10 +525,10 @@ export default function AdminPage() {
                   {isExporting ? 'Exporting…' : 'Export CSV'}
                 </Button>
                 <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-sky-500/30 bg-sky-500/10 px-4 text-sm font-semibold text-sky-300 transition hover:bg-sky-500/20 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
-                  {isImporting ? 'Importing…' : 'Import CSV'}
+                  {isImporting ? 'Importing…' : 'Import CSV / Excel'}
                   <input
                     type="file"
-                    accept=".csv,text/csv"
+                    accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     className="hidden"
                     onChange={handleImportFile}
                     disabled={isImporting}
@@ -544,7 +538,7 @@ export default function AdminPage() {
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/35">
-              <span>CSV files may contain email addresses in any column.</span>
+              <span>CSV and Excel files may contain email addresses in any column. Include an email and category header to update existing categories.</span>
               {search ? <span>{filteredRows.length} of {rows.length} subscribers match</span> : null}
             </div>
 
@@ -853,7 +847,7 @@ export default function AdminPage() {
 
         {importResult ? (
           <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200">
-            Received: {importResult.received} · Valid: {importResult.valid} · Imported: {importResult.imported} · Existing or suppressed: {importResult.skippedExisting} · Invalid: {importResult.invalid}
+            Received: {importResult.received} · Valid: {importResult.valid} · Added: {importResult.imported} · Updated: {importResult.updated} · Unchanged: {importResult.unchangedExisting} · Invalid: {importResult.invalid}
           </div>
         ) : null}
 
@@ -862,40 +856,4 @@ export default function AdminPage() {
       </div>
     </div>
   );
-}
-
-function parseCsv(contents: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let quoted = false;
-
-  for (let index = 0; index < contents.length; index += 1) {
-    const character = contents[index];
-    const next = contents[index + 1];
-
-    if (character === '"') {
-      if (quoted && next === '"') {
-        field += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === ',' && !quoted) {
-      row.push(field);
-      field = '';
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && next === '\n') index += 1;
-      row.push(field);
-      if (row.some((value) => value.length > 0)) rows.push(row);
-      row = [];
-      field = '';
-    } else {
-      field += character;
-    }
-  }
-
-  row.push(field);
-  if (row.some((value) => value.length > 0)) rows.push(row);
-  return rows;
 }

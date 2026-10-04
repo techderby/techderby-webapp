@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useConsent } from '../contexts/ConsentContext';
 import { trackAnalyticsEvent } from '../lib/analytics';
 import { createMailingListSubscription } from '../services/content-service';
+import type { MailingListCategory } from '../constants/mailing-list';
+import { MailingListCategoryModal } from './MailingListCategoryModal';
 import brandLogo from '../assets/images/techderbywhitelogo.webp';
 
 const footerLinks = {
@@ -46,6 +48,10 @@ export function Footer() {
   const [mailingError, setMailingError] = useState<string | null>(null);
   const [mailingMessage, setMailingMessage] = useState<string | null>(null);
   const [isSubmittingMailingList, setIsSubmittingMailingList] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [pendingMailingEmail, setPendingMailingEmail] = useState('');
+  const [selectedMailingCategory, setSelectedMailingCategory] = useState<MailingListCategory | ''>('');
+  const [categoryModalError, setCategoryModalError] = useState<string | null>(null);
 
   async function handleMailingListSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,33 +63,55 @@ export function Footer() {
       return;
     }
 
-    setIsSubmittingMailingList(true);
     setMailingError(null);
     setMailingMessage(null);
+    setPendingMailingEmail(normalizedEmail);
+    setSelectedMailingCategory('');
+    setCategoryModalError(null);
+    setIsCategoryModalOpen(true);
+  }
+
+  async function completeMailingListSignup(category: MailingListCategory) {
+    if (!pendingMailingEmail || isSubmittingMailingList) return;
+
+    setIsSubmittingMailingList(true);
+    setCategoryModalError(null);
 
     try {
-      await createMailingListSubscription(normalizedEmail);
-      trackAnalyticsEvent('newsletter_signup', { signup_location: 'footer' });
+      await createMailingListSubscription(pendingMailingEmail, category);
+      trackAnalyticsEvent('newsletter_signup', { signup_location: 'footer', subscriber_category: category });
       setMailingMessage('You are on the list. We will share updates soon.');
       setMailingEmail('');
+      setPendingMailingEmail('');
+      setSelectedMailingCategory('');
+      setIsCategoryModalOpen(false);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        const apiMessage = String((err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? '').toLowerCase();
 
         if (status === 403) {
-          setMailingError('Mailing list sign-up is currently unavailable. Please try again shortly.');
-        } else if (status === 400 && (apiMessage.includes('unique') || apiMessage.includes('already') || apiMessage.includes('email'))) {
-          setMailingError('This email is already on the mailing list.');
+          setCategoryModalError('Mailing list sign-up is currently unavailable. Please try again shortly.');
         } else {
-          setMailingError('Could not join the mailing list right now. Please try again.');
+          setCategoryModalError('Could not join the mailing list right now. Please try again.');
         }
       } else {
-        setMailingError('Could not join the mailing list right now. Please try again.');
+        setCategoryModalError('Could not join the mailing list right now. Please try again.');
       }
     } finally {
       setIsSubmittingMailingList(false);
     }
+  }
+
+  function continueMailingListSignup() {
+    if (!selectedMailingCategory) {
+      setCategoryModalError('Select a category before continuing.');
+      return;
+    }
+    void completeMailingListSignup(selectedMailingCategory);
+  }
+
+  function closeCategoryModal() {
+    void completeMailingListSignup('None');
   }
 
   return (
@@ -293,6 +321,19 @@ export function Footer() {
           </div>
         </div>
       </Container>
+
+      <MailingListCategoryModal
+        isOpen={isCategoryModalOpen}
+        selectedCategory={selectedMailingCategory}
+        error={categoryModalError}
+        isSubmitting={isSubmittingMailingList}
+        onSelect={(category) => {
+          setSelectedMailingCategory(category);
+          setCategoryModalError(null);
+        }}
+        onContinue={continueMailingListSignup}
+        onClose={closeCategoryModal}
+      />
     </footer>
   );
 }

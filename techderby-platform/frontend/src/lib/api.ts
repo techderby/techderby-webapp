@@ -1,4 +1,6 @@
 import axios from 'axios';
+import type { MailingListCategory } from '../constants/mailing-list';
+import type { MailingListImportEntry } from './mailing-list-import';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:1337',
@@ -52,8 +54,8 @@ export const apiClient = {
   getInsights: () => api.get('/api/wire/articles'),
   getInsightBySlug: (slug: string) => api.get(`/api/wire/articles/${encodeURIComponent(slug)}`),
   getProgrammes: () => api.get('/api/programmes'),
-  createMailingListSubscription: (email: string) =>
-    api.post('/api/mailing-list-subscriptions', { data: { email, category: 'None' } }),
+  createMailingListSubscription: (email: string, category: MailingListCategory) =>
+    api.post('/api/mailing-list-subscriptions', { data: { email, category } }),
   getMailingListUnsubscribeDetails: (token: string) =>
     api.get(`/api/mailing-list-subscriptions/unsubscribe/${encodeURIComponent(token)}`),
   unsubscribeFromMailingList: (token: string, reason: string, details: string) =>
@@ -68,8 +70,8 @@ export const apiClient = {
     api.get('/api/mailing-list-subscriptions/admin/export.csv', {
       responseType: 'blob',
     }),
-  importMailingListForAdmin: (emails: string[]) =>
-    api.post('/api/mailing-list-subscriptions/admin/import', { emails }),
+  importMailingListForAdmin: (entries: MailingListImportEntry[]) =>
+    api.post('/api/mailing-list-subscriptions/admin/import', { entries }),
   getMailingListSegmentsForAdmin: () =>
     api.get('/api/mailing-list-subscriptions/admin/segments'),
   createMailingListSegmentForAdmin: (data: { name: string; description?: string; categories: string[] }) =>

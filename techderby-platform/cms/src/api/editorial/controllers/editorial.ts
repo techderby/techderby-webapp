@@ -334,12 +334,28 @@ function parseArticle(body: Record<string, unknown> = {}) {
   const hasArticleContent = contentFormat === 'html'
     ? Boolean(articleText(content) || /<img\b/i.test(content) || /<table\b/i.test(content))
     : Boolean(content);
-  if (!title || !excerpt || !hasArticleContent) throw new InputError('Title, excerpt and article content are required.');
+  // A draft only needs a title so writers can save work in progress and return
+  // later. Publication readiness is enforced when the article is submitted or
+  // published, rather than while it is being drafted.
+  if (!title) throw new InputError('Enter a title before saving your draft.');
   if (title.length > 200) throw new InputError('The title must be 200 characters or fewer.');
   if (excerpt.length > 600) throw new InputError('The excerpt must be 600 characters or fewer.');
   if (content.length > 250_000) throw new InputError('The article content is too large.');
   if (!ARTICLE_CATEGORIES.has(category)) throw new InputError('Select a valid article category.');
   return { title, excerpt, content, contentFormat, category, tags };
+}
+
+function validateArticleForPublication(article: any) {
+  const contentFormat = ARTICLE_CONTENT_FORMATS.has(article?.contentFormat) ? article.contentFormat : 'markdown';
+  const content = String(article?.content ?? '').trim();
+  const hasArticleContent = contentFormat === 'html'
+    ? Boolean(articleText(content) || /<img\b/i.test(content) || /<table\b/i.test(content))
+    : Boolean(content);
+
+  if (!field(article?.title) || !field(article?.excerpt) || !hasArticleContent) {
+    throw new InputError('Title, excerpt and article content are required before submission.');
+  }
+  if (!publicImage(article)) throw new InputError('Select a featured image before submission.');
 }
 
 async function allArticleDocuments() {
@@ -716,14 +732,14 @@ export default {
     let stored: any;
     try {
       const input = parseArticle(ctx.request.body);
-      stored = storeArticleImage(uploadedImage(ctx));
+      if (uploadedImage(ctx)) stored = storeArticleImage(uploadedImage(ctx));
       const documents = strapi.documents(POST_UID) as any;
       const article = await documents.create({
         status: 'draft',
         data: {
           ...input,
           slug: await uniqueSlug(input.title),
-          featuredImageUrl: stored.publicPath,
+          featuredImageUrl: stored?.publicPath ?? null,
           author: displayName(user),
           authorUserId: user.id,
           workflowStatus: 'draft',
@@ -804,10 +820,16 @@ export default {
     if (!user) return;
     const documentId = field(ctx.params?.documentId);
     const documents = strapi.documents(POST_UID) as any;
-    const existing = await documents.findOne({ documentId, status: 'draft' });
+    const existing = await documents.findOne({ documentId, status: 'draft', populate: ['featuredImage'] });
     if (!existing) return ctx.notFound('Article not found.');
     const role = user.memberRole ?? user.member_role;
     if (!ADMIN_ROLES.has(role) && Number(existing.authorUserId) !== Number(user.id)) return ctx.forbidden('You can only submit your own articles.');
+    try {
+      validateArticleForPublication(existing);
+    } catch (error) {
+      if (error instanceof InputError) return ctx.badRequest(error.message);
+      throw error;
+    }
     const updated = await documents.update({ documentId, data: { workflowStatus: 'pending-review', reviewNotes: null } });
     ctx.body = { data: serialiseArticle(updated) };
   },
@@ -923,10 +945,18 @@ export default {
     const reviewNotes = field(ctx.request.body?.reviewNotes);
     if (!WORKFLOW_STATUSES.has(status) || status === 'draft') return ctx.badRequest('Invalid review status.');
     const documents = strapi.documents(POST_UID) as any;
-    const existing = await documents.findOne({ documentId, status: 'draft' });
+    const existing = await documents.findOne({ documentId, status: 'draft', populate: ['featuredImage'] });
     if (!existing) return ctx.notFound('Article not found.');
     if (status === 'published' && existing.workflowStatus === 'published') {
       return ctx.badRequest('This article is already published and has no pending revision.');
+    }
+    if (status === 'published') {
+      try {
+        validateArticleForPublication(existing);
+      } catch (error) {
+        if (error instanceof InputError) return ctx.badRequest(error.message);
+        throw error;
+      }
     }
 
     const updated = await documents.update({

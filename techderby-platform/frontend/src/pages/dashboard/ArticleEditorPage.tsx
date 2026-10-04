@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -24,6 +24,7 @@ export default function ArticleEditorPage() {
   const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const role = user?.memberRole ?? 'member';
   const isAdmin = role === 'admin' || role === 'super-admin';
   const query = useQuery<{ data: Insight[] }>({
@@ -68,14 +69,27 @@ export default function ArticleEditorPage() {
     }
   }
 
-  async function save(event: FormEvent, action: 'draft' | 'submit' | 'publish') {
-    event.preventDefault();
-    if (!documentId && !image) {
-      setError('Select a featured image.');
+  async function save(action: 'draft' | 'submit' | 'publish') {
+    const title = form.title.trim();
+    if (!title) {
+      setError('Enter a title before saving your draft.');
       return;
+    }
+    if (action !== 'draft') {
+      const articleText = new DOMParser().parseFromString(form.content, 'text/html').body.textContent?.trim();
+      const hasRichContent = Boolean(articleText || /<img\b/i.test(form.content) || /<table\b/i.test(form.content));
+      if (!form.excerpt.trim() || !hasRichContent) {
+        setError('Add an excerpt and article content before submitting.');
+        return;
+      }
+      if (!image && !preview) {
+        setError('Select a featured image before submitting.');
+        return;
+      }
     }
     setSaving(true);
     setError('');
+    setSuccess('');
     try {
       const payload = new FormData();
       Object.entries(form).forEach(([key, value]) => payload.append(key, value));
@@ -90,7 +104,12 @@ export default function ArticleEditorPage() {
         queryClient.invalidateQueries({ queryKey: ['articles-dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['editorial-admin'] }),
       ]);
-      navigate('/dashboard/articles');
+      if (action === 'draft' && saved.documentId) {
+        setSuccess('Draft saved. You can leave this page and return to it from Your articles.');
+        if (!documentId) navigate(`/dashboard/articles/${saved.documentId}/edit`, { replace: true });
+      } else {
+        navigate('/dashboard/articles');
+      }
     } catch (saveError) {
       setError(axios.isAxiosError(saveError) ? saveError.response?.data?.error?.message ?? 'Could not save article.' : 'Could not save article.');
     } finally {
@@ -144,10 +163,11 @@ export default function ArticleEditorPage() {
             <div className="aspect-video overflow-hidden rounded-xl bg-white/5">{preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : null}</div>
           </section>
 
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          {error ? <p role="alert" className="text-sm text-red-300">{error}</p> : null}
+          {success ? <p role="status" className="text-sm text-emerald-300">{success}</p> : null}
           <div className="flex flex-wrap justify-end gap-3">
-            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, 'draft')} className="rounded-xl border border-white/15 px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/5">Save draft</button>
-            <button type="button" disabled={saving} onClick={(e) => save(e as unknown as FormEvent, isAdmin ? 'publish' : 'submit')} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">{saving ? 'Saving…' : isAdmin ? 'Publish article' : 'Submit for review'}</button>
+            <button type="button" disabled={saving} onClick={() => save('draft')} className="rounded-xl border border-white/15 px-5 py-3 text-sm font-bold text-white/70 hover:bg-white/5">{saving ? 'Saving…' : 'Save draft'}</button>
+            <button type="button" disabled={saving} onClick={() => save(isAdmin ? 'publish' : 'submit')} className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">{saving ? 'Saving…' : isAdmin ? 'Publish article' : 'Submit for review'}</button>
           </div>
         </form>
       </div>

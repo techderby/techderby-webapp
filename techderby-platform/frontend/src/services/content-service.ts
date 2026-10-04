@@ -2,6 +2,7 @@ import { z } from 'zod';
 import axios from 'axios';
 import { apiClient } from '../lib/api';
 import { eventDateTimestamp } from '../lib/event-date';
+import type { MailingListCategory } from '../constants/mailing-list';
 import type { Event, Insight, Partner, Programme } from '../types/content';
 
 const eventSpeakerCardSchema = z.object({
@@ -188,6 +189,6 @@ export async function fetchProgrammes(): Promise<Programme[]> {
   return normalizeResponse(response.data, programmeSchema);
 }
 
-export async function createMailingListSubscription(email: string): Promise<void> {
-  await apiClient.createMailingListSubscription(email);
+export async function createMailingListSubscription(email: string, category: MailingListCategory): Promise<void> {
+  await apiClient.createMailingListSubscription(email, category);
 }
